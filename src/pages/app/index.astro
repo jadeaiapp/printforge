@@ -4,13 +4,13 @@ import { withBase } from "../../utils/paths";
 import "../../styles/app.css";
 
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Interactive Editor";
-const description = "Sprint 2 interactive editor with drag, resize, pages and local save.";
+const title = "PrintForge App — Builder Shell";
+const description = "Builder shell UI for Sprint 1.";
 const homeHref = withBase("/en/", base);
 ---
 
 <BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="app-shell" data-lang="en" id="app-shell">
+  <div class="app-shell" data-lang="en">
     <header class="app-topbar" aria-label="Application top bar">
       <a class="app-brand" href={homeHref} aria-label="PrintForge home">
         <span class="brand-badge" aria-hidden="true">✦</span>
@@ -21,11 +21,11 @@ const homeHref = withBase("/en/", base);
         <label class="control-group" for="zoom-select">
           <span data-i18n="zoom">Zoom</span>
           <select id="zoom-select" aria-label="Zoom level">
-            <option value="0.25">25%</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1" selected>100%</option>
-            <option value="fit">Fit</option>
+            <option>25%</option>
+            <option>50%</option>
+            <option>75%</option>
+            <option selected>100%</option>
+            <option>Fit</option>
           </select>
         </label>
       </div>
@@ -33,14 +33,8 @@ const homeHref = withBase("/en/", base);
       <div class="topbar-group topbar-actions">
         <fieldset class="segment" aria-label="Page size toggle">
           <legend class="sr-only" data-i18n="pageSize">Page size</legend>
-          <button type="button" class="segment-btn size-btn is-active" data-size="A4">A4</button>
-          <button type="button" class="segment-btn size-btn" data-size="A5">A5</button>
-        </fieldset>
-
-        <fieldset class="segment" aria-label="Orientation toggle">
-          <legend class="sr-only" data-i18n="orientation">Orientation</legend>
-          <button type="button" class="segment-btn orientation-btn is-active" data-orientation="portrait" data-i18n="portrait">Portrait</button>
-          <button type="button" class="segment-btn orientation-btn" data-orientation="landscape" data-i18n="landscape">Landscape</button>
+          <button type="button" class="segment-btn is-active" aria-label="A4 page size">A4</button>
+          <button type="button" class="segment-btn" aria-label="A5 page size">A5</button>
         </fieldset>
 
         <fieldset class="segment" aria-label="Language toggle">
@@ -49,11 +43,12 @@ const homeHref = withBase("/en/", base);
           <button type="button" class="segment-btn lang-btn is-active" data-lang-btn="en" aria-label="Switch to English">EN</button>
         </fieldset>
 
-        <button class="btn" id="import-btn" type="button"><span data-i18n="import">Import JSON</span></button>
-        <input id="import-input" type="file" accept="application/json" hidden />
-        <button class="btn" id="save-btn" type="button"><span data-i18n="save">Save</span></button>
-        <button class="btn" id="export-btn" type="button"><span data-i18n="export">Export JSON</span></button>
-        <button class="btn" type="button" disabled aria-label="Export PDF (coming soon)"><span data-i18n="exportPdf">Export PDF</span></button>
+        <button class="btn" type="button" disabled aria-label="Export (coming soon)">
+          <span data-i18n="export">Export</span>
+        </button>
+        <button class="btn" type="button" disabled aria-label="Save (coming soon)">
+          <span data-i18n="save">Save</span>
+        </button>
       </div>
     </header>
 
@@ -61,15 +56,15 @@ const homeHref = withBase("/en/", base);
       <aside class="panel left-panel" aria-label="Blocks sidebar">
         <h2 data-i18n="blocks">Blocks</h2>
         <div class="block-list">
-          <button type="button" class="block-item" data-block="text">⬚ <span data-i18n="blockText">Text</span></button>
-          <button type="button" class="block-item" data-block="heading">⬚ <span data-i18n="blockHeading">Heading</span></button>
-          <button type="button" class="block-item" data-block="box">⬚ <span data-i18n="blockBox">Box</span></button>
-          <button type="button" class="block-item" data-block="line">⬚ <span data-i18n="blockLine">Line</span></button>
-          <button type="button" class="block-item" data-block="checklist">⬚ <span data-i18n="blockChecklist">Checklist</span></button>
-          <button type="button" class="block-item" data-block="table">⬚ <span data-i18n="blockTable">Table</span></button>
-          <button type="button" class="block-item" data-block="calendar">⬚ <span data-i18n="blockCalendar">Calendar</span></button>
-          <button type="button" class="block-item" data-block="habit">⬚ <span data-i18n="blockHabit">Habit Tracker</span></button>
-          <button type="button" class="block-item" data-block="image">⬚ <span data-i18n="blockImage">Image</span></button>
+          <button type="button" class="block-item" aria-label="Text block">⬚ Text</button>
+          <button type="button" class="block-item" aria-label="Heading block">⬚ Heading</button>
+          <button type="button" class="block-item" aria-label="Box block">⬚ Box</button>
+          <button type="button" class="block-item" aria-label="Line block">⬚ Line</button>
+          <button type="button" class="block-item" aria-label="Checklist block">⬚ Checklist</button>
+          <button type="button" class="block-item" aria-label="Table block">⬚ Table</button>
+          <button type="button" class="block-item" aria-label="Calendar block">⬚ Calendar</button>
+          <button type="button" class="block-item" aria-label="Habit Tracker block">⬚ Habit Tracker</button>
+          <button type="button" class="block-item" aria-label="Image block">⬚ Image</button>
         </div>
       </aside>
 
@@ -77,18 +72,17 @@ const homeHref = withBase("/en/", base);
         <div class="canvas-toolbar">
           <label class="checkline" for="grid-toggle">
             <input id="grid-toggle" type="checkbox" />
-            <span data-i18n="grid">Show grid + snap</span>
+            <span data-i18n="grid">Show grid overlay</span>
           </label>
           <div class="canvas-meta">
-            <span class="pill" id="meta-size">A4</span>
-            <span class="pill" id="meta-zoom">100%</span>
+            <span class="pill">A4</span>
+            <span class="pill">100%</span>
           </div>
         </div>
 
-        <div id="workspace" class="workspace" aria-label="Canvas workspace">
-          <div id="page" class="page-frame" aria-label="Page preview" tabindex="0">
-            <div class="page-tag" id="page-tag">A4 • Portrait</div>
-            <div id="stage" class="stage"></div>
+        <div class="workspace" aria-label="Canvas workspace" data-i18n-aria="workspace">
+          <div class="page-frame" aria-label="Page preview" data-i18n-aria="pagePreview">
+            <div class="page-tag">A4 • 210 × 297 mm</div>
           </div>
         </div>
       </section>
@@ -99,34 +93,34 @@ const homeHref = withBase("/en/", base);
         <details open>
           <summary data-i18n="position">Position</summary>
           <div class="inspector-grid">
-            <label><span data-i18n="x">X</span><input id="ins-x" readonly type="text" value="-" /></label>
-            <label><span data-i18n="y">Y</span><input id="ins-y" readonly type="text" value="-" /></label>
+            <label><span data-i18n="x">X</span><input disabled type="number" value="0" /></label>
+            <label><span data-i18n="y">Y</span><input disabled type="number" value="0" /></label>
           </div>
         </details>
 
         <details open>
           <summary data-i18n="size">Size</summary>
           <div class="inspector-grid">
-            <label><span data-i18n="w">W</span><input id="ins-w" readonly type="text" value="-" /></label>
-            <label><span data-i18n="h">H</span><input id="ins-h" readonly type="text" value="-" /></label>
+            <label><span data-i18n="w">W</span><input disabled type="number" value="100" /></label>
+            <label><span data-i18n="h">H</span><input disabled type="number" value="40" /></label>
           </div>
         </details>
 
         <details>
           <summary data-i18n="typography">Typography</summary>
           <div class="inspector-grid full">
-            <label><span data-i18n="font">Font</span><input readonly type="text" value="Inter" /></label>
-            <label><span data-i18n="fontSize">Size</span><input id="ins-font-size" readonly type="text" value="-" /></label>
-            <label><span data-i18n="align">Align</span><input id="ins-align" readonly type="text" value="-" /></label>
+            <label><span data-i18n="font">Font</span><input disabled type="text" value="Inter" /></label>
+            <label><span data-i18n="fontSize">Size</span><input disabled type="number" value="14" /></label>
+            <label><span data-i18n="align">Align</span><input disabled type="text" value="Left" /></label>
           </div>
         </details>
 
         <details>
           <summary data-i18n="style">Style</summary>
           <div class="inspector-grid full">
-            <label><span data-i18n="fill">Fill</span><input id="ins-fill" readonly type="text" value="-" /></label>
-            <label><span data-i18n="stroke">Stroke</span><input id="ins-stroke" readonly type="text" value="-" /></label>
-            <label><span data-i18n="radius">Radius</span><input id="ins-radius" readonly type="text" value="-" /></label>
+            <label><span data-i18n="fill">Fill</span><input disabled type="text" value="#ffffff" /></label>
+            <label><span data-i18n="stroke">Stroke</span><input disabled type="text" value="#d1d5db" /></label>
+            <label><span data-i18n="radius">Radius</span><input disabled type="number" value="6" /></label>
           </div>
         </details>
       </aside>
@@ -136,475 +130,126 @@ const homeHref = withBase("/en/", base);
       <div class="pages-head">
         <h2 data-i18n="pages">Pages</h2>
         <div class="pages-actions">
-          <button type="button" id="add-page-btn"><span data-i18n="addPage">Add page</span></button>
-          <button type="button" id="dup-page-btn"><span data-i18n="duplicate">Duplicate</span></button>
-          <button type="button" id="del-page-btn"><span data-i18n="remove">Delete</span></button>
+          <button type="button" aria-label="Add page"><span data-i18n="addPage">Add page</span></button>
+          <button type="button" disabled aria-label="Duplicate page"><span data-i18n="duplicate">Duplicate</span></button>
+          <button type="button" disabled aria-label="Delete page"><span data-i18n="remove">Delete</span></button>
         </div>
       </div>
-      <div class="pages-list" id="pages-list"></div>
+      <div class="pages-list">
+        <button class="page-thumb is-active" type="button" aria-label="Page 1">
+          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+          <span data-i18n="page">Page</span> 1
+        </button>
+        <button class="page-thumb" type="button" aria-label="Page 2">
+          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+          <span data-i18n="page">Page</span> 2
+        </button>
+      </div>
     </section>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script>
-    import { clamp, createId, defaultDoc, mmToPx, pageDimensionsMm, pxToMm, snapMm } from "../../app/model";
-    import { exportJSON, importJSON, loadFromLocal, saveToLocal } from "../../app/storage";
+  <script is:inline>
+    (() => {
+      const shell = document.querySelector(".app-shell");
+      if (!shell) return;
 
-    const shell = document.getElementById("app-shell");
-    const stage = document.getElementById("stage");
-    const pageEl = document.getElementById("page");
-    const workspace = document.getElementById("workspace");
-    const pagesList = document.getElementById("pages-list");
-    const toast = document.getElementById("toast");
-    const zoomSelect = document.getElementById("zoom-select");
-    const gridToggle = document.getElementById("grid-toggle");
-    const saveBtn = document.getElementById("save-btn");
-    const exportBtn = document.getElementById("export-btn");
-    const importBtn = document.getElementById("import-btn");
-    const importInput = document.getElementById("import-input");
+      const dict = {
+        en: {
+          blocks: "Blocks",
+          inspector: "Inspector",
+          pages: "Pages",
+          zoom: "Zoom",
+          pageSize: "Page size",
+          lang: "Language",
+          export: "Export",
+          save: "Save",
+          grid: "Show grid overlay",
+          workspace: "Canvas workspace",
+          pagePreview: "Page preview",
+          page: "Page",
+          addPage: "Add page",
+          duplicate: "Duplicate",
+          remove: "Delete",
+          position: "Position",
+          size: "Size",
+          typography: "Typography",
+          style: "Style",
+          x: "X",
+          y: "Y",
+          w: "W",
+          h: "H",
+          font: "Font",
+          fontSize: "Size",
+          align: "Align",
+          fill: "Fill",
+          stroke: "Stroke",
+          radius: "Radius"
+        },
+        tr: {
+          blocks: "Bloklar",
+          inspector: "İnceleyici",
+          pages: "Sayfalar",
+          zoom: "Yakınlaştırma",
+          pageSize: "Sayfa boyutu",
+          lang: "Dil",
+          export: "Dışa aktar",
+          save: "Kaydet",
+          grid: "Izgara katmanını göster",
+          workspace: "Tuval çalışma alanı",
+          pagePreview: "Sayfa önizleme",
+          page: "Sayfa",
+          addPage: "Sayfa ekle",
+          duplicate: "Çoğalt",
+          remove: "Sil",
+          position: "Konum",
+          size: "Boyut",
+          typography: "Tipografi",
+          style: "Stil",
+          x: "X",
+          y: "Y",
+          w: "G",
+          h: "Y",
+          font: "Yazı tipi",
+          fontSize: "Boyut",
+          align: "Hizalama",
+          fill: "Dolgu",
+          stroke: "Çizgi",
+          radius: "Köşe"
+        }
+      };
 
-    const inspector = {
-      x: document.getElementById("ins-x"), y: document.getElementById("ins-y"), w: document.getElementById("ins-w"), h: document.getElementById("ins-h"),
-      fontSize: document.getElementById("ins-font-size"), align: document.getElementById("ins-align"), fill: document.getElementById("ins-fill"),
-      stroke: document.getElementById("ins-stroke"), radius: document.getElementById("ins-radius")
-    };
+      const langButtons = shell.querySelectorAll("[data-lang-btn]");
+      const defaultLang = (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
 
-    const dict = {
-      en: { zoom: "Zoom", pageSize: "Page size", orientation: "Orientation", portrait: "Portrait", landscape: "Landscape", lang: "Language", import: "Import JSON", save: "Save", export: "Export JSON", exportPdf: "Export PDF", blocks: "Blocks", blockText: "Text", blockHeading: "Heading", blockBox: "Box", blockLine: "Line", blockChecklist: "Checklist", blockTable: "Table", blockCalendar: "Calendar", blockHabit: "Habit Tracker", blockImage: "Image", grid: "Show grid + snap", inspector: "Inspector", position: "Position", size: "Size", typography: "Typography", style: "Style", x: "X", y: "Y", w: "W", h: "H", font: "Font", fontSize: "Size", align: "Align", fill: "Fill", stroke: "Stroke", radius: "Radius", pages: "Pages", addPage: "Add page", duplicate: "Duplicate", remove: "Delete" },
-      tr: { zoom: "Yakınlaştırma", pageSize: "Sayfa boyutu", orientation: "Yön", portrait: "Dikey", landscape: "Yatay", lang: "Dil", import: "JSON içe aktar", save: "Kaydet", export: "JSON dışa aktar", exportPdf: "PDF dışa aktar", blocks: "Bloklar", blockText: "Metin", blockHeading: "Başlık", blockBox: "Kutu", blockLine: "Çizgi", blockChecklist: "Checklist", blockTable: "Tablo", blockCalendar: "Takvim", blockHabit: "Alışkanlık Takibi", blockImage: "Görsel", grid: "Izgara + snap", inspector: "İnceleyici", position: "Konum", size: "Boyut", typography: "Tipografi", style: "Stil", x: "X", y: "Y", w: "G", h: "Y", font: "Yazı tipi", fontSize: "Boyut", align: "Hizalama", fill: "Dolgu", stroke: "Çizgi", radius: "Köşe", pages: "Sayfalar", addPage: "Sayfa ekle", duplicate: "Çoğalt", remove: "Sil" }
-    };
+      const applyLang = (lang) => {
+        const bundle = dict[lang] || dict.en || {};
+        shell.dataset.lang = lang;
 
-    const preferredLang = (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
-    let currentLang = preferredLang;
-    let selectedNodeId = null;
-    let doc = loadFromLocal() || defaultDoc();
-    let undoStack = [structuredClone(doc)];
-    let redoStack = [];
-
-    function activePage() { return doc.pages.find((p) => p.id === doc.activePageId); }
-    function activeNode() { return activePage()?.nodes.find((n) => n.id === selectedNodeId) || null; }
-    function roundMm(v) { return Math.round(v * 10) / 10; }
-
-    function minSize(nodeType) {
-      if (nodeType === "text") return { w: 20, h: 12 };
-      if (nodeType === "line") return { w: 10, h: 2 };
-      return { w: 10, h: 10 };
-    }
-
-    function pushHistory() {
-      undoStack.push(structuredClone(doc));
-      if (undoStack.length > 50) undoStack.shift();
-      redoStack = [];
-    }
-
-    function setDoc(newDoc, skipHistory = false) {
-      doc = newDoc;
-      if (!skipHistory) pushHistory();
-      render();
-    }
-
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 1300);
-    }
-
-    function applyLang(lang) {
-      currentLang = lang;
-      const bundle = dict[lang] || dict.en;
-      shell.querySelectorAll("[data-i18n]").forEach((node) => {
-        const key = node.getAttribute("data-i18n");
-        if (key && bundle[key]) node.textContent = bundle[key];
-      });
-      shell.querySelectorAll("[data-lang-btn]").forEach((btn) => {
-        const active = btn.getAttribute("data-lang-btn") === lang;
-        btn.classList.toggle("is-active", active);
-        btn.setAttribute("aria-pressed", String(active));
-      });
-    }
-
-    function snap(value) { return snapMm(value, doc.grid.stepMm, doc.grid.enabled); }
-
-    function getPageBounds() {
-      return pageDimensionsMm(doc.pageSize, doc.orientation);
-    }
-
-    function renderPageFrame() {
-      const { wMm, hMm } = getPageBounds();
-      pageEl.style.width = `${mmToPx(wMm)}px`;
-      pageEl.style.height = `${mmToPx(hMm)}px`;
-      pageEl.style.transform = `scale(${doc.zoom})`;
-      pageEl.style.transformOrigin = "top center";
-      pageEl.classList.toggle("grid-enabled", doc.grid.enabled);
-      document.getElementById("page-tag").textContent = `${doc.pageSize} • ${doc.orientation === "portrait" ? (currentLang === "tr" ? "Dikey" : "Portrait") : (currentLang === "tr" ? "Yatay" : "Landscape")}`;
-      document.getElementById("meta-size").textContent = `${doc.pageSize} ${doc.orientation === "portrait" ? "P" : "L"}`;
-      document.getElementById("meta-zoom").textContent = `${Math.round(doc.zoom * 100)}%`;
-      stage.style.width = `${mmToPx(wMm)}px`;
-      stage.style.height = `${mmToPx(hMm)}px`;
-      gridToggle.checked = doc.grid.enabled;
-    }
-
-    function renderInspector() {
-      const node = activeNode();
-      if (!node) {
-        Object.values(inspector).forEach((el) => (el.value = "-"));
-        return;
-      }
-      inspector.x.value = `${roundMm(node.xMm)} mm`;
-      inspector.y.value = `${roundMm(node.yMm)} mm`;
-      inspector.w.value = `${roundMm(node.wMm)} mm`;
-      inspector.h.value = `${roundMm(node.hMm)} mm`;
-      inspector.fontSize.value = node.type === "text" ? `${node.fontSize}px` : "-";
-      inspector.align.value = node.type === "text" ? node.align : "-";
-      inspector.fill.value = node.type === "box" ? node.fill : "-";
-      inspector.stroke.value = node.type === "box" || node.type === "line" ? node.stroke : "-";
-      inspector.radius.value = node.type === "box" ? `${node.radius}` : "-";
-    }
-
-    function renderPages() {
-      pagesList.innerHTML = "";
-      doc.pages.forEach((page) => {
-        const btn = document.createElement("button");
-        btn.className = `page-thumb ${page.id === doc.activePageId ? "is-active" : ""}`;
-        btn.innerHTML = `<span class=\"drag-handle\">⋮⋮</span><span>${page.name}</span>`;
-        btn.addEventListener("click", () => {
-          doc.activePageId = page.id;
-          selectedNodeId = null;
-          stage.classList.remove("switch-flash");
-          requestAnimationFrame(() => stage.classList.add("switch-flash"));
-          render();
+        shell.querySelectorAll("[data-i18n]").forEach((node) => {
+          const key = node.getAttribute("data-i18n");
+          if (key && bundle[key]) node.textContent = bundle[key];
         });
-        pagesList.appendChild(btn);
+
+        shell.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+          const key = node.getAttribute("data-i18n-aria");
+          if (key && bundle[key]) node.setAttribute("aria-label", bundle[key]);
+        });
+
+        langButtons.forEach((btn) => {
+          const isActive = btn.getAttribute("data-lang-btn") === lang;
+          btn.classList.toggle("is-active", isActive);
+          btn.setAttribute("aria-pressed", String(isActive));
+        });
+      };
+
+      langButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const lang = btn.getAttribute("data-lang-btn") || "en";
+          applyLang(lang);
+        });
       });
-      document.getElementById("del-page-btn").disabled = doc.pages.length <= 1;
-    }
 
-    function nodeHTML(node) {
-      if (node.type === "text") {
-        return `<div class=\"node-content text-content\" contenteditable=\"true\">${node.text}</div>`;
-      }
-      if (node.type === "box") return `<div class=\"node-content box-content\"></div>`;
-      return `<div class=\"node-content line-content\"></div>`;
-    }
-
-    function renderNodes() {
-      const page = activePage();
-      if (!page) return;
-      stage.innerHTML = "";
-
-      page.nodes.sort((a, b) => a.z - b.z).forEach((node) => {
-        const el = document.createElement("div");
-        el.className = `stage-node node-${node.type} ${node.id === selectedNodeId ? "selected" : ""}`;
-        el.dataset.nodeId = node.id;
-        el.style.left = `${mmToPx(node.xMm)}px`;
-        el.style.top = `${mmToPx(node.yMm)}px`;
-        el.style.width = `${mmToPx(node.wMm)}px`;
-        el.style.height = `${mmToPx(node.hMm)}px`;
-        el.style.zIndex = String(node.z);
-        el.innerHTML = nodeHTML(node);
-
-        if (node.type === "box") {
-          const c = el.querySelector(".box-content");
-          c.style.borderRadius = `${node.radius}px`;
-          c.style.borderColor = node.stroke;
-          c.style.background = node.fill;
-        }
-        if (node.type === "line") {
-          const c = el.querySelector(".line-content");
-          c.style.background = node.stroke;
-          c.style.height = `${node.thickness}px`;
-          c.style.width = node.direction === "horizontal" ? "100%" : `${node.thickness}px`;
-        }
-        if (node.type === "text") {
-          const c = el.querySelector(".text-content");
-          c.style.fontSize = `${node.fontSize}px`;
-          c.style.textAlign = node.align;
-          c.addEventListener("input", () => { node.text = c.textContent || "Text"; renderInspector(); });
-          c.addEventListener("blur", () => pushHistory());
-        }
-
-        if (node.id === selectedNodeId) {
-          ["nw", "ne", "sw", "se"].forEach((h) => {
-            const handle = document.createElement("button");
-            handle.type = "button";
-            handle.className = `resize-handle ${h}`;
-            handle.dataset.handle = h;
-            el.appendChild(handle);
-          });
-        }
-
-        stage.appendChild(el);
-      });
-    }
-
-    function render() {
-      renderPageFrame();
-      renderNodes();
-      renderPages();
-      renderInspector();
-      shell.querySelectorAll(".size-btn").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.size === doc.pageSize));
-      shell.querySelectorAll(".orientation-btn").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.orientation === doc.orientation));
-      if (zoomSelect.value !== "fit") zoomSelect.value = String(doc.zoom);
-    }
-
-    function centerNode(wMm, hMm) {
-      const { wMm: pw, hMm: ph } = getPageBounds();
-      return { xMm: Math.max(0, (pw - wMm) / 2), yMm: Math.max(0, (ph - hMm) / 2) };
-    }
-
-    function addNode(type) {
-      const page = activePage();
-      if (!page) return;
-      const z = page.nodes.length ? Math.max(...page.nodes.map((n) => n.z)) + 1 : 1;
-      let node;
-      if (type === "text") {
-        const p = centerNode(60, 14);
-        node = { id: createId("node"), type: "text", text: currentLang === "tr" ? "Yeni metin" : "New text", fontSize: 14, align: "left", xMm: p.xMm, yMm: p.yMm, wMm: 60, hMm: 14, z };
-      } else if (type === "box") {
-        const p = centerNode(60, 40);
-        node = { id: createId("node"), type: "box", radius: 6, stroke: "#94a3b8", fill: "#e2e8f0", xMm: p.xMm, yMm: p.yMm, wMm: 60, hMm: 40, z };
-      } else if (type === "line") {
-        const p = centerNode(70, 2);
-        node = { id: createId("node"), type: "line", stroke: "#334155", thickness: 2, direction: "horizontal", xMm: p.xMm, yMm: p.yMm, wMm: 70, hMm: 2, z };
-      }
-      if (!node) {
-        showToast(currentLang === "tr" ? "Bu blok Sprint 3'te" : "Coming soon in Sprint 3");
-        return;
-      }
-      page.nodes.push(node);
-      selectedNodeId = node.id;
-      pushHistory();
-      render();
-    }
-
-    function duplicateSelected() {
-      const page = activePage();
-      const node = activeNode();
-      if (!page || !node) return;
-      const copy = structuredClone(node);
-      copy.id = createId("node");
-      copy.xMm = snap(node.xMm + 5);
-      copy.yMm = snap(node.yMm + 5);
-      copy.z = (Math.max(...page.nodes.map((n) => n.z)) || 0) + 1;
-      page.nodes.push(copy);
-      selectedNodeId = copy.id;
-      pushHistory();
-      render();
-    }
-
-    function deleteSelected() {
-      const page = activePage();
-      if (!page || !selectedNodeId) return;
-      page.nodes = page.nodes.filter((n) => n.id !== selectedNodeId);
-      selectedNodeId = null;
-      pushHistory();
-      render();
-    }
-
-    function startPointerInteraction(event) {
-      const nodeEl = event.target.closest(".stage-node");
-      if (!nodeEl) return;
-      const nodeId = nodeEl.dataset.nodeId;
-      selectedNodeId = nodeId;
-      render();
-
-      const node = activeNode();
-      if (!node) return;
-      const before = structuredClone(doc);
-      const { wMm: pw, hMm: ph } = getPageBounds();
-      const start = { x: event.clientX, y: event.clientY, xMm: node.xMm, yMm: node.yMm, wMm: node.wMm, hMm: node.hMm };
-      const handle = event.target.dataset.handle || null;
-      const min = minSize(node.type);
-
-      function onMove(ev) {
-        const dx = pxToMm((ev.clientX - start.x) / doc.zoom);
-        const dy = pxToMm((ev.clientY - start.y) / doc.zoom);
-
-        if (!handle) {
-          node.xMm = clamp(snap(start.xMm + dx), 0, pw - node.wMm);
-          node.yMm = clamp(snap(start.yMm + dy), 0, ph - node.hMm);
-        } else {
-          if (handle.includes("e")) node.wMm = clamp(snap(start.wMm + dx), min.w, pw - node.xMm);
-          if (handle.includes("s")) node.hMm = clamp(snap(start.hMm + dy), min.h, ph - node.yMm);
-          if (handle.includes("w")) {
-            const newX = clamp(snap(start.xMm + dx), 0, start.xMm + start.wMm - min.w);
-            node.wMm = clamp(snap(start.wMm - (newX - start.xMm)), min.w, pw);
-            node.xMm = clamp(newX, 0, pw - node.wMm);
-          }
-          if (handle.includes("n")) {
-            const newY = clamp(snap(start.yMm + dy), 0, start.yMm + start.hMm - min.h);
-            node.hMm = clamp(snap(start.hMm - (newY - start.yMm)), min.h, ph);
-            node.yMm = clamp(newY, 0, ph - node.hMm);
-          }
-        }
-
-        renderNodes();
-        renderInspector();
-      }
-
-      function onUp() {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        if (JSON.stringify(before) !== JSON.stringify(doc)) pushHistory();
-        render();
-      }
-
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    }
-
-    stage.addEventListener("pointerdown", (event) => {
-      if (event.target === stage) {
-        selectedNodeId = null;
-        render();
-        return;
-      }
-      startPointerInteraction(event);
-    });
-
-    document.querySelectorAll(".block-item").forEach((btn) => {
-      btn.addEventListener("click", () => addNode(btn.dataset.block));
-    });
-
-    shell.querySelectorAll(".size-btn").forEach((btn) => {
-      btn.addEventListener("click", () => { doc.pageSize = btn.dataset.size; render(); pushHistory(); });
-    });
-
-    shell.querySelectorAll(".orientation-btn").forEach((btn) => {
-      btn.addEventListener("click", () => { doc.orientation = btn.dataset.orientation; render(); pushHistory(); });
-    });
-
-    shell.querySelectorAll("[data-lang-btn]").forEach((btn) => btn.addEventListener("click", () => applyLang(btn.dataset.langBtn)));
-
-    zoomSelect.addEventListener("change", () => {
-      if (zoomSelect.value === "fit") {
-        const { wMm } = getPageBounds();
-        const fit = clamp((workspace.clientWidth - 60) / mmToPx(wMm), 0.25, 1.5);
-        doc.zoom = Number(fit.toFixed(2));
-      } else {
-        doc.zoom = Number(zoomSelect.value);
-      }
-      render();
-      pushHistory();
-    });
-
-    gridToggle.addEventListener("change", () => {
-      doc.grid.enabled = gridToggle.checked;
-      render();
-      pushHistory();
-    });
-
-    saveBtn.addEventListener("click", () => { saveToLocal(doc); showToast(currentLang === "tr" ? "Kaydedildi" : "Saved to local storage"); });
-    exportBtn.addEventListener("click", () => exportJSON(doc));
-    importBtn.addEventListener("click", () => importInput.click());
-
-    importInput.addEventListener("change", async () => {
-      const file = importInput.files?.[0];
-      if (!file) return;
-      try {
-        const loaded = await importJSON(file);
-        setDoc(loaded, true);
-        undoStack = [structuredClone(loaded)];
-        redoStack = [];
-        selectedNodeId = null;
-        showToast(currentLang === "tr" ? "İçe aktarıldı" : "Imported");
-      } catch (error) {
-        showToast(error.message || "Import failed");
-      }
-      importInput.value = "";
-    });
-
-    document.getElementById("add-page-btn").addEventListener("click", () => {
-      const page = { id: createId("page"), name: `Page ${doc.pages.length + 1}`, nodes: [] };
-      doc.pages.push(page);
-      doc.activePageId = page.id;
-      selectedNodeId = null;
-      pushHistory();
-      render();
-    });
-
-    document.getElementById("dup-page-btn").addEventListener("click", () => {
-      const page = activePage();
-      if (!page) return;
-      const clone = structuredClone(page);
-      clone.id = createId("page");
-      clone.name = `Page ${doc.pages.length + 1}`;
-      clone.nodes.forEach((n) => (n.id = createId("node")));
-      doc.pages.push(clone);
-      doc.activePageId = clone.id;
-      selectedNodeId = null;
-      pushHistory();
-      render();
-    });
-
-    document.getElementById("del-page-btn").addEventListener("click", () => {
-      if (doc.pages.length <= 1) return;
-      doc.pages = doc.pages.filter((p) => p.id !== doc.activePageId);
-      doc.activePageId = doc.pages[0].id;
-      selectedNodeId = null;
-      pushHistory();
-      render();
-    });
-
-    window.addEventListener("keydown", (event) => {
-      const node = activeNode();
-      const page = activePage();
-      if (!page) return;
-      const meta = event.metaKey || event.ctrlKey;
-
-      if (meta && event.key.toLowerCase() === "z") {
-        event.preventDefault();
-        if (event.shiftKey) {
-          if (!redoStack.length) return;
-          const next = redoStack.pop();
-          undoStack.push(structuredClone(next));
-          doc = structuredClone(next);
-        } else {
-          if (undoStack.length <= 1) return;
-          const current = undoStack.pop();
-          redoStack.push(structuredClone(current));
-          doc = structuredClone(undoStack[undoStack.length - 1]);
-        }
-        selectedNodeId = null;
-        render();
-        return;
-      }
-
-      if (meta && event.key.toLowerCase() === "d") {
-        event.preventDefault();
-        duplicateSelected();
-        return;
-      }
-
-      if (event.key === "Escape") {
-        selectedNodeId = null;
-        render();
-        return;
-      }
-
-      if (!node) return;
-      const step = event.shiftKey ? 5 : 1;
-      const { wMm: pw, hMm: ph } = getPageBounds();
-
-      if (["Delete", "Backspace"].includes(event.key)) {
-        event.preventDefault();
-        deleteSelected();
-        return;
-      }
-
-      if (event.key.startsWith("Arrow")) {
-        event.preventDefault();
-        if (event.key === "ArrowLeft") node.xMm = clamp(snap(node.xMm - step), 0, pw - node.wMm);
-        if (event.key === "ArrowRight") node.xMm = clamp(snap(node.xMm + step), 0, pw - node.wMm);
-        if (event.key === "ArrowUp") node.yMm = clamp(snap(node.yMm - step), 0, ph - node.hMm);
-        if (event.key === "ArrowDown") node.yMm = clamp(snap(node.yMm + step), 0, ph - node.hMm);
-        pushHistory();
-        render();
-      }
-    });
-
-    applyLang(preferredLang);
-    render();
+      applyLang(defaultLang);
+    })();
   </script>
 </BaseLayout>

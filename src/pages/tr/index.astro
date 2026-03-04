@@ -66,10 +66,10 @@
           <div class="container">
             <h2 class="section-title">SSS</h2>
             <p class="section-lead">Kısa cevaplar. Ürün geliştikçe güncelleyeceğiz.</p>
-            <details><summary>Hesap gerekiyor mu?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">v1’de hayır. v2’de günlük kota ve bulut kayıt için email login ekleyeceğiz.</div></details>
-<details><summary>Sadece planner mı?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Hayır. Her türlü printable: worksheet, bingo, tracker, checklist, etiket.</div></details>
-<details><summary>Mobilde çalışır mı?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Evet; ama en iyi edit deneyimi desktop/tablet. Mobil preview/export için iyi.</div></details>
-<details><summary>Fiyatlandırma nasıl olacak?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Ücretsiz başla. Sonra: login zorunlu günlük kota + daha yüksek limitli ücretli plan.</div></details>
+            <details><summary>Hesap gerekiyor mu?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">v1’de hayır. v2’de günlük kota ve bulut kayıt için email login ekleyeceğiz.</div></details>
+<details><summary>Sadece planner mı?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">Hayır. Her türlü printable: worksheet, bingo, tracker, checklist, etiket.</div></details>
+<details><summary>Mobilde çalışır mı?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">Evet; ama en iyi edit deneyimi desktop/tablet. Mobil preview/export için iyi.</div></details>
+<details><summary>Fiyatlandırma nasıl olacak?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">Ücretsiz başla. Sonra: login zorunlu günlük kota + daha yüksek limitli ücretli plan.</div></details>
           </div>
         </section>
 
@@ -90,4 +90,47 @@
           </div>
         </footer>
       </main>
+
+  <script is:inline>
+    (() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      const allDetails = document.querySelectorAll("#faq details");
+      allDetails.forEach((detailsEl) => {
+        const content = detailsEl.querySelector(".faq-content");
+        if (!content) return;
+
+        if (detailsEl.open) {
+          content.style.maxHeight = `${content.scrollHeight}px`;
+          content.style.opacity = "1";
+          content.style.transform = "translateY(0)";
+        } else {
+          content.style.maxHeight = "0px";
+          content.style.opacity = "0";
+          content.style.transform = "translateY(-6px)";
+        }
+
+        detailsEl.addEventListener("toggle", () => {
+          const targetHeight = `${content.scrollHeight}px`;
+
+          if (detailsEl.open) {
+            content.style.maxHeight = targetHeight;
+            content.style.opacity = "1";
+            content.style.transform = "translateY(0)";
+            return;
+          }
+
+          content.style.maxHeight = targetHeight;
+          requestAnimationFrame(() => {
+            content.style.maxHeight = "0px";
+            content.style.opacity = "0";
+            content.style.transform = "translateY(-6px)";
+          });
+        });
+      });
+    })();
+  </script>
+
     </BaseLayout>
