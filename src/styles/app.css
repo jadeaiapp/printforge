@@ -1,0 +1,56 @@
+.app-shell{ min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
+.app-topbar,.panel{ background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(8px); }
+.app-topbar{ position:sticky; top:0; z-index:30; padding:10px 14px; display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.brand{ display:inline-flex; gap:8px; align-items:center; font-weight:700; }
+.top-controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.top-controls button,.top-controls select,.block-item,.pages-actions button,.page-thumb,input{ border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--text); border-radius:10px; padding:7px 10px; cursor:pointer; }
+.segment{ display:inline-flex; border:1px solid rgba(255,255,255,.14); border-radius:10px; padding:3px; gap:3px; }
+.segment button{ min-width:44px; }
+.is-active{ background:rgba(99,102,241,.28)!important; border-color:rgba(99,102,241,.45)!important; }
+.checkline{ display:inline-flex; gap:6px; align-items:center; color:var(--muted); }
+
+.app-main{ min-height:0; display:grid; grid-template-columns:minmax(220px,280px) 1fr minmax(260px,320px); gap:12px; padding:12px; }
+.panel{ border-radius:14px; padding:12px; min-height:0; overflow:auto; }
+.block-list{ display:grid; gap:8px; }
+.block-item{ display:flex; align-items:center; gap:8px; text-align:left; }
+.block-item svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; }
+.canvas-panel{ display:grid; }
+.workspace{ min-height:560px; border:1px dashed rgba(255,255,255,.2); border-radius:12px; padding:20px; overflow:auto; }
+
+.page{ margin:0 auto; background:#fff; border:1px solid rgba(17,24,39,.2); border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,.35); transform-origin:top center; transition:transform .15s ease,width .15s ease,height .15s ease; position:relative; }
+.page.grid .stage{ background-image: linear-gradient(to right, rgba(15,23,42,.08) 1px, transparent 1px),linear-gradient(to bottom, rgba(15,23,42,.08) 1px, transparent 1px); background-size:18.8976378px 18.8976378px; }
+.stage{ width:100%; height:100%; position:relative; overflow:hidden; }
+
+.drop-preview{ position:absolute; width:14px; height:14px; border:2px solid #3b82f6; border-radius:50%; opacity:0; pointer-events:none; transform:translate(-50%,-50%) scale(.7); transition:opacity .12s ease, transform .12s ease; }
+.drop-preview.show{ opacity:.9; transform:translate(-50%,-50%) scale(1); }
+
+.node{ position:absolute; transition:box-shadow .08s ease, opacity .1s ease; }
+.node.selected{ box-shadow:0 0 0 2px #3b82f6 inset; }
+.text-content{ width:100%; height:100%; padding:2px 4px; color:#111827; outline:none; white-space:pre-wrap; }
+.box-content{ width:100%; height:100%; }
+.line-content{ width:100%; }
+.image-content{ width:100%; height:100%; object-fit:contain; display:block; background:#f8fafc; }
+
+.handle{ position:absolute; width:10px; height:10px; border:1px solid #1d4ed8; background:#dbeafe; border-radius:50%; padding:0; }
+.handle.nw{ left:-5px; top:-5px; cursor:nwse-resize; }
+.handle.ne{ right:-5px; top:-5px; cursor:nesw-resize; }
+.handle.sw{ left:-5px; bottom:-5px; cursor:nesw-resize; }
+.handle.se{ right:-5px; bottom:-5px; cursor:nwse-resize; }
+
+.inspector-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.inspector-grid label{ display:grid; gap:6px; color:var(--muted); font-size:13px; }
+.inspector-grid input,.inspector-grid select{ width:100%; }
+
+.pages-strip{ margin:0 12px 12px; }
+.pages-actions{ display:inline-flex; gap:8px; }
+.pages-list{ margin-top:8px; display:flex; gap:8px; overflow-x:auto; }
+.page-chip{ min-width:120px; }
+.page-thumb.active{ border-color:rgba(99,102,241,.5); background:rgba(99,102,241,.18); }
+.page-rename{ width:100%; }
+
+.toast{ position:fixed; right:16px; bottom:22px; padding:8px 10px; border-radius:10px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.95); opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .12s ease, transform .12s ease; }
+.toast.show{ opacity:1; transform:translateY(0); }
+
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ outline:2px solid rgba(99,102,241,.9); outline-offset:2px; }
+@media (max-width:1120px){ .app-main{ grid-template-columns:1fr; } }
+@media (prefers-reduced-motion: reduce){ .page,.stage,.node,.drop-preview,.toast{ transition:none !important; } }

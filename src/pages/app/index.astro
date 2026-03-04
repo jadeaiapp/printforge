@@ -1,45 +1,506 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder";
-const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
 ---
-<BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="topbar">
-    <div class="container topbar-inner">
+<BaseLayout lang="en" title="PrintForge App — Pro MVP" description="Interactive printable builder MVP" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar">
       <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-      <div class="nav">
-        <a class="btn" href={withBase("/en/", base)}>Landing</a>
-        <a class="btn" href={withBase("/tr/", base)}>TR</a>
+
+      <div class="top-controls">
+        <label>Zoom
+          <select id="zoom-select">
+            <option value="0.25">25%</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="fit">Fit</option>
+          </select>
+        </label>
+
+        <div class="segment">
+          <button type="button" data-size="A4" class="is-active">A4</button>
+          <button type="button" data-size="A5">A5</button>
+        </div>
+        <div class="segment">
+          <button type="button" data-orientation="portrait" class="is-active">Portrait</button>
+          <button type="button" data-orientation="landscape">Landscape</button>
+        </div>
+
+        <label class="checkline"><input type="checkbox" id="grid-toggle" /> Grid</label>
+        <button type="button" id="bring-front">Bring front</button>
+        <button type="button" id="send-back">Send back</button>
+        <button type="button" id="save-btn">Save</button>
+        <button type="button" id="load-btn">Load</button>
+        <button type="button" id="export-btn">Export JSON</button>
+        <button type="button" id="import-btn">Import JSON</button>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <input id="image-input" type="file" accept="image/*" hidden />
+        <button type="button" disabled>Export PDF</button>
       </div>
-    </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="panel">
+        <h2>Blocks</h2>
+        <div class="block-list" id="block-list">
+          <button type="button" draggable="true" data-block="text" class="block-item"><svg viewBox="0 0 24 24"><path d="M4 6h16M8 12h8M10 18h4"/></svg><span>Text</span></button>
+          <button type="button" draggable="true" data-block="box" class="block-item"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg><span>Box</span></button>
+          <button type="button" draggable="true" data-block="line" class="block-item"><svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg><span>Line</span></button>
+          <button type="button" draggable="true" data-block="image" class="block-item"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 14l3-3 5 5"/></svg><span>Image</span></button>
+        </div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div id="workspace" class="workspace">
+          <div id="page" class="page">
+            <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
+            <div id="stage" class="stage"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Inspector</h2>
+        <div class="inspector-grid">
+          <label>X (mm)<input id="ins-x" type="number" step="0.5" /></label>
+          <label>Y (mm)<input id="ins-y" type="number" step="0.5" /></label>
+          <label>W (mm)<input id="ins-w" type="number" step="0.5" /></label>
+          <label>H (mm)<input id="ins-h" type="number" step="0.5" /></label>
+
+          <label>Font size<input id="ins-font-size" type="number" step="1" /></label>
+          <label>Align
+            <select id="ins-align"><option>left</option><option>center</option><option>right</option></select>
+          </label>
+
+          <label>Fill<input id="ins-fill" type="color" /></label>
+          <label>Stroke<input id="ins-stroke" type="color" /></label>
+          <label>Stroke w<input id="ins-stroke-w" type="number" step="0.5" /></label>
+          <label>Radius<input id="ins-radius" type="number" step="1" /></label>
+
+          <label>Line w<input id="ins-thickness" type="number" step="0.5" /></label>
+          <label>Line color<input id="ins-line-color" type="color" /></label>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page">Add page</button>
+        <button type="button" id="dup-page">Duplicate</button>
+        <button type="button" id="del-page">Delete</button>
+      </div>
+      <div class="pages-list" id="pages-list"></div>
+    </section>
+
+    <div class="toast" id="toast"></div>
   </div>
 
-  <main class="container" style="padding:60px 0 50px;">
-    <div class="kicker">/app</div>
-    <h1>Builder shell (Sprint 1)</h1>
-    <p class="lead" style="max-width:72ch;">
-      This route is reserved for the drag & drop editor. Next sprint we’ll add:
-      canvas, blocks palette, inspector, pages panel, and PDF export.
-    </p>
+  <script type="module">
+    console.log("PrintForge editor booted");
 
-    <div class="card" style="margin-top:22px;">
-      <h3 style="margin:0 0 10px;">Next up</h3>
-      <ul style="margin:0; padding-left:18px; color:var(--muted);">
-        <li>Freeform A4/A5 canvas + snap</li>
-        <li>Blocks: Text, Box, Line, Checklist</li>
-        <li>Multi-page + export PDF</li>
-        <li>Project save/load (JSON)</li>
-      </ul>
-    </div>
+    const PX_PER_MM = 3.7795275591;
+    const mmToPx = (mm) => mm * PX_PER_MM;
+    const pxToMm = (px) => px / PX_PER_MM;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const id = (p = "id") => `${p}_${Math.random().toString(36).slice(2, 10)}`;
+    const snapMm = (v, step, enabled) => (enabled ? Math.round(v / step) * step : v);
 
-    <div class="hero-cta" style="margin-top:18px;">
-      <a class="btn primary" href={withBase("/en/#features", base)}>See features</a>
-      <a class="btn" href={withBase("/tr/#features", base)}>Özelliklere bak</a>
-    </div>
-  </main>
+    const el = {
+      workspace: document.getElementById("workspace"),
+      page: document.getElementById("page"),
+      stage: document.getElementById("stage"),
+      pagesList: document.getElementById("pages-list"),
+      zoom: document.getElementById("zoom-select"),
+      grid: document.getElementById("grid-toggle"),
+      addPage: document.getElementById("add-page"),
+      dupPage: document.getElementById("dup-page"),
+      delPage: document.getElementById("del-page"),
+      save: document.getElementById("save-btn"),
+      load: document.getElementById("load-btn"),
+      ex: document.getElementById("export-btn"),
+      im: document.getElementById("import-btn"),
+      imInput: document.getElementById("import-input"),
+      imageInput: document.getElementById("image-input"),
+      bringFront: document.getElementById("bring-front"),
+      sendBack: document.getElementById("send-back"),
+      dropPreview: document.getElementById("drop-preview"),
+      toast: document.getElementById("toast"),
+      blockList: document.getElementById("block-list"),
+      insX: document.getElementById("ins-x"),
+      insY: document.getElementById("ins-y"),
+      insW: document.getElementById("ins-w"),
+      insH: document.getElementById("ins-h"),
+      insFontSize: document.getElementById("ins-font-size"),
+      insAlign: document.getElementById("ins-align"),
+      insFill: document.getElementById("ins-fill"),
+      insStroke: document.getElementById("ins-stroke"),
+      insStrokeW: document.getElementById("ins-stroke-w"),
+      insRadius: document.getElementById("ins-radius"),
+      insThickness: document.getElementById("ins-thickness"),
+      insLineColor: document.getElementById("ins-line-color"),
+    };
+
+    const key = "printforge_doc_v2b";
+    const blank = () => ({
+      version: 2,
+      pageSize: "A4",
+      orientation: "portrait",
+      zoom: 1,
+      grid: { enabled: false, stepMm: 5 },
+      pages: [{ id: id("page"), name: "Page 1", nodes: [] }],
+      activePageId: null,
+    });
+
+    let doc = (() => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : blank();
+      } catch { return blank(); }
+    })();
+    if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
+
+    let selectedNodeId = null;
+    let draggingBlock = null;
+    let undoStack = [structuredClone(doc)];
+    let redoStack = [];
+
+    const pushHistory = () => {
+      undoStack.push(structuredClone(doc));
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+    };
+
+    const pageDims = () => {
+      const b = doc.pageSize === "A4" ? { w: 210, h: 297 } : { w: 148, h: 210 };
+      return doc.orientation === "portrait" ? b : { w: b.h, h: b.w };
+    };
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const snap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+
+    const toast = (msg) => {
+      el.toast.textContent = msg;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 1000);
+    };
+
+    function renderFrame() {
+      const d = pageDims();
+      el.page.style.width = `${mmToPx(d.w)}px`;
+      el.page.style.height = `${mmToPx(d.h)}px`;
+      el.page.style.transform = `scale(${doc.zoom})`;
+      el.page.classList.toggle("grid", doc.grid.enabled);
+      el.stage.style.width = `${mmToPx(d.w)}px`;
+      el.stage.style.height = `${mmToPx(d.h)}px`;
+    }
+
+    function renderPages() {
+      el.pagesList.innerHTML = "";
+      doc.pages.forEach((p, i) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "page-chip";
+        const btn = document.createElement("button");
+        btn.className = `page-thumb ${p.id === doc.activePageId ? "active" : ""}`;
+        btn.textContent = p.name || `Page ${i + 1}`;
+        btn.onclick = () => { doc.activePageId = p.id; selectedNodeId = null; render(); };
+
+        btn.ondblclick = (ev) => {
+          ev.stopPropagation();
+          const inp = document.createElement("input");
+          inp.value = p.name;
+          inp.className = "page-rename";
+          wrapper.replaceChild(inp, btn);
+          inp.focus();
+          inp.select();
+          const commit = () => {
+            p.name = inp.value.trim() || `Page ${i + 1}`;
+            pushHistory();
+            renderPages();
+          };
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") renderPages();
+          });
+          inp.addEventListener("blur", commit);
+        };
+
+        wrapper.appendChild(btn);
+        el.pagesList.appendChild(wrapper);
+      });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
+
+    function nodeInner(n) {
+      if (n.type === "text") return `<div class=\"text-content\" contenteditable=\"true\">${n.text}</div>`;
+      if (n.type === "box") return `<div class=\"box-content\" style=\"background:${n.fill};border:${n.strokeWidth || 1}px solid ${n.stroke};border-radius:${n.radius || 0}px\"></div>`;
+      if (n.type === "line") return `<div class=\"line-content\" style=\"height:${n.thickness || 2}px;background:${n.color || '#334155'}\"></div>`;
+      if (n.type === "image") return `<img class=\"image-content\" src=\"${n.src}\" alt=\"uploaded\" />`;
+      return "";
+    }
+
+    function renderNodes() {
+      const p = activePage();
+      el.stage.innerHTML = "";
+      if (!p) return;
+      [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        const d = document.createElement("div");
+        d.className = `node node-${n.type} ${n.id === selectedNodeId ? "selected" : ""}`;
+        d.dataset.id = n.id;
+        d.style.left = `${mmToPx(n.xMm)}px`;
+        d.style.top = `${mmToPx(n.yMm)}px`;
+        d.style.width = `${mmToPx(n.wMm)}px`;
+        d.style.height = `${mmToPx(n.hMm)}px`;
+        d.style.zIndex = String(n.z);
+        d.innerHTML = nodeInner(n);
+
+        if (n.type === "text") {
+          const c = d.querySelector('.text-content');
+          c.oninput = () => { n.text = c.textContent || "Text"; };
+          c.onblur = () => pushHistory();
+        }
+
+        if (n.id === selectedNodeId) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = `handle ${h}`;
+            handle.dataset.handle = h;
+            d.appendChild(handle);
+          });
+        }
+
+        el.stage.appendChild(d);
+      });
+      syncInspector();
+    }
+
+    function syncInspector() {
+      const n = activeNode();
+      const disable = !n;
+      const set = (input, val) => { input.value = val ?? ""; input.disabled = disable; };
+      set(el.insX, n?.xMm?.toFixed?.(1));
+      set(el.insY, n?.yMm?.toFixed?.(1));
+      set(el.insW, n?.wMm?.toFixed?.(1));
+      set(el.insH, n?.hMm?.toFixed?.(1));
+      set(el.insFontSize, n?.type === "text" ? n.fontSize : "");
+      set(el.insAlign, n?.type === "text" ? n.align || "left" : "left");
+      set(el.insFill, n?.type === "box" ? n.fill : "#e2e8f0");
+      set(el.insStroke, n?.type === "box" ? n.stroke : "#94a3b8");
+      set(el.insStrokeW, n?.type === "box" ? n.strokeWidth || 1 : "1");
+      set(el.insRadius, n?.type === "box" ? n.radius || 0 : "0");
+      set(el.insThickness, n?.type === "line" ? n.thickness || 2 : "2");
+      set(el.insLineColor, n?.type === "line" ? n.color || "#334155" : "#334155");
+    }
+
+    function render() {
+      renderFrame();
+      renderPages();
+      renderNodes();
+      document.querySelectorAll("[data-size]").forEach((b) => b.classList.toggle("is-active", b.dataset.size === doc.pageSize));
+      document.querySelectorAll("[data-orientation]").forEach((b) => b.classList.toggle("is-active", b.dataset.orientation === doc.orientation));
+    }
+
+    function createNode(type, xMm, yMm, extra = {}) {
+      const p = activePage();
+      if (!p) return;
+      const z = p.nodes.length ? Math.max(...p.nodes.map((n) => n.z)) + 1 : 1;
+      const base = { id: id("node"), type, xMm, yMm, wMm: 60, hMm: 30, z };
+      if (type === "text") p.nodes.push({ ...base, wMm: 70, hMm: 16, text: "Text", fontSize: 14, align: "left", ...extra });
+      if (type === "box") p.nodes.push({ ...base, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1, radius: 6, ...extra });
+      if (type === "line") p.nodes.push({ ...base, wMm: 70, hMm: 3, thickness: 2, color: "#334155", ...extra });
+      if (type === "image") p.nodes.push({ ...base, wMm: 80, hMm: 50, src: extra.src, ...extra });
+      selectedNodeId = p.nodes[p.nodes.length - 1].id;
+      pushHistory();
+      render();
+    }
+
+    async function createImageAt(xMm, yMm) {
+      el.imageInput.click();
+      const file = await new Promise((resolve) => {
+        el.imageInput.onchange = () => resolve(el.imageInput.files?.[0] || null);
+      });
+      el.imageInput.value = "";
+      if (!file) return;
+      const src = await new Promise((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.readAsDataURL(file);
+      });
+      createNode("image", xMm, yMm, { src });
+    }
+
+    // Drag/drop blocks
+    el.blockList.querySelectorAll('[data-block]').forEach((b) => {
+      b.addEventListener('dragstart', () => { draggingBlock = b.dataset.block; el.page.classList.add('dropping'); });
+      b.addEventListener('dragend', () => { draggingBlock = null; el.page.classList.remove('dropping'); el.dropPreview.classList.remove('show'); });
+      b.addEventListener('click', () => toast('Drag to place on page'));
+    });
+
+    function pagePointFromEvent(ev) {
+      const rect = el.page.getBoundingClientRect();
+      const xPx = (ev.clientX - rect.left) / doc.zoom;
+      const yPx = (ev.clientY - rect.top) / doc.zoom;
+      return { xMm: clamp(snap(pxToMm(xPx)), 0, pageDims().w), yMm: clamp(snap(pxToMm(yPx)), 0, pageDims().h) };
+    }
+
+    el.page.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      if (!draggingBlock) return;
+      const { xMm, yMm } = pagePointFromEvent(ev);
+      el.dropPreview.style.left = `${mmToPx(xMm)}px`;
+      el.dropPreview.style.top = `${mmToPx(yMm)}px`;
+      el.dropPreview.classList.add('show');
+    });
+    el.page.addEventListener('dragleave', () => el.dropPreview.classList.remove('show'));
+    el.page.addEventListener('drop', async (ev) => {
+      ev.preventDefault();
+      if (!draggingBlock) return;
+      const { xMm, yMm } = pagePointFromEvent(ev);
+      if (draggingBlock === 'image') await createImageAt(xMm, yMm);
+      else createNode(draggingBlock, xMm, yMm);
+      draggingBlock = null;
+      el.page.classList.remove('dropping');
+      el.dropPreview.classList.remove('show');
+    });
+
+    // stage select/drag/resize
+    function startPointer(ev) {
+      const nodeEl = ev.target.closest('.node');
+      if (!nodeEl) return;
+      const n = activePage()?.nodes.find((x) => x.id === nodeEl.dataset.id);
+      if (!n) return;
+      selectedNodeId = n.id;
+      const s = { x: ev.clientX, y: ev.clientY, xMm: n.xMm, yMm: n.yMm, wMm: n.wMm, hMm: n.hMm };
+      const handle = ev.target.dataset.handle || null;
+      const d = pageDims();
+
+      const move = (e) => {
+        const dx = pxToMm((e.clientX - s.x) / doc.zoom);
+        const dy = pxToMm((e.clientY - s.y) / doc.zoom);
+        if (!handle) {
+          n.xMm = clamp(snap(s.xMm + dx), 0, d.w - n.wMm);
+          n.yMm = clamp(snap(s.yMm + dy), 0, d.h - n.hMm);
+        } else {
+          if (handle.includes('e')) n.wMm = clamp(snap(s.wMm + dx), 8, d.w - n.xMm);
+          if (handle.includes('s')) n.hMm = clamp(snap(s.hMm + dy), 8, d.h - n.yMm);
+          if (handle.includes('w')) {
+            const nx = clamp(snap(s.xMm + dx), 0, s.xMm + s.wMm - 8);
+            n.wMm = clamp(snap(s.wMm - (nx - s.xMm)), 8, d.w);
+            n.xMm = nx;
+          }
+          if (handle.includes('n')) {
+            const ny = clamp(snap(s.yMm + dy), 0, s.yMm + s.hMm - 8);
+            n.hMm = clamp(snap(s.hMm - (ny - s.yMm)), 8, d.h);
+            n.yMm = ny;
+          }
+        }
+        renderNodes();
+      };
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); pushHistory(); render(); };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    el.stage.addEventListener('pointerdown', (ev) => {
+      if (ev.target === el.stage) { selectedNodeId = null; render(); return; }
+      startPointer(ev);
+    });
+
+    // inspector edits
+    function applyInspectorChange(mutator) {
+      const n = activeNode();
+      if (!n) return;
+      mutator(n);
+      pushHistory();
+      render();
+    }
+
+    el.insX.addEventListener('change', () => applyInspectorChange((n) => n.xMm = snap(Number(el.insX.value) || 0)));
+    el.insY.addEventListener('change', () => applyInspectorChange((n) => n.yMm = snap(Number(el.insY.value) || 0)));
+    el.insW.addEventListener('change', () => applyInspectorChange((n) => n.wMm = Math.max(8, Number(el.insW.value) || 8)));
+    el.insH.addEventListener('change', () => applyInspectorChange((n) => n.hMm = Math.max(8, Number(el.insH.value) || 8)));
+    el.insFontSize.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'text') n.fontSize = Math.max(8, Number(el.insFontSize.value) || 14); }));
+    el.insAlign.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'text') n.align = el.insAlign.value; }));
+    el.insFill.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.fill = el.insFill.value; }));
+    el.insStroke.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.stroke = el.insStroke.value; }));
+    el.insStrokeW.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.strokeWidth = Math.max(0.5, Number(el.insStrokeW.value) || 1); }));
+    el.insRadius.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.radius = Math.max(0, Number(el.insRadius.value) || 0); }));
+    el.insThickness.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'line') n.thickness = Math.max(1, Number(el.insThickness.value) || 2); }));
+    el.insLineColor.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'line') n.color = el.insLineColor.value; }));
+
+    // z-order
+    el.bringFront.onclick = () => {
+      const p = activePage(); const n = activeNode(); if (!p || !n) return;
+      n.z = Math.max(...p.nodes.map((x) => x.z)) + 1;
+      pushHistory(); render();
+    };
+    el.sendBack.onclick = () => {
+      const p = activePage(); const n = activeNode(); if (!p || !n) return;
+      n.z = Math.min(...p.nodes.map((x) => x.z)) - 1;
+      pushHistory(); render();
+    };
+
+    // controls + persistence
+    document.querySelectorAll('[data-size]').forEach((b) => b.onclick = () => { doc.pageSize = b.dataset.size; pushHistory(); render(); });
+    document.querySelectorAll('[data-orientation]').forEach((b) => b.onclick = () => { doc.orientation = b.dataset.orientation; pushHistory(); render(); });
+    el.zoom.onchange = () => {
+      if (el.zoom.value === 'fit') doc.zoom = clamp((el.workspace.clientWidth - 40) / mmToPx(pageDims().w), 0.25, 1.5);
+      else doc.zoom = Number(el.zoom.value);
+      pushHistory(); render();
+    };
+    el.grid.onchange = () => { doc.grid.enabled = el.grid.checked; pushHistory(); render(); };
+
+    el.addPage.onclick = () => { const p = { id: id('page'), name: `Page ${doc.pages.length + 1}`, nodes: [] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; pushHistory(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if (!p) return; const c = structuredClone(p); c.id = id('page'); c.name = `Page ${doc.pages.length + 1}`; c.nodes.forEach((n) => n.id = id('node')); doc.pages.push(c); doc.activePageId = c.id; selectedNodeId = null; pushHistory(); render(); };
+    el.delPage.onclick = () => { if (doc.pages.length <= 1) return; doc.pages = doc.pages.filter((p) => p.id !== doc.activePageId); doc.activePageId = doc.pages[0].id; selectedNodeId = null; pushHistory(); render(); };
+
+    el.save.onclick = () => { localStorage.setItem(key, JSON.stringify(doc)); toast('Saved'); };
+    el.load.onclick = () => { const raw = localStorage.getItem(key); if (!raw) return; try { doc = JSON.parse(raw); selectedNodeId = null; undoStack = [structuredClone(doc)]; redoStack = []; render(); toast('Loaded'); } catch { toast('Load failed'); } };
+    el.ex.onclick = () => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = 'printforge-doc.json'; a.click(); URL.revokeObjectURL(u); };
+    el.im.onclick = () => el.imInput.click();
+    el.imInput.onchange = async () => {
+      const f = el.imInput.files?.[0]; if (!f) return;
+      try { doc = JSON.parse(await f.text()); selectedNodeId = null; undoStack = [structuredClone(doc)]; redoStack = []; render(); toast('Imported'); }
+      catch { toast('Invalid JSON'); }
+      el.imInput.value = '';
+    };
+
+    // keyboard undo/redo + delete
+    window.addEventListener('keydown', (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (!redoStack.length) return;
+          const next = redoStack.pop();
+          undoStack.push(structuredClone(next));
+          doc = structuredClone(next);
+        } else {
+          if (undoStack.length <= 1) return;
+          const cur = undoStack.pop();
+          redoStack.push(structuredClone(cur));
+          doc = structuredClone(undoStack[undoStack.length - 1]);
+        }
+        selectedNodeId = null;
+        render();
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
+        const p = activePage();
+        if (!p) return;
+        p.nodes = p.nodes.filter((n) => n.id !== selectedNodeId);
+        selectedNodeId = null;
+        pushHistory();
+        render();
+      }
+    });
+
+    render();
+  </script>
 </BaseLayout>
