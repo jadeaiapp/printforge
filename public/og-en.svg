@@ -12,7 +12,7 @@
   </g>
   <text x="90" y="210" fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="64" font-weight="700">PrintForge</text>
   <text x="90" y="280" fill="#e5e7eb" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="34" font-weight="500">Drag &amp; drop printable builder</text>
-  <text x="90" y="350" fill="#9ca3af" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="26">A4/A5 • Multi-page • Pixel-sharp PDF export</text>
+  <text x="90" y="350" fill="#9ca3af" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="26">A4/A5 • Multi-page • Crisp PDF export</text>
   <rect x="820" y="420" width="300" height="72" rx="18" fill="#ffffff" opacity="0.14"/>
   <text x="885" y="468" fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="28" font-weight="600">Start Designing</text>
 </svg>

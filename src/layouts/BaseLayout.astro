@@ -1,4 +1,7 @@
 ---
+import "../styles/global.css";
+import { withBase } from "../utils/paths";
+
 const {
   lang = "en",
   title = "PrintForge",
@@ -10,22 +13,20 @@ const {
 } = Astro.props;
 
 const site = (Astro.site?.toString() ?? "https://example.com").replace(/\/$/, "");
+const base = import.meta.env.BASE_URL ?? "/";
 
-// Astro.resolve() respects the configured `base` for GitHub Pages subpaths.
-const resolveLocal = (p) => {
-  if (!p) return Astro.url.pathname;
-  if (p.startsWith("http")) return p;
-  return Astro.resolve(p);
-};
+const canonicalPath = canonical
+  ? (canonical.startsWith("http") ? canonical : withBase(canonical, base))
+  : withBase(Astro.url.pathname, base);
 
-const canonicalPath = canonical ? resolveLocal(canonical) : Astro.url.pathname;
 const canonicalUrl = canonicalPath.startsWith("http") ? canonicalPath : site + canonicalPath;
 
-const ogPath = ogImage.startsWith("http") ? ogImage : Astro.resolve(ogImage);
+const ogPath = ogImage.startsWith("http") ? ogImage : withBase(ogImage, base);
 const ogUrl = ogPath.startsWith("http") ? ogPath : site + ogPath;
 
-const trHref = site + resolveLocal(hreflang.tr);
-const enHref = site + resolveLocal(hreflang.en);
+const trHref = site + withBase(hreflang.tr, base);
+const enHref = site + withBase(hreflang.en, base);
+const xDefaultHref = site + withBase("/", base);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -44,7 +45,7 @@ const jsonLd = {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    <link rel="icon" href={Astro.resolve("/favicon.svg")} />
+    <link rel="icon" href={withBase("/favicon.svg", base)} />
     <link rel="canonical" href={canonicalUrl} />
 
     <meta property="og:type" content="website" />
@@ -60,13 +61,11 @@ const jsonLd = {
 
     <link rel="alternate" hreflang="tr" href={trHref} />
     <link rel="alternate" hreflang="en" href={enHref} />
-    <link rel="alternate" hreflang="x-default" href={(site + Astro.resolve("/"))} />
+    <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
 
     {noindex && <meta name="robots" content="noindex,nofollow" />}
 
     <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-
-    <link rel="stylesheet" href={Astro.resolve("/src/styles/global.css")} />
   </head>
   <body>
     <slot />

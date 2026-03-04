@@ -3,24 +3,26 @@
     import Topbar from "../../components/Topbar.astro";
     import HeroMock from "../../components/HeroMock.astro";
     import CTA from "../../components/CTA.astro";
+    import { withBase } from "../../utils/paths";
 
-    const labels = {"navFeatures": "Özellikler", "navHow": "Nasıl çalışır?", "navFaq": "SSS", "langSwitch": "English", "ctaPrimary": "Tasarlamaya başla", "heroKicker": "Sürükle‑bırak printable tasarım aracı", "heroTitle": "Baskıda net görünen printables tasarla.", "heroLead": "A4/A5 için profesyonel bir tuval: blokları istediğin yere bırak, sayfaları çoğalt, keskin PDF export al. Ücretsiz başla—hesap gerekmez.", "heroPrimary": "Builder’ı aç", "heroSecondary": "Özelliklere bak", "featTitle": "Printable iş akışları için üretildi", "featLead": "Planner, worksheet, tracker ve çok sayfalı setler için gereken her şey—tam bir tasarım paketinin karmaşası olmadan.", "features": [["Serbest tuval", "Her şeyi istediğin yere koy. Snap/align ile milimetre hassasiyet."], ["Çok sayfalı doküman", "Sayfa ekle, çoğalt, sırala. Tek PDF olarak export."], ["Baskıya hazır export", "A4/A5, margin ve temiz vektörel PDF çıktısı."], ["Blok kütüphanesi", "Metin, kutu, çizgi, checklist, tablo, takvim, tracker."], ["Pro edit deneyimi", "Undo/redo, kısayollar, layer, grouping (roadmap)."], ["Offline-first MVP", "Statik web app gibi çalışır; projeyi JSON olarak kaydedebilirsin."]], "howTitle": "Nasıl çalışır?", "howLead": "Basit, hızlı ve kontrol sende.", "steps": [["Tuvali aç", "Boştan başla veya preset seç; A4/A5 belirle."], ["Sayfalarını kur", "Blokları sürükle, stilini ayarla, sayfa çoğalt."], ["Export & paylaş", "Keskin PDF indir veya proje dosyanı kaydet."]], "faqTitle": "SSS", "faq": [["Hesap gerekiyor mu?", "v1’de hayır. v2’de günlük kota ve bulut kayıt için email login ekleyeceğiz."], ["Sadece planner mı?", "Hayır. Her türlü printable: worksheet, bingo, tracker, checklist, etiket."], ["Mobilde çalışır mı?", "Evet; ama en iyi edit deneyimi desktop/tablet. Mobil preview/export için iyi."], ["Fiyatlandırma nasıl olacak?", "Ücretsiz başla. Sonra: login zorunlu günlük kota + daha yüksek limitli ücretli plan."]], "ctaTitle": "İlk printable’ını tasarlamaya hazır mısın?", "ctaBody": "Builder’ı aç ve dakikalar içinde baskıya hazır PDF al.", "footerNote": "© {year} PrintForge. Printables için üretildi."};
-    const title = "PrintForge — Sürükle‑bırak printable tasarım aracı";
+    const labels = {"navFeatures": "Özellikler", "navHow": "Nasıl çalışır?", "navFaq": "SSS", "langSwitch": "English", "ctaPrimary": "Tasarlamaya başla", "heroKicker": "Sürükle-bırak printable tasarım aracı", "heroTitle": "Baskıda net görünen printables tasarla.", "heroLead": "A4/A5 için profesyonel bir tuval: blokları istediğin yere bırak, sayfaları çoğalt, keskin PDF export al. Ücretsiz başla—hesap gerekmez.", "heroPrimary": "Builder’ı aç", "heroSecondary": "Özelliklere bak", "featTitle": "Printable iş akışları için üretildi", "featLead": "Planner, worksheet, tracker ve çok sayfalı setler için gereken her şey—tam bir tasarım paketinin karmaşası olmadan.", "features": [["Serbest tuval", "Her şeyi istediğin yere koy. Snap/align ile milimetre hassasiyet."], ["Çok sayfalı doküman", "Sayfa ekle, çoğalt, sırala. Tek PDF olarak export."], ["Baskıya hazır export", "A4/A5, margin ve temiz vektörel PDF çıktısı."], ["Blok kütüphanesi", "Metin, kutu, çizgi, checklist, tablo, takvim, tracker."], ["Pro edit deneyimi", "Undo/redo, kısayollar, layer, grouping (roadmap)."], ["Offline-first MVP", "Statik web app gibi çalışır; projeyi JSON olarak kaydedebilirsin."]], "howTitle": "Nasıl çalışır?", "howLead": "Basit, hızlı ve kontrol sende.", "steps": [["Tuvali aç", "Boştan başla veya preset seç; A4/A5 belirle."], ["Sayfalarını kur", "Blokları sürükle, stilini ayarla, sayfa çoğalt."], ["Export & paylaş", "Keskin PDF indir veya proje dosyanı kaydet."]], "faqTitle": "SSS", "faq": [["Hesap gerekiyor mu?", "v1’de hayır. v2’de günlük kota ve bulut kayıt için email login ekleyeceğiz."], ["Sadece planner mı?", "Hayır. Her türlü printable: worksheet, bingo, tracker, checklist, etiket."], ["Mobilde çalışır mı?", "Evet; ama en iyi edit deneyimi desktop/tablet. Mobil preview/export için iyi."], ["Fiyatlandırma nasıl olacak?", "Ücretsiz başla. Sonra: login zorunlu günlük kota + daha yüksek limitli ücretli plan."]], "ctaTitle": "İlk printable’ını tasarlamaya hazır mısın?", "ctaBody": "Builder’ı aç ve dakikalar içinde baskıya hazır PDF al.", "footerNote": "© {year} PrintForge. Printables için üretildi."};
+    const base = import.meta.env.BASE_URL ?? "/";
+    const title = "PrintForge — Sürükle-bırak printable tasarım aracı";
     const description = "A4/A5 için profesyonel bir tuval: blokları istediğin yere bırak, sayfaları çoğalt, keskin PDF export al. Ücretsiz başla—hesap gerekmez.";
     ---
-    <BaseLayout lang="tr" title={title} description={description} canonical="/tr/" ogImage="/og-tr.svg" hreflang={{ tr: "/tr/", en: "/en/" }}>
+    <BaseLayout lang="tr" title={title} description={description} canonical="/tr/" ogImage="/og-tr.svg" hreflang={ { tr: "/tr/", en: "/en/" } }>
       <Topbar lang="tr" labels={labels} switcherHref="/en/" />
 
       <main>
         <div class="container hero" id="top">
           <div class="hero-grid">
             <div>
-              <div class="kicker">Sürükle‑bırak printable tasarım aracı</div>
+              <div class="kicker">Sürükle-bırak printable tasarım aracı</div>
               <h1>Baskıda net görünen printables tasarla.</h1>
               <p class="lead">A4/A5 için profesyonel bir tuval: blokları istediğin yere bırak, sayfaları çoğalt, keskin PDF export al. Ücretsiz başla—hesap gerekmez.</p>
 
               <div class="hero-cta">
-                <a class="btn primary" href={Astro.resolve("/app/")}>Builder’ı aç</a>
+                <a class="btn primary" href={withBase("/app/", base)}>Builder’ı aç</a>
                 <a class="btn" href="#features">Özelliklere bak</a>
               </div>
 
@@ -74,8 +76,8 @@
         <CTA
           title="İlk printable’ını tasarlamaya hazır mısın?"
           body="Builder’ı aç ve dakikalar içinde baskıya hazır PDF al."
-          primary={{ href: Astro.resolve("/app/"), label: labels.ctaPrimary }}
-          secondary={{ href: "#top", label: "Başa dön" }}
+          primary={ { href: withBase("/app/", base), label: labels.ctaPrimary } }
+          secondary={ { href: "#top", label: "Başa dön" } }
         />
 
         <footer class="footer">

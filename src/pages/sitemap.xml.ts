@@ -1,12 +1,12 @@
 export const prerender = true;
+
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = () => {
   const site = (import.meta.env.SITE ?? "https://example.com").replace(/\/$/, "");
   const base = (import.meta.env.BASE_URL ?? "/").replace(/\/?$/, "/");
 
-  // SEO-first pages only (exclude /app which is noindex)
-  const paths = ["", "tr/", "en/"];
+  const paths = ["", "tr/", "en/"]; // exclude /app (noindex)
 
   const urls = paths.map((p) => {
     const loc = `${site}${base}${p}`;

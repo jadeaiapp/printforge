@@ -1,9 +1,11 @@
 ---
+import { withBase } from "../utils/paths";
 const { lang = "en", labels, switcherHref } = Astro.props;
+const base = import.meta.env.BASE_URL ?? "/";
 
-const homeHref = lang === "tr" ? Astro.resolve("/tr/") : Astro.resolve("/en/");
-const appHref = Astro.resolve("/app/");
-const switchHref = switcherHref.startsWith("http") ? switcherHref : Astro.resolve(switcherHref);
+const homeHref = withBase(lang === "tr" ? "/tr/" : "/en/", base);
+const appHref = withBase("/app/", base);
+const switchHref = withBase(switcherHref, base);
 ---
 <div class="topbar">
   <div class="container topbar-inner">
