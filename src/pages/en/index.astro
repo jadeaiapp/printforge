@@ -20,7 +20,7 @@
               <p class="lead">A pro canvas for A4/A5 layouts: drag blocks anywhere, add pages, and export pixel-sharp PDFs. Start free—no account required.</p>
 
               <div class="hero-cta">
-                <a class="btn primary" href="/app/">Open the builder</a>
+                <a class="btn primary" href={Astro.resolve("/app/")}>Open the builder</a>
                 <a class="btn" href="#features">View features</a>
               </div>
 
@@ -74,8 +74,8 @@
         <CTA
           title="Ready to design your first printable?"
           body="Open the builder and export a print-ready PDF in minutes."
-          primary={ href: "/app/", label: labels.ctaPrimary }
-          secondary={ href: "#top", label: ("Back to top" if lang=="en" else "Başa dön") }
+          primary={{ href: Astro.resolve("/app/"), label: labels.ctaPrimary }}
+          secondary={{ href: "#top", label: "Back to top" }}
         />
 
         <footer class="footer">

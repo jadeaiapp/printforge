@@ -20,7 +20,7 @@
               <p class="lead">A4/A5 için profesyonel bir tuval: blokları istediğin yere bırak, sayfaları çoğalt, keskin PDF export al. Ücretsiz başla—hesap gerekmez.</p>
 
               <div class="hero-cta">
-                <a class="btn primary" href="/app/">Builder’ı aç</a>
+                <a class="btn primary" href={Astro.resolve("/app/")}>Builder’ı aç</a>
                 <a class="btn" href="#features">Özelliklere bak</a>
               </div>
 
@@ -74,8 +74,8 @@
         <CTA
           title="İlk printable’ını tasarlamaya hazır mısın?"
           body="Builder’ı aç ve dakikalar içinde baskıya hazır PDF al."
-          primary={ href: "/app/", label: labels.ctaPrimary }
-          secondary={ href: "#top", label: ("Back to top" if lang=="en" else "Başa dön") }
+          primary={{ href: Astro.resolve("/app/"), label: labels.ctaPrimary }}
+          secondary={{ href: "#top", label: "Başa dön" }}
         />
 
         <footer class="footer">
