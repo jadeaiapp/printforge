@@ -1,45 +1,413 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder";
-const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
 ---
-<BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="topbar">
-    <div class="container topbar-inner">
+<BaseLayout lang="en" title="PrintForge App — Interactive Editor" description="Interactive printable editor" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar">
       <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-      <div class="nav">
-        <a class="btn" href={withBase("/en/", base)}>Landing</a>
-        <a class="btn" href={withBase("/tr/", base)}>TR</a>
+      <div class="top-controls">
+        <span class="js-badge" id="js-badge">JS: OFF</span>
+        <label>Zoom
+          <select id="zoom-select">
+            <option value="0.25">25%</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="fit">Fit</option>
+          </select>
+        </label>
+        <div class="segment">
+          <button type="button" data-size="A4" class="is-active">A4</button>
+          <button type="button" data-size="A5">A5</button>
+        </div>
+        <div class="segment">
+          <button type="button" data-orientation="portrait" class="is-active">Portrait</button>
+          <button type="button" data-orientation="landscape">Landscape</button>
+        </div>
+        <label class="checkline"><input type="checkbox" id="grid-toggle"/> Grid</label>
+        <button type="button" id="save-btn">Save</button>
+        <button type="button" id="load-btn">Load</button>
+        <button type="button" id="export-btn">Export JSON</button>
+        <button type="button" id="import-btn">Import JSON</button>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <button type="button" disabled>Export PDF</button>
       </div>
-    </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="panel">
+        <h2>Blocks</h2>
+        <div class="block-list">
+          <button type="button" data-block="text">Text</button>
+          <button type="button" data-block="box">Box</button>
+          <button type="button" data-block="line">Line</button>
+        </div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div id="workspace" class="workspace">
+          <div id="page" class="page">
+            <div id="stage" class="stage"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Inspector</h2>
+        <div class="inspector-grid">
+          <label>X<input id="ins-x" readonly /></label>
+          <label>Y<input id="ins-y" readonly /></label>
+          <label>W<input id="ins-w" readonly /></label>
+          <label>H<input id="ins-h" readonly /></label>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page">Add page</button>
+        <button type="button" id="dup-page">Duplicate</button>
+        <button type="button" id="del-page">Delete</button>
+      </div>
+      <div class="pages-list" id="pages-list"></div>
+    </section>
+
+    <div class="toast" id="toast"></div>
   </div>
 
-  <main class="container" style="padding:60px 0 50px;">
-    <div class="kicker">/app</div>
-    <h1>Builder shell (Sprint 1)</h1>
-    <p class="lead" style="max-width:72ch;">
-      This route is reserved for the drag & drop editor. Next sprint we’ll add:
-      canvas, blocks palette, inspector, pages panel, and PDF export.
-    </p>
+  <script type="module">
+    console.log("PrintForge editor booted");
 
-    <div class="card" style="margin-top:22px;">
-      <h3 style="margin:0 0 10px;">Next up</h3>
-      <ul style="margin:0; padding-left:18px; color:var(--muted);">
-        <li>Freeform A4/A5 canvas + snap</li>
-        <li>Blocks: Text, Box, Line, Checklist</li>
-        <li>Multi-page + export PDF</li>
-        <li>Project save/load (JSON)</li>
-      </ul>
-    </div>
+    const PX_PER_MM = 3.7795275591;
+    const mmToPx = (mm) => mm * PX_PER_MM;
+    const pxToMm = (px) => px / PX_PER_MM;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const createId = (prefix = "id") => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const pageDimensionsMm = (size, orientation) => {
+      const base = size === "A4" ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
+      return orientation === "portrait" ? base : { wMm: base.hMm, hMm: base.wMm };
+    };
+    const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
+    const saveToLocal = (doc) => localStorage.setItem("printforge_doc_v1", JSON.stringify(doc));
+    const loadFromLocal = () => {
+      try {
+        const raw = localStorage.getItem("printforge_doc_v1");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    };
+    const exportJSON = (doc) => {
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `printforge-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    const importJSON = async (file) => JSON.parse(await file.text());
 
-    <div class="hero-cta" style="margin-top:18px;">
-      <a class="btn primary" href={withBase("/en/#features", base)}>See features</a>
-      <a class="btn" href={withBase("/tr/#features", base)}>Özelliklere bak</a>
-    </div>
-  </main>
+    const el = {
+      shell: document.getElementById("app-shell"),
+      badge: document.getElementById("js-badge"),
+      workspace: document.getElementById("workspace"),
+      page: document.getElementById("page"),
+      stage: document.getElementById("stage"),
+      pagesList: document.getElementById("pages-list"),
+      zoom: document.getElementById("zoom-select"),
+      grid: document.getElementById("grid-toggle"),
+      save: document.getElementById("save-btn"),
+      load: document.getElementById("load-btn"),
+      ex: document.getElementById("export-btn"),
+      im: document.getElementById("import-btn"),
+      imInput: document.getElementById("import-input"),
+      addPage: document.getElementById("add-page"),
+      dupPage: document.getElementById("dup-page"),
+      delPage: document.getElementById("del-page"),
+      toast: document.getElementById("toast"),
+      insX: document.getElementById("ins-x"), insY: document.getElementById("ins-y"), insW: document.getElementById("ins-w"), insH: document.getElementById("ins-h"),
+    };
+
+    el.badge.textContent = "JS: ON";
+    el.badge.classList.add("on");
+
+    let doc = loadFromLocal() || {
+      version: 1,
+      pageSize: "A4",
+      orientation: "portrait",
+      zoom: 1,
+      grid: { enabled: false, stepMm: 5 },
+      pages: [{ id: createId("page"), name: "Page 1", nodes: [] }],
+      activePageId: ""
+    };
+    if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
+    let selectedNodeId = null;
+    let undoStack = [structuredClone(doc)];
+    let redoStack = [];
+
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
+    const snap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+
+    const pushHistory = () => {
+      undoStack.push(structuredClone(doc));
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+    };
+
+    const toast = (msg) => {
+      el.toast.textContent = msg;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 1000);
+    };
+
+    function renderInspector() {
+      const n = activeNode();
+      el.insX.value = n ? `${n.xMm.toFixed(1)} mm` : "-";
+      el.insY.value = n ? `${n.yMm.toFixed(1)} mm` : "-";
+      el.insW.value = n ? `${n.wMm.toFixed(1)} mm` : "-";
+      el.insH.value = n ? `${n.hMm.toFixed(1)} mm` : "-";
+    }
+
+    function renderPages() {
+      el.pagesList.innerHTML = "";
+      doc.pages.forEach((p, i) => {
+        const b = document.createElement("button");
+        b.className = `page-thumb ${p.id === doc.activePageId ? "active" : ""}`;
+        b.textContent = p.name || `Page ${i + 1}`;
+        b.onclick = () => { doc.activePageId = p.id; selectedNodeId = null; render(); };
+        el.pagesList.appendChild(b);
+      });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
+
+    function renderNodes() {
+      const page = activePage();
+      el.stage.innerHTML = "";
+      if (!page) return;
+      [...page.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        const node = document.createElement("div");
+        node.className = `node node-${n.type} ${n.id === selectedNodeId ? "selected" : ""}`;
+        node.dataset.id = n.id;
+        node.style.left = `${mmToPx(n.xMm)}px`;
+        node.style.top = `${mmToPx(n.yMm)}px`;
+        node.style.width = `${mmToPx(n.wMm)}px`;
+        node.style.height = `${mmToPx(n.hMm)}px`;
+        node.style.zIndex = String(n.z);
+
+        if (n.type === "text") {
+          node.innerHTML = `<div class=\"text-content\" contenteditable=\"true\">${n.text}</div>`;
+          const content = node.firstElementChild;
+          content.oninput = () => { n.text = content.textContent || "Text"; };
+        }
+        if (n.type === "box") node.innerHTML = `<div class=\"box-content\"></div>`;
+        if (n.type === "line") node.innerHTML = `<div class=\"line-content\"></div>`;
+
+        if (n.id === selectedNodeId) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = `handle ${h}`;
+            handle.dataset.handle = h;
+            node.appendChild(handle);
+          });
+        }
+
+        el.stage.appendChild(node);
+      });
+      renderInspector();
+    }
+
+    function renderFrame() {
+      const d = dims();
+      el.page.style.width = `${mmToPx(d.wMm)}px`;
+      el.page.style.height = `${mmToPx(d.hMm)}px`;
+      el.page.style.transform = `scale(${doc.zoom})`;
+      el.page.classList.toggle("grid", doc.grid.enabled);
+      el.stage.style.width = `${mmToPx(d.wMm)}px`;
+      el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function render() {
+      renderFrame();
+      renderNodes();
+      renderPages();
+      document.querySelectorAll("[data-size]").forEach((b) => b.classList.toggle("is-active", b.dataset.size === doc.pageSize));
+      document.querySelectorAll("[data-orientation]").forEach((b) => b.classList.toggle("is-active", b.dataset.orientation === doc.orientation));
+    }
+
+    function addNode(type) {
+      const page = activePage();
+      if (!page) return;
+      const d = dims();
+      const z = page.nodes.length ? Math.max(...page.nodes.map((n)=>n.z)) + 1 : 1;
+      let node = null;
+      if (type === "text") node = { id: createId("node"), type, text: "Text", fontSize: 14, xMm: d.wMm/2-30, yMm: d.hMm/2-7, wMm: 60, hMm: 14, z };
+      if (type === "box") node = { id: createId("node"), type, fill: "#e2e8f0", stroke: "#94a3b8", radius: 6, xMm: d.wMm/2-30, yMm: d.hMm/2-20, wMm: 60, hMm: 40, z };
+      if (type === "line") node = { id: createId("node"), type, stroke: "#334155", thickness: 2, xMm: d.wMm/2-35, yMm: d.hMm/2, wMm: 70, hMm: 2, z };
+      if (!node) return;
+      page.nodes.push(node);
+      selectedNodeId = node.id;
+      pushHistory();
+      render();
+    }
+
+    function startPointer(e) {
+      const nodeEl = e.target.closest(".node");
+      if (!nodeEl) return;
+      const node = activePage()?.nodes.find((n)=>n.id===nodeEl.dataset.id);
+      if (!node) return;
+      selectedNodeId = node.id;
+      const start = { x: e.clientX, y: e.clientY, xMm: node.xMm, yMm: node.yMm, wMm: node.wMm, hMm: node.hMm };
+      const handle = e.target.dataset.handle || null;
+      const d = dims();
+
+      const onMove = (ev) => {
+        const dx = pxToMm((ev.clientX - start.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - start.y) / doc.zoom);
+        if (!handle) {
+          node.xMm = clamp(snap(start.xMm + dx), 0, d.wMm - node.wMm);
+          node.yMm = clamp(snap(start.yMm + dy), 0, d.hMm - node.hMm);
+        } else {
+          if (handle.includes("e")) node.wMm = clamp(snap(start.wMm + dx), 10, d.wMm - node.xMm);
+          if (handle.includes("s")) node.hMm = clamp(snap(start.hMm + dy), 10, d.hMm - node.yMm);
+          if (handle.includes("w")) {
+            const nx = clamp(snap(start.xMm + dx), 0, start.xMm + start.wMm - 10);
+            node.wMm = clamp(snap(start.wMm - (nx - start.xMm)), 10, d.wMm);
+            node.xMm = nx;
+          }
+          if (handle.includes("n")) {
+            const ny = clamp(snap(start.yMm + dy), 0, start.yMm + start.hMm - 10);
+            node.hMm = clamp(snap(start.hMm - (ny - start.yMm)), 10, d.hMm);
+            node.yMm = ny;
+          }
+        }
+        renderNodes();
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        pushHistory();
+        render();
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    }
+
+    el.stage.addEventListener("pointerdown", (e) => {
+      if (e.target === el.stage) {
+        selectedNodeId = null;
+        render();
+        return;
+      }
+      startPointer(e);
+    });
+
+    document.querySelectorAll("[data-block]").forEach((b) => b.addEventListener("click", () => addNode(b.dataset.block)));
+    document.querySelectorAll("[data-size]").forEach((b) => b.addEventListener("click", () => { doc.pageSize = b.dataset.size; pushHistory(); render(); }));
+    document.querySelectorAll("[data-orientation]").forEach((b) => b.addEventListener("click", () => { doc.orientation = b.dataset.orientation; pushHistory(); render(); }));
+    el.zoom.addEventListener("change", () => {
+      if (el.zoom.value === "fit") {
+        const d = dims();
+        doc.zoom = clamp((el.workspace.clientWidth - 40) / mmToPx(d.wMm), 0.25, 1.5);
+      } else {
+        doc.zoom = Number(el.zoom.value);
+      }
+      pushHistory();
+      render();
+    });
+    el.grid.addEventListener("change", () => { doc.grid.enabled = el.grid.checked; pushHistory(); render(); });
+
+    el.addPage.onclick = () => {
+      const p = { id: createId("page"), name: `Page ${doc.pages.length + 1}`, nodes: [] };
+      doc.pages.push(p);
+      doc.activePageId = p.id;
+      selectedNodeId = null;
+      pushHistory();
+      render();
+    };
+    el.dupPage.onclick = () => {
+      const p = activePage();
+      if (!p) return;
+      const cp = structuredClone(p);
+      cp.id = createId("page");
+      cp.name = `Page ${doc.pages.length + 1}`;
+      cp.nodes.forEach((n) => (n.id = createId("node")));
+      doc.pages.push(cp);
+      doc.activePageId = cp.id;
+      selectedNodeId = null;
+      pushHistory();
+      render();
+    };
+    el.delPage.onclick = () => {
+      if (doc.pages.length <= 1) return;
+      doc.pages = doc.pages.filter((p) => p.id !== doc.activePageId);
+      doc.activePageId = doc.pages[0].id;
+      selectedNodeId = null;
+      pushHistory();
+      render();
+    };
+
+    el.save.onclick = () => { saveToLocal(doc); toast("Saved"); };
+    el.load.onclick = () => {
+      const loaded = loadFromLocal();
+      if (!loaded) return;
+      doc = loaded;
+      selectedNodeId = null;
+      undoStack = [structuredClone(doc)];
+      redoStack = [];
+      render();
+      toast("Loaded");
+    };
+    el.ex.onclick = () => exportJSON(doc);
+    el.im.onclick = () => el.imInput.click();
+    el.imInput.onchange = async () => {
+      const file = el.imInput.files?.[0];
+      if (!file) return;
+      try {
+        doc = await importJSON(file);
+        selectedNodeId = null;
+        undoStack = [structuredClone(doc)];
+        redoStack = [];
+        render();
+        toast("Imported");
+      } catch {
+        toast("Invalid JSON");
+      }
+      el.imInput.value = "";
+    };
+
+    window.addEventListener("keydown", (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (!redoStack.length) return;
+          const next = redoStack.pop();
+          undoStack.push(structuredClone(next));
+          doc = structuredClone(next);
+        } else {
+          if (undoStack.length <= 1) return;
+          const curr = undoStack.pop();
+          redoStack.push(structuredClone(curr));
+          doc = structuredClone(undoStack[undoStack.length - 1]);
+        }
+        selectedNodeId = null;
+        render();
+      }
+    });
+
+    render();
+  </script>
 </BaseLayout>
