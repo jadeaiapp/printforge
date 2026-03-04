@@ -1,29 +1,37 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { withBase } from "../utils/paths";
+
 const base = import.meta.env.BASE_URL ?? "/";
+const trPath = withBase("/tr/", base);
+const enPath = withBase("/en/", base);
 const title = "PrintForge — Printable Builder";
-const description = "Choose a language to continue.";
+const description = "Redirecting to your preferred language landing page.";
 ---
 <BaseLayout lang="en" title={title} description={description} canonical="/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }}>
   <div class="container" style="padding:90px 0 30px;">
     <div class="kicker">✦ PrintForge</div>
-    <h1>Choose your language</h1>
-    <p class="lead">We host Turkish and English landing pages for SEO. Pick one to continue.</p>
+    <h1>Redirecting…</h1>
+    <p class="lead">Choose a language if you are not redirected automatically.</p>
     <div class="hero-cta">
-      <a class="btn primary" href={withBase("/en/", base)}>English</a>
-      <a class="btn" href={withBase("/tr/", base)}>Türkçe</a>
-      <a class="btn ghost" href={withBase("/app/", base)}>Go to app</a>
+      <a class="btn primary" href={enPath}>English</a>
+      <a class="btn" href={trPath}>Türkçe</a>
     </div>
-    <p class="tiny" style="margin-top:18px;">Tip: we can auto-redirect later, but for SEO a visible choice is cleaner.</p>
+
+    <noscript>
+      <p class="tiny" style="margin-top:16px;">JavaScript is disabled. Continue manually:</p>
+      <div class="hero-cta">
+        <a class="btn primary" href={enPath}>English</a>
+        <a class="btn" href={trPath}>Türkçe</a>
+      </div>
+    </noscript>
   </div>
-  <script>
-    (function(){
-      const lang = (navigator.language || '').toLowerCase();
-      if(lang.startsWith('tr')){
-        const el = document.querySelector('a[href*="/tr/"]');
-        if(el) el.classList.add('primary');
-      }
+
+  <script define:vars={{ trPath, enPath }}>
+    (function () {
+      const lang = (navigator.language || "").toLowerCase();
+      const nextPath = lang.startsWith("tr") ? trPath : enPath;
+      window.location.replace(nextPath);
     })();
   </script>
 </BaseLayout>
