@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const title = "PrintForge — Printable Builder";
+const description = "Choose a language to continue.";
+---
+<BaseLayout lang="en" title={title} description={description} canonical="/" ogImage="/og-en.svg" hreflang={{tr:"/tr/", en:"/en/"}}>
+  <div class="container" style="padding:90px 0 30px;">
+    <div class="kicker">✦ PrintForge</div>
+    <h1>Choose your language</h1>
+    <p class="lead">We’ll host a Turkish and English landing page for SEO. Pick one to continue.</p>
+    <div class="hero-cta">
+      <a class="btn primary" href={Astro.resolve("/en/")}>English</a>
+      <a class="btn" href={Astro.resolve("/tr/")}>Türkçe</a>
+      <a class="btn ghost" href={Astro.resolve("/app/")}>Go to app</a>
+    </div>
+    <p class="tiny" style="margin-top:18px;">Tip: we can auto-redirect later, but for SEO a visible choice is cleaner.</p>
+  </div>
+  <script>
+    // Optional: soft auto-suggest (does not hard redirect)
+    (function(){
+      const lang = (navigator.language || '').toLowerCase();
+      if(lang.startsWith('tr')){
+        const el = document.querySelector('a[href$="/tr/"]');
+        if(el) el.classList.add('primary');
+      }
+    })();
+  </script>
+</BaseLayout>

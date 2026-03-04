@@ -1,0 +1,74 @@
+---
+const {
+  lang = "en",
+  title = "PrintForge",
+  description = "",
+  canonical = "",
+  ogImage = "/og-en.svg",
+  hreflang = { tr: "/tr/", en: "/en/" },
+  noindex = false,
+} = Astro.props;
+
+const site = (Astro.site?.toString() ?? "https://example.com").replace(/\/$/, "");
+
+// Astro.resolve() respects the configured `base` for GitHub Pages subpaths.
+const resolveLocal = (p) => {
+  if (!p) return Astro.url.pathname;
+  if (p.startsWith("http")) return p;
+  return Astro.resolve(p);
+};
+
+const canonicalPath = canonical ? resolveLocal(canonical) : Astro.url.pathname;
+const canonicalUrl = canonicalPath.startsWith("http") ? canonicalPath : site + canonicalPath;
+
+const ogPath = ogImage.startsWith("http") ? ogImage : Astro.resolve(ogImage);
+const ogUrl = ogPath.startsWith("http") ? ogPath : site + ogPath;
+
+const trHref = site + resolveLocal(hreflang.tr);
+const enHref = site + resolveLocal(hreflang.en);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PrintForge",
+  "applicationCategory": "DesignApplication",
+  "operatingSystem": "Web",
+  "description": description,
+  "url": canonicalUrl
+};
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" href={Astro.resolve("/favicon.svg")} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogUrl} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:image" content={ogUrl} />
+
+    <link rel="alternate" hreflang="tr" href={trHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="x-default" href={(site + Astro.resolve("/"))} />
+
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+
+    <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+
+    <link rel="stylesheet" href={Astro.resolve("/src/styles/global.css")} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

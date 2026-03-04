@@ -1,0 +1,43 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+const title = "PrintForge App — Builder";
+const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
+---
+<BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{tr:"/tr/", en:"/en/"}} noindex={true}>
+  <div class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href={Astro.resolve("/en/")}>
+        <span class="brand-badge" aria-hidden="true">✦</span>
+        <span>PrintForge</span>
+      </a>
+      <div class="nav">
+        <a class="btn" href={Astro.resolve("/en/")}>Landing</a>
+        <a class="btn" href={Astro.resolve("/tr/")}>TR</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="container" style="padding:60px 0 50px;">
+    <div class="kicker">/app</div>
+    <h1>Builder shell (Sprint 1)</h1>
+    <p class="lead" style="max-width:72ch;">
+      This route is reserved for the drag & drop editor. Next sprint we’ll add:
+      canvas, blocks palette, inspector, pages panel, and PDF export.
+    </p>
+
+    <div class="card" style="margin-top:22px;">
+      <h3 style="margin:0 0 10px;">Next up</h3>
+      <ul style="margin:0; padding-left:18px; color:var(--muted);">
+        <li>Freeform A4/A5 canvas + snap</li>
+        <li>Blocks: Text, Box, Line, Checklist</li>
+        <li>Multi-page + export PDF</li>
+        <li>Project save/load (JSON)</li>
+      </ul>
+    </div>
+
+    <div class="hero-cta" style="margin-top:18px;">
+      <a class="btn primary" href={Astro.resolve("/en/#features")}>See features</a>
+      <a class="btn" href={Astro.resolve("/tr/#features")}>Özelliklere bak</a>
+    </div>
+  </main>
+</BaseLayout>

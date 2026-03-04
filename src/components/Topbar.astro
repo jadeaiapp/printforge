@@ -1,0 +1,23 @@
+---
+const { lang = "en", labels, switcherHref } = Astro.props;
+
+const homeHref = lang === "tr" ? Astro.resolve("/tr/") : Astro.resolve("/en/");
+const appHref = Astro.resolve("/app/");
+const switchHref = switcherHref.startsWith("http") ? switcherHref : Astro.resolve(switcherHref);
+---
+<div class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href={homeHref}>
+      <span class="brand-badge" aria-hidden="true">✦</span>
+      <span>PrintForge</span>
+    </a>
+
+    <div class="nav">
+      <a class="pill" href="#features">{labels.navFeatures}</a>
+      <a class="pill" href="#how">{labels.navHow}</a>
+      <a class="pill" href="#faq">{labels.navFaq}</a>
+      <a class="btn ghost" href={switchHref}>{labels.langSwitch}</a>
+      <a class="btn primary" href={appHref}>{labels.ctaPrimary}</a>
+    </div>
+  </div>
+</div>

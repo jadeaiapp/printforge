@@ -1,0 +1,91 @@
+    ---
+    import BaseLayout from "../../layouts/BaseLayout.astro";
+    import Topbar from "../../components/Topbar.astro";
+    import HeroMock from "../../components/HeroMock.astro";
+    import CTA from "../../components/CTA.astro";
+
+    const labels = {"navFeatures": "Features", "navHow": "How it works", "navFaq": "FAQ", "langSwitch": "Türkçe", "ctaPrimary": "Start designing", "heroKicker": "Drag & drop printable builder", "heroTitle": "Design printables that look crisp on paper.", "heroLead": "A pro canvas for A4/A5 layouts: drag blocks anywhere, add pages, and export pixel-sharp PDFs. Start free—no account required.", "heroPrimary": "Open the builder", "heroSecondary": "View features", "featTitle": "Built for printable workflows", "featLead": "Everything you need for planners, worksheets, trackers, and multi-page packs—without the complexity of a full design suite.", "features": [["Freeform canvas", "Place anything anywhere. Snap, align, and fine‑tune in millimeters."], ["Multi-page documents", "Add, duplicate, reorder pages. Export as a single PDF."], ["Print-ready export", "A4/A5, margins, and clean vector PDF output."], ["Blocks library", "Text, boxes, lines, checklists, tables, calendars, trackers."], ["Pro editing UX", "Undo/redo, shortcuts, layers, grouping (roadmap)."], ["Offline-first MVP", "Works as a static web app; projects can be saved as JSON."]], "howTitle": "How it works", "howLead": "A simple flow that stays out of your way.", "steps": [["Open the canvas", "Start from blank or a preset and choose A4/A5."], ["Build your pages", "Drag blocks, adjust styles, duplicate pages as needed."], ["Export & share", "Download a crisp PDF or save your project file."]], "faqTitle": "FAQ", "faq": [["Do I need an account?", "No for v1. We’ll add email login later for daily quotas and cloud projects."], ["Is it only for planners?", "No. Any printable layout: worksheets, bingo cards, trackers, checklists, labels."], ["Will it work on mobile?", "Yes, but the best editing experience is on desktop/tablet. Mobile is great for preview/export."], ["How will pricing work?", "Start free. Later: login-required daily quotas + a paid plan for higher limits and premium packs."]], "ctaTitle": "Ready to design your first printable?", "ctaBody": "Open the builder and export a print-ready PDF in minutes.", "footerNote": "© {year} PrintForge. Built for printables."};
+    const title = "PrintForge — Drag & drop printable builder";
+    const description = "A pro canvas for A4/A5 layouts: drag blocks anywhere, add pages, and export pixel-sharp PDFs. Start free—no account required.";
+    ---
+    <BaseLayout lang="en" title={title} description={description} canonical="/en/" ogImage="/og-en.svg" hreflang={tr:"/tr/", en:"/en/"}>
+      <Topbar lang="en" labels={labels} switcherHref="/tr/" />
+
+      <main>
+        <div class="container hero" id="top">
+          <div class="hero-grid">
+            <div>
+              <div class="kicker">Drag & drop printable builder</div>
+              <h1>Design printables that look crisp on paper.</h1>
+              <p class="lead">A pro canvas for A4/A5 layouts: drag blocks anywhere, add pages, and export pixel-sharp PDFs. Start free—no account required.</p>
+
+              <div class="hero-cta">
+                <a class="btn primary" href="/app/">Open the builder</a>
+                <a class="btn" href="#features">View features</a>
+              </div>
+
+              <div style="margin-top:18px;color:rgba(229,231,235,0.65);font-size:13px;">
+                No install • No account • Export-ready
+              </div>
+            </div>
+
+            <HeroMock />
+          </div>
+        </div>
+
+        <section id="features">
+          <div class="container">
+            <h2 class="section-title">Built for printable workflows</h2>
+            <p class="section-lead">Everything you need for planners, worksheets, trackers, and multi-page packs—without the complexity of a full design suite.</p>
+            <div class="grid-3">
+              <div class="card"><h3>Freeform canvas</h3><p>Place anything anywhere. Snap, align, and fine‑tune in millimeters.</p></div>
+<div class="card"><h3>Multi-page documents</h3><p>Add, duplicate, reorder pages. Export as a single PDF.</p></div>
+<div class="card"><h3>Print-ready export</h3><p>A4/A5, margins, and clean vector PDF output.</p></div>
+<div class="card"><h3>Blocks library</h3><p>Text, boxes, lines, checklists, tables, calendars, trackers.</p></div>
+<div class="card"><h3>Pro editing UX</h3><p>Undo/redo, shortcuts, layers, grouping (roadmap).</p></div>
+<div class="card"><h3>Offline-first MVP</h3><p>Works as a static web app; projects can be saved as JSON.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="how">
+          <div class="container">
+            <h2 class="section-title">How it works</h2>
+            <p class="section-lead">A simple flow that stays out of your way.</p>
+            <div class="steps">
+              <div class="step"><div class="num">1</div><h3 style="margin:0 0 8px;font-size:16px;">Open the canvas</h3><p style="margin:0;color:var(--muted);font-size:14px;">Start from blank or a preset and choose A4/A5.</p></div>
+<div class="step"><div class="num">2</div><h3 style="margin:0 0 8px;font-size:16px;">Build your pages</h3><p style="margin:0;color:var(--muted);font-size:14px;">Drag blocks, adjust styles, duplicate pages as needed.</p></div>
+<div class="step"><div class="num">3</div><h3 style="margin:0 0 8px;font-size:16px;">Export & share</h3><p style="margin:0;color:var(--muted);font-size:14px;">Download a crisp PDF or save your project file.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="faq">
+          <div class="container">
+            <h2 class="section-title">FAQ</h2>
+            <p class="section-lead">Quick answers. We’ll keep this updated as we ship.</p>
+            <details><summary>Do I need an account?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">No for v1. We’ll add email login later for daily quotas and cloud projects.</div></details>
+<details><summary>Is it only for planners?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">No. Any printable layout: worksheets, bingo cards, trackers, checklists, labels.</div></details>
+<details><summary>Will it work on mobile?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Yes, but the best editing experience is on desktop/tablet. Mobile is great for preview/export.</div></details>
+<details><summary>How will pricing work?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Start free. Later: login-required daily quotas + a paid plan for higher limits and premium packs.</div></details>
+          </div>
+        </section>
+
+        <CTA
+          title="Ready to design your first printable?"
+          body="Open the builder and export a print-ready PDF in minutes."
+          primary={ href: "/app/", label: labels.ctaPrimary }
+          secondary={ href: "#top", label: ("Back to top" if lang=="en" else "Başa dön") }
+        />
+
+        <footer class="footer">
+          <div class="container footer-grid">
+            <div class="brand">
+              <span class="brand-badge" aria-hidden="true">✦</span>
+              <span>PrintForge</span>
+            </div>
+            <div class="tiny">© 2026 PrintForge. Built for printables.</div>
+          </div>
+        </footer>
+      </main>
+    </BaseLayout>
