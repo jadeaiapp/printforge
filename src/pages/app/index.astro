@@ -4,252 +4,344 @@ import { withBase } from "../../utils/paths";
 import "../../styles/app.css";
 
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder Shell";
-const description = "Builder shell UI for Sprint 1.";
-const homeHref = withBase("/en/", base);
+const title = "PrintForge App — Interactive Editor";
+const description = "Interactive printable editor.";
 ---
 
 <BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="app-shell" data-lang="en">
-    <header class="app-topbar" aria-label="Application top bar">
-      <a class="app-brand" href={homeHref} aria-label="PrintForge home">
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar" aria-label="App topbar">
+      <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
 
-      <div class="topbar-group">
-        <label class="control-group" for="zoom-select">
-          <span data-i18n="zoom">Zoom</span>
-          <select id="zoom-select" aria-label="Zoom level">
-            <option>25%</option>
-            <option>50%</option>
-            <option>75%</option>
-            <option selected>100%</option>
-            <option>Fit</option>
+      <div class="top-controls">
+        <span class="js-badge" id="js-badge">JS: OFF</span>
+        <label>Zoom
+          <select id="zoom-select">
+            <option value="0.25">25%</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="fit">Fit</option>
           </select>
         </label>
-      </div>
 
-      <div class="topbar-group topbar-actions">
-        <fieldset class="segment" aria-label="Page size toggle">
-          <legend class="sr-only" data-i18n="pageSize">Page size</legend>
-          <button type="button" class="segment-btn is-active" aria-label="A4 page size">A4</button>
-          <button type="button" class="segment-btn" aria-label="A5 page size">A5</button>
-        </fieldset>
+        <div class="segment">
+          <button type="button" data-size="A4" class="is-active">A4</button>
+          <button type="button" data-size="A5">A5</button>
+        </div>
+        <div class="segment">
+          <button type="button" data-orientation="portrait" class="is-active">Portrait</button>
+          <button type="button" data-orientation="landscape">Landscape</button>
+        </div>
 
-        <fieldset class="segment" aria-label="Language toggle">
-          <legend class="sr-only" data-i18n="lang">Language</legend>
-          <button type="button" class="segment-btn lang-btn" data-lang-btn="tr" aria-label="Switch to Turkish">TR</button>
-          <button type="button" class="segment-btn lang-btn is-active" data-lang-btn="en" aria-label="Switch to English">EN</button>
-        </fieldset>
+        <label class="checkline"><input type="checkbox" id="grid-toggle" /> Grid</label>
 
-        <button class="btn" type="button" disabled aria-label="Export (coming soon)">
-          <span data-i18n="export">Export</span>
-        </button>
-        <button class="btn" type="button" disabled aria-label="Save (coming soon)">
-          <span data-i18n="save">Save</span>
-        </button>
+        <button type="button" id="save-btn">Save</button>
+        <button type="button" id="load-btn">Load</button>
+        <button type="button" id="export-btn">Export JSON</button>
+        <button type="button" id="import-btn">Import JSON</button>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <button type="button" disabled>Export PDF</button>
       </div>
     </header>
 
-    <main class="app-main" aria-label="Builder editor">
-      <aside class="panel left-panel" aria-label="Blocks sidebar">
-        <h2 data-i18n="blocks">Blocks</h2>
+    <main class="app-main">
+      <aside class="panel">
+        <h2>Blocks</h2>
         <div class="block-list">
-          <button type="button" class="block-item" aria-label="Text block">⬚ Text</button>
-          <button type="button" class="block-item" aria-label="Heading block">⬚ Heading</button>
-          <button type="button" class="block-item" aria-label="Box block">⬚ Box</button>
-          <button type="button" class="block-item" aria-label="Line block">⬚ Line</button>
-          <button type="button" class="block-item" aria-label="Checklist block">⬚ Checklist</button>
-          <button type="button" class="block-item" aria-label="Table block">⬚ Table</button>
-          <button type="button" class="block-item" aria-label="Calendar block">⬚ Calendar</button>
-          <button type="button" class="block-item" aria-label="Habit Tracker block">⬚ Habit Tracker</button>
-          <button type="button" class="block-item" aria-label="Image block">⬚ Image</button>
+          <button type="button" data-block="text">Text</button>
+          <button type="button" data-block="box">Box</button>
+          <button type="button" data-block="line">Line</button>
+          <button type="button" data-block="other">Checklist (soon)</button>
         </div>
       </aside>
 
-      <section class="panel canvas-panel" aria-label="Canvas section">
-        <div class="canvas-toolbar">
-          <label class="checkline" for="grid-toggle">
-            <input id="grid-toggle" type="checkbox" />
-            <span data-i18n="grid">Show grid overlay</span>
-          </label>
-          <div class="canvas-meta">
-            <span class="pill">A4</span>
-            <span class="pill">100%</span>
-          </div>
-        </div>
-
-        <div class="workspace" aria-label="Canvas workspace" data-i18n-aria="workspace">
-          <div class="page-frame" aria-label="Page preview" data-i18n-aria="pagePreview">
-            <div class="page-tag">A4 • 210 × 297 mm</div>
+      <section class="panel canvas-panel">
+        <div id="workspace" class="workspace">
+          <div id="page" class="page">
+            <div id="stage" class="stage"></div>
           </div>
         </div>
       </section>
 
-      <aside class="panel right-panel" aria-label="Inspector sidebar">
-        <h2 data-i18n="inspector">Inspector</h2>
-
-        <details open>
-          <summary data-i18n="position">Position</summary>
-          <div class="inspector-grid">
-            <label><span data-i18n="x">X</span><input disabled type="number" value="0" /></label>
-            <label><span data-i18n="y">Y</span><input disabled type="number" value="0" /></label>
-          </div>
-        </details>
-
-        <details open>
-          <summary data-i18n="size">Size</summary>
-          <div class="inspector-grid">
-            <label><span data-i18n="w">W</span><input disabled type="number" value="100" /></label>
-            <label><span data-i18n="h">H</span><input disabled type="number" value="40" /></label>
-          </div>
-        </details>
-
-        <details>
-          <summary data-i18n="typography">Typography</summary>
-          <div class="inspector-grid full">
-            <label><span data-i18n="font">Font</span><input disabled type="text" value="Inter" /></label>
-            <label><span data-i18n="fontSize">Size</span><input disabled type="number" value="14" /></label>
-            <label><span data-i18n="align">Align</span><input disabled type="text" value="Left" /></label>
-          </div>
-        </details>
-
-        <details>
-          <summary data-i18n="style">Style</summary>
-          <div class="inspector-grid full">
-            <label><span data-i18n="fill">Fill</span><input disabled type="text" value="#ffffff" /></label>
-            <label><span data-i18n="stroke">Stroke</span><input disabled type="text" value="#d1d5db" /></label>
-            <label><span data-i18n="radius">Radius</span><input disabled type="number" value="6" /></label>
-          </div>
-        </details>
+      <aside class="panel">
+        <h2>Inspector</h2>
+        <div class="inspector-grid">
+          <label>X<input id="ins-x" readonly /></label>
+          <label>Y<input id="ins-y" readonly /></label>
+          <label>W<input id="ins-w" readonly /></label>
+          <label>H<input id="ins-h" readonly /></label>
+        </div>
       </aside>
     </main>
 
-    <section class="pages-strip" aria-label="Pages strip">
-      <div class="pages-head">
-        <h2 data-i18n="pages">Pages</h2>
-        <div class="pages-actions">
-          <button type="button" aria-label="Add page"><span data-i18n="addPage">Add page</span></button>
-          <button type="button" disabled aria-label="Duplicate page"><span data-i18n="duplicate">Duplicate</span></button>
-          <button type="button" disabled aria-label="Delete page"><span data-i18n="remove">Delete</span></button>
-        </div>
+    <section class="pages-strip panel">
+      <div class="pages-actions">
+        <button type="button" id="add-page">Add page</button>
+        <button type="button" id="dup-page">Duplicate</button>
+        <button type="button" id="del-page">Delete</button>
       </div>
-      <div class="pages-list">
-        <button class="page-thumb is-active" type="button" aria-label="Page 1">
-          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
-          <span data-i18n="page">Page</span> 1
-        </button>
-        <button class="page-thumb" type="button" aria-label="Page 2">
-          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
-          <span data-i18n="page">Page</span> 2
-        </button>
-      </div>
+      <div id="pages-list" class="pages-list"></div>
     </section>
   </div>
 
-  <script is:inline>
-    (() => {
-      const shell = document.querySelector(".app-shell");
-      if (!shell) return;
+  <script type="module">
+    console.log("PrintForge editor booted");
 
-      const dict = {
-        en: {
-          blocks: "Blocks",
-          inspector: "Inspector",
-          pages: "Pages",
-          zoom: "Zoom",
-          pageSize: "Page size",
-          lang: "Language",
-          export: "Export",
-          save: "Save",
-          grid: "Show grid overlay",
-          workspace: "Canvas workspace",
-          pagePreview: "Page preview",
-          page: "Page",
-          addPage: "Add page",
-          duplicate: "Duplicate",
-          remove: "Delete",
-          position: "Position",
-          size: "Size",
-          typography: "Typography",
-          style: "Style",
-          x: "X",
-          y: "Y",
-          w: "W",
-          h: "H",
-          font: "Font",
-          fontSize: "Size",
-          align: "Align",
-          fill: "Fill",
-          stroke: "Stroke",
-          radius: "Radius"
-        },
-        tr: {
-          blocks: "Bloklar",
-          inspector: "İnceleyici",
-          pages: "Sayfalar",
-          zoom: "Yakınlaştırma",
-          pageSize: "Sayfa boyutu",
-          lang: "Dil",
-          export: "Dışa aktar",
-          save: "Kaydet",
-          grid: "Izgara katmanını göster",
-          workspace: "Tuval çalışma alanı",
-          pagePreview: "Sayfa önizleme",
-          page: "Sayfa",
-          addPage: "Sayfa ekle",
-          duplicate: "Çoğalt",
-          remove: "Sil",
-          position: "Konum",
-          size: "Boyut",
-          typography: "Tipografi",
-          style: "Stil",
-          x: "X",
-          y: "Y",
-          w: "G",
-          h: "Y",
-          font: "Yazı tipi",
-          fontSize: "Boyut",
-          align: "Hizalama",
-          fill: "Dolgu",
-          stroke: "Çizgi",
-          radius: "Köşe"
-        }
-      };
+    const PX_PER_MM = 3.7795275591;
+    const mmToPx = (mm) => mm * PX_PER_MM;
+    const pxToMm = (px) => px / PX_PER_MM;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const id = () => Math.random().toString(36).slice(2, 10);
 
-      const langButtons = shell.querySelectorAll("[data-lang-btn]");
-      const defaultLang = (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
+    const el = {
+      app: document.getElementById("app-shell"),
+      jsBadge: document.getElementById("js-badge"),
+      workspace: document.getElementById("workspace"),
+      page: document.getElementById("page"),
+      stage: document.getElementById("stage"),
+      pagesList: document.getElementById("pages-list"),
+      zoom: document.getElementById("zoom-select"),
+      grid: document.getElementById("grid-toggle"),
+      addPage: document.getElementById("add-page"),
+      dupPage: document.getElementById("dup-page"),
+      delPage: document.getElementById("del-page"),
+      save: document.getElementById("save-btn"),
+      load: document.getElementById("load-btn"),
+      ex: document.getElementById("export-btn"),
+      im: document.getElementById("import-btn"),
+      imInput: document.getElementById("import-input"),
+      insX: document.getElementById("ins-x"),
+      insY: document.getElementById("ins-y"),
+      insW: document.getElementById("ins-w"),
+      insH: document.getElementById("ins-h")
+    };
 
-      const applyLang = (lang) => {
-        const bundle = dict[lang] || dict.en || {};
-        shell.dataset.lang = lang;
+    el.jsBadge.textContent = "JS: ON";
+    el.jsBadge.classList.add("on");
 
-        shell.querySelectorAll("[data-i18n]").forEach((node) => {
-          const key = node.getAttribute("data-i18n");
-          if (key && bundle[key]) node.textContent = bundle[key];
-        });
+    const key = "printforge-hotfix-doc";
+    const blankDoc = () => ({
+      pageSize: "A4",
+      orientation: "portrait",
+      zoom: 1,
+      grid: { enabled: false, stepMm: 5 },
+      pages: [{ id: id(), name: "Page 1", nodes: [] }],
+      activePageId: null,
+    });
 
-        shell.querySelectorAll("[data-i18n-aria]").forEach((node) => {
-          const key = node.getAttribute("data-i18n-aria");
-          if (key && bundle[key]) node.setAttribute("aria-label", bundle[key]);
-        });
+    let doc = blankDoc();
+    doc.activePageId = doc.pages[0].id;
+    let selectedNodeId = null;
 
-        langButtons.forEach((btn) => {
-          const isActive = btn.getAttribute("data-lang-btn") === lang;
-          btn.classList.toggle("is-active", isActive);
-          btn.setAttribute("aria-pressed", String(isActive));
-        });
-      };
+    const dims = () => {
+      const base = doc.pageSize === "A4" ? { w: 210, h: 297 } : { w: 148, h: 210 };
+      return doc.orientation === "portrait" ? base : { w: base.h, h: base.w };
+    };
 
-      langButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const lang = btn.getAttribute("data-lang-btn") || "en";
-          applyLang(lang);
-        });
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const snap = (v) => doc.grid.enabled ? Math.round(v / doc.grid.stepMm) * doc.grid.stepMm : v;
+
+    function updateInspector() {
+      const n = activeNode();
+      el.insX.value = n ? `${n.xMm.toFixed(1)} mm` : "-";
+      el.insY.value = n ? `${n.yMm.toFixed(1)} mm` : "-";
+      el.insW.value = n ? `${n.wMm.toFixed(1)} mm` : "-";
+      el.insH.value = n ? `${n.hMm.toFixed(1)} mm` : "-";
+    }
+
+    function renderPages() {
+      el.pagesList.innerHTML = "";
+      doc.pages.forEach((p, idx) => {
+        const b = document.createElement("button");
+        b.className = `page-thumb ${p.id === doc.activePageId ? "active" : ""}`;
+        b.textContent = p.name || `Page ${idx + 1}`;
+        b.onclick = () => { doc.activePageId = p.id; selectedNodeId = null; render(); };
+        el.pagesList.appendChild(b);
       });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
 
-      applyLang(defaultLang);
-    })();
+    function renderNodes() {
+      const p = activePage();
+      el.stage.innerHTML = "";
+      if (!p) return;
+      [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        const d = document.createElement("div");
+        d.className = `node node-${n.type} ${n.id === selectedNodeId ? "selected" : ""}`;
+        d.dataset.id = n.id;
+        d.style.left = `${mmToPx(n.xMm)}px`;
+        d.style.top = `${mmToPx(n.yMm)}px`;
+        d.style.width = `${mmToPx(n.wMm)}px`;
+        d.style.height = `${mmToPx(n.hMm)}px`;
+        d.style.zIndex = n.z;
+
+        if (n.type === "text") {
+          d.innerHTML = `<div class="text-content" contenteditable="true">${n.text}</div>`;
+          const c = d.firstElementChild;
+          c.oninput = () => { n.text = c.textContent || "Text"; };
+        }
+        if (n.type === "box") d.innerHTML = `<div class="box-content"></div>`;
+        if (n.type === "line") d.innerHTML = `<div class="line-content"></div>`;
+
+        if (n.id === selectedNodeId) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = `handle ${h}`;
+            handle.dataset.handle = h;
+            d.appendChild(handle);
+          });
+        }
+
+        el.stage.appendChild(d);
+      });
+      updateInspector();
+    }
+
+    function renderFrame() {
+      const d = dims();
+      el.page.style.width = `${mmToPx(d.w)}px`;
+      el.page.style.height = `${mmToPx(d.h)}px`;
+      el.page.style.transform = `scale(${doc.zoom})`;
+      el.page.classList.toggle("grid", doc.grid.enabled);
+      el.stage.style.width = `${mmToPx(d.w)}px`;
+      el.stage.style.height = `${mmToPx(d.h)}px`;
+    }
+
+    function render() {
+      renderFrame();
+      renderNodes();
+      renderPages();
+      document.querySelectorAll("[data-size]").forEach((b)=>b.classList.toggle("is-active", b.dataset.size===doc.pageSize));
+      document.querySelectorAll("[data-orientation]").forEach((b)=>b.classList.toggle("is-active", b.dataset.orientation===doc.orientation));
+    }
+
+    function addNode(type) {
+      const p = activePage();
+      if (!p) return;
+      const d = dims();
+      const z = p.nodes.length ? Math.max(...p.nodes.map((n)=>n.z))+1 : 1;
+      let node;
+      if (type === "text") node = { id: id(), type, text: "Text", xMm: d.w/2-30, yMm: d.h/2-7, wMm: 60, hMm: 14, z };
+      if (type === "box") node = { id: id(), type, xMm: d.w/2-30, yMm: d.h/2-20, wMm: 60, hMm: 40, z };
+      if (type === "line") node = { id: id(), type, xMm: d.w/2-35, yMm: d.h/2, wMm: 70, hMm: 2, z };
+      if (!node) return;
+      p.nodes.push(node);
+      selectedNodeId = node.id;
+      render();
+    }
+
+    function startDragResize(e) {
+      const nodeEl = e.target.closest(".node");
+      if (!nodeEl) return;
+      const n = activePage().nodes.find((x)=>x.id===nodeEl.dataset.id);
+      if (!n) return;
+      selectedNodeId = n.id;
+      const start = { x:e.clientX, y:e.clientY, xMm:n.xMm, yMm:n.yMm, wMm:n.wMm, hMm:n.hMm };
+      const handle = e.target.dataset.handle || null;
+      const d = dims();
+
+      const onMove = (ev) => {
+        const dx = pxToMm((ev.clientX - start.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - start.y) / doc.zoom);
+        if (!handle) {
+          n.xMm = clamp(snap(start.xMm + dx), 0, d.w - n.wMm);
+          n.yMm = clamp(snap(start.yMm + dy), 0, d.h - n.hMm);
+        } else {
+          if (handle.includes("e")) n.wMm = clamp(snap(start.wMm + dx), 10, d.w - n.xMm);
+          if (handle.includes("s")) n.hMm = clamp(snap(start.hMm + dy), 10, d.h - n.yMm);
+          if (handle.includes("w")) {
+            const nx = clamp(snap(start.xMm + dx), 0, start.xMm + start.wMm - 10);
+            n.wMm = clamp(snap(start.wMm - (nx - start.xMm)), 10, d.w);
+            n.xMm = nx;
+          }
+          if (handle.includes("n")) {
+            const ny = clamp(snap(start.yMm + dy), 0, start.yMm + start.hMm - 10);
+            n.hMm = clamp(snap(start.hMm - (ny - start.yMm)), 10, d.h);
+            n.yMm = ny;
+          }
+        }
+        renderNodes();
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        render();
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    }
+
+    el.stage.addEventListener("pointerdown", (e) => {
+      if (e.target === el.stage) {
+        selectedNodeId = null;
+        render();
+        return;
+      }
+      startDragResize(e);
+    });
+
+    document.querySelectorAll(".block-list [data-block]").forEach((b) => b.addEventListener("click", () => addNode(b.dataset.block)));
+
+    document.querySelectorAll("[data-size]").forEach((b) => b.addEventListener("click", () => { doc.pageSize = b.dataset.size; render(); }));
+    document.querySelectorAll("[data-orientation]").forEach((b) => b.addEventListener("click", () => { doc.orientation = b.dataset.orientation; render(); }));
+    el.zoom.addEventListener("change", () => {
+      if (el.zoom.value === "fit") {
+        const d = dims();
+        doc.zoom = clamp((el.workspace.clientWidth - 40) / mmToPx(d.w), 0.25, 1.5);
+      } else doc.zoom = Number(el.zoom.value);
+      render();
+    });
+    el.grid.addEventListener("change", () => { doc.grid.enabled = el.grid.checked; render(); });
+
+    el.addPage.onclick = () => {
+      const p = { id: id(), name: `Page ${doc.pages.length + 1}`, nodes: [] };
+      doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; render();
+    };
+    el.dupPage.onclick = () => {
+      const p = activePage(); if (!p) return;
+      const cp = structuredClone(p); cp.id = id(); cp.name = `Page ${doc.pages.length + 1}`; cp.nodes.forEach((n)=>n.id=id());
+      doc.pages.push(cp); doc.activePageId = cp.id; selectedNodeId = null; render();
+    };
+    el.delPage.onclick = () => {
+      if (doc.pages.length <= 1) return;
+      doc.pages = doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId = doc.pages[0].id; selectedNodeId = null; render();
+    };
+
+    el.save.onclick = () => localStorage.setItem(key, JSON.stringify(doc));
+    el.load.onclick = () => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed?.pages?.length) { doc = parsed; selectedNodeId = null; render(); }
+      } catch {}
+    };
+    el.ex.onclick = () => {
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "printforge-doc.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    el.im.onclick = () => el.imInput.click();
+    el.imInput.onchange = async () => {
+      const f = el.imInput.files?.[0];
+      if (!f) return;
+      try {
+        const parsed = JSON.parse(await f.text());
+        if (parsed?.pages?.length) { doc = parsed; selectedNodeId = null; render(); }
+      } catch {}
+      el.imInput.value = "";
+    };
+
+    render();
   </script>
 </BaseLayout>

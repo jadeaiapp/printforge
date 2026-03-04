@@ -2,8 +2,6 @@ export const PX_PER_MM = 3.7795275591;
 
 export type PageSize = "A4" | "A5";
 export type Orientation = "portrait" | "landscape";
-export type Align = "left" | "center" | "right";
-
 export type NodeType = "text" | "box" | "line";
 
 export interface NodeBase {
@@ -14,28 +12,25 @@ export interface NodeBase {
   wMm: number;
   hMm: number;
   z: number;
-  locked?: boolean;
 }
 
 export interface TextNode extends NodeBase {
   type: "text";
   text: string;
   fontSize: number;
-  align: Align;
 }
 
 export interface BoxNode extends NodeBase {
   type: "box";
-  radius: number;
-  stroke: string;
   fill: string;
+  stroke: string;
+  radius: number;
 }
 
 export interface LineNode extends NodeBase {
   type: "line";
   stroke: string;
   thickness: number;
-  direction: "horizontal" | "vertical";
 }
 
 export type Node = TextNode | BoxNode | LineNode;
@@ -51,56 +46,44 @@ export interface Doc {
   pageSize: PageSize;
   orientation: Orientation;
   zoom: number;
-  grid: {
-    enabled: boolean;
-    stepMm: number;
-  };
+  grid: { enabled: boolean; stepMm: number };
   pages: Page[];
   activePageId: string;
 }
 
-export function createId(prefix = "id"): string {
+export function createId(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function pageDimensionsMm(pageSize: PageSize, orientation: Orientation): { wMm: number; hMm: number } {
+export function pageDimensionsMm(pageSize: PageSize, orientation: Orientation) {
   const base = pageSize === "A4" ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
   return orientation === "portrait" ? base : { wMm: base.hMm, hMm: base.wMm };
 }
 
-export function mmToPx(mm: number): number {
+export function mmToPx(mm: number) {
   return mm * PX_PER_MM;
 }
 
-export function pxToMm(px: number): number {
+export function pxToMm(px: number) {
   return px / PX_PER_MM;
 }
 
-export function snapMm(value: number, stepMm: number, enabled: boolean): number {
-  if (!enabled) return value;
-  return Math.round(value / stepMm) * stepMm;
+export function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
 }
 
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
+export function snapMm(v: number, stepMm: number, enabled: boolean) {
+  return enabled ? Math.round(v / stepMm) * stepMm : v;
 }
 
 export function defaultDoc(): Doc {
-  const page: Page = {
-    id: createId("page"),
-    name: "Page 1",
-    nodes: [],
-  };
-
+  const page = { id: createId("page"), name: "Page 1", nodes: [] };
   return {
     version: 1,
     pageSize: "A4",
     orientation: "portrait",
     zoom: 1,
-    grid: {
-      enabled: false,
-      stepMm: 5,
-    },
+    grid: { enabled: false, stepMm: 5 },
     pages: [page],
     activePageId: page.id,
   };
