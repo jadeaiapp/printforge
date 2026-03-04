@@ -1,45 +1,255 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder";
-const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
+const title = "PrintForge App — Builder Shell";
+const description = "Builder shell UI for Sprint 1.";
+const homeHref = withBase("/en/", base);
 ---
+
 <BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href={withBase("/en/", base)}>
+  <div class="app-shell" data-lang="en">
+    <header class="app-topbar" aria-label="Application top bar">
+      <a class="app-brand" href={homeHref} aria-label="PrintForge home">
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-      <div class="nav">
-        <a class="btn" href={withBase("/en/", base)}>Landing</a>
-        <a class="btn" href={withBase("/tr/", base)}>TR</a>
+
+      <div class="topbar-group">
+        <label class="control-group" for="zoom-select">
+          <span data-i18n="zoom">Zoom</span>
+          <select id="zoom-select" aria-label="Zoom level">
+            <option>25%</option>
+            <option>50%</option>
+            <option>75%</option>
+            <option selected>100%</option>
+            <option>Fit</option>
+          </select>
+        </label>
       </div>
-    </div>
+
+      <div class="topbar-group topbar-actions">
+        <fieldset class="segment" aria-label="Page size toggle">
+          <legend class="sr-only" data-i18n="pageSize">Page size</legend>
+          <button type="button" class="segment-btn is-active" aria-label="A4 page size">A4</button>
+          <button type="button" class="segment-btn" aria-label="A5 page size">A5</button>
+        </fieldset>
+
+        <fieldset class="segment" aria-label="Language toggle">
+          <legend class="sr-only" data-i18n="lang">Language</legend>
+          <button type="button" class="segment-btn lang-btn" data-lang-btn="tr" aria-label="Switch to Turkish">TR</button>
+          <button type="button" class="segment-btn lang-btn is-active" data-lang-btn="en" aria-label="Switch to English">EN</button>
+        </fieldset>
+
+        <button class="btn" type="button" disabled aria-label="Export (coming soon)">
+          <span data-i18n="export">Export</span>
+        </button>
+        <button class="btn" type="button" disabled aria-label="Save (coming soon)">
+          <span data-i18n="save">Save</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main" aria-label="Builder editor">
+      <aside class="panel left-panel" aria-label="Blocks sidebar">
+        <h2 data-i18n="blocks">Blocks</h2>
+        <div class="block-list">
+          <button type="button" class="block-item" aria-label="Text block">⬚ Text</button>
+          <button type="button" class="block-item" aria-label="Heading block">⬚ Heading</button>
+          <button type="button" class="block-item" aria-label="Box block">⬚ Box</button>
+          <button type="button" class="block-item" aria-label="Line block">⬚ Line</button>
+          <button type="button" class="block-item" aria-label="Checklist block">⬚ Checklist</button>
+          <button type="button" class="block-item" aria-label="Table block">⬚ Table</button>
+          <button type="button" class="block-item" aria-label="Calendar block">⬚ Calendar</button>
+          <button type="button" class="block-item" aria-label="Habit Tracker block">⬚ Habit Tracker</button>
+          <button type="button" class="block-item" aria-label="Image block">⬚ Image</button>
+        </div>
+      </aside>
+
+      <section class="panel canvas-panel" aria-label="Canvas section">
+        <div class="canvas-toolbar">
+          <label class="checkline" for="grid-toggle">
+            <input id="grid-toggle" type="checkbox" />
+            <span data-i18n="grid">Show grid overlay</span>
+          </label>
+          <div class="canvas-meta">
+            <span class="pill">A4</span>
+            <span class="pill">100%</span>
+          </div>
+        </div>
+
+        <div class="workspace" aria-label="Canvas workspace" data-i18n-aria="workspace">
+          <div class="page-frame" aria-label="Page preview" data-i18n-aria="pagePreview">
+            <div class="page-tag">A4 • 210 × 297 mm</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel right-panel" aria-label="Inspector sidebar">
+        <h2 data-i18n="inspector">Inspector</h2>
+
+        <details open>
+          <summary data-i18n="position">Position</summary>
+          <div class="inspector-grid">
+            <label><span data-i18n="x">X</span><input disabled type="number" value="0" /></label>
+            <label><span data-i18n="y">Y</span><input disabled type="number" value="0" /></label>
+          </div>
+        </details>
+
+        <details open>
+          <summary data-i18n="size">Size</summary>
+          <div class="inspector-grid">
+            <label><span data-i18n="w">W</span><input disabled type="number" value="100" /></label>
+            <label><span data-i18n="h">H</span><input disabled type="number" value="40" /></label>
+          </div>
+        </details>
+
+        <details>
+          <summary data-i18n="typography">Typography</summary>
+          <div class="inspector-grid full">
+            <label><span data-i18n="font">Font</span><input disabled type="text" value="Inter" /></label>
+            <label><span data-i18n="fontSize">Size</span><input disabled type="number" value="14" /></label>
+            <label><span data-i18n="align">Align</span><input disabled type="text" value="Left" /></label>
+          </div>
+        </details>
+
+        <details>
+          <summary data-i18n="style">Style</summary>
+          <div class="inspector-grid full">
+            <label><span data-i18n="fill">Fill</span><input disabled type="text" value="#ffffff" /></label>
+            <label><span data-i18n="stroke">Stroke</span><input disabled type="text" value="#d1d5db" /></label>
+            <label><span data-i18n="radius">Radius</span><input disabled type="number" value="6" /></label>
+          </div>
+        </details>
+      </aside>
+    </main>
+
+    <section class="pages-strip" aria-label="Pages strip">
+      <div class="pages-head">
+        <h2 data-i18n="pages">Pages</h2>
+        <div class="pages-actions">
+          <button type="button" aria-label="Add page"><span data-i18n="addPage">Add page</span></button>
+          <button type="button" disabled aria-label="Duplicate page"><span data-i18n="duplicate">Duplicate</span></button>
+          <button type="button" disabled aria-label="Delete page"><span data-i18n="remove">Delete</span></button>
+        </div>
+      </div>
+      <div class="pages-list">
+        <button class="page-thumb is-active" type="button" aria-label="Page 1">
+          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+          <span data-i18n="page">Page</span> 1
+        </button>
+        <button class="page-thumb" type="button" aria-label="Page 2">
+          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+          <span data-i18n="page">Page</span> 2
+        </button>
+      </div>
+    </section>
   </div>
 
-  <main class="container" style="padding:60px 0 50px;">
-    <div class="kicker">/app</div>
-    <h1>Builder shell (Sprint 1)</h1>
-    <p class="lead" style="max-width:72ch;">
-      This route is reserved for the drag & drop editor. Next sprint we’ll add:
-      canvas, blocks palette, inspector, pages panel, and PDF export.
-    </p>
+  <script is:inline>
+    (() => {
+      const shell = document.querySelector(".app-shell");
+      if (!shell) return;
 
-    <div class="card" style="margin-top:22px;">
-      <h3 style="margin:0 0 10px;">Next up</h3>
-      <ul style="margin:0; padding-left:18px; color:var(--muted);">
-        <li>Freeform A4/A5 canvas + snap</li>
-        <li>Blocks: Text, Box, Line, Checklist</li>
-        <li>Multi-page + export PDF</li>
-        <li>Project save/load (JSON)</li>
-      </ul>
-    </div>
+      const dict = {
+        en: {
+          blocks: "Blocks",
+          inspector: "Inspector",
+          pages: "Pages",
+          zoom: "Zoom",
+          pageSize: "Page size",
+          lang: "Language",
+          export: "Export",
+          save: "Save",
+          grid: "Show grid overlay",
+          workspace: "Canvas workspace",
+          pagePreview: "Page preview",
+          page: "Page",
+          addPage: "Add page",
+          duplicate: "Duplicate",
+          remove: "Delete",
+          position: "Position",
+          size: "Size",
+          typography: "Typography",
+          style: "Style",
+          x: "X",
+          y: "Y",
+          w: "W",
+          h: "H",
+          font: "Font",
+          fontSize: "Size",
+          align: "Align",
+          fill: "Fill",
+          stroke: "Stroke",
+          radius: "Radius"
+        },
+        tr: {
+          blocks: "Bloklar",
+          inspector: "İnceleyici",
+          pages: "Sayfalar",
+          zoom: "Yakınlaştırma",
+          pageSize: "Sayfa boyutu",
+          lang: "Dil",
+          export: "Dışa aktar",
+          save: "Kaydet",
+          grid: "Izgara katmanını göster",
+          workspace: "Tuval çalışma alanı",
+          pagePreview: "Sayfa önizleme",
+          page: "Sayfa",
+          addPage: "Sayfa ekle",
+          duplicate: "Çoğalt",
+          remove: "Sil",
+          position: "Konum",
+          size: "Boyut",
+          typography: "Tipografi",
+          style: "Stil",
+          x: "X",
+          y: "Y",
+          w: "G",
+          h: "Y",
+          font: "Yazı tipi",
+          fontSize: "Boyut",
+          align: "Hizalama",
+          fill: "Dolgu",
+          stroke: "Çizgi",
+          radius: "Köşe"
+        }
+      };
 
-    <div class="hero-cta" style="margin-top:18px;">
-      <a class="btn primary" href={withBase("/en/#features", base)}>See features</a>
-      <a class="btn" href={withBase("/tr/#features", base)}>Özelliklere bak</a>
-    </div>
-  </main>
+      const langButtons = shell.querySelectorAll("[data-lang-btn]");
+      const defaultLang = (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
+
+      const applyLang = (lang) => {
+        const bundle = dict[lang] || dict.en || {};
+        shell.dataset.lang = lang;
+
+        shell.querySelectorAll("[data-i18n]").forEach((node) => {
+          const key = node.getAttribute("data-i18n");
+          if (key && bundle[key]) node.textContent = bundle[key];
+        });
+
+        shell.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+          const key = node.getAttribute("data-i18n-aria");
+          if (key && bundle[key]) node.setAttribute("aria-label", bundle[key]);
+        });
+
+        langButtons.forEach((btn) => {
+          const isActive = btn.getAttribute("data-lang-btn") === lang;
+          btn.classList.toggle("is-active", isActive);
+          btn.setAttribute("aria-pressed", String(isActive));
+        });
+      };
+
+      langButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const lang = btn.getAttribute("data-lang-btn") || "en";
+          applyLang(lang);
+        });
+      });
+
+      applyLang(defaultLang);
+    })();
+  </script>
 </BaseLayout>
