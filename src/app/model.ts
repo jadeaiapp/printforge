@@ -2,38 +2,60 @@ export const PX_PER_MM = 3.7795275591;
 
 export type PageSize = "A4" | "A5";
 export type Orientation = "portrait" | "landscape";
-export type NodeType = "text" | "box" | "line";
 
-export interface NodeBase {
+export type NodeType =
+  | "text"
+  | "heading"
+  | "paragraph"
+  | "box"
+  | "line"
+  | "checkbox"
+  | "checklist"
+  | "bulletlist"
+  | "divider"
+  | "highlight"
+  | "circle"
+  | "roundedrect"
+  | "datelabel"
+  | "table"
+  | "calendar"
+  | "image";
+
+export interface NodeProps {
+  text?: string;
+  items?: string[];
+  checked?: boolean;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: 400 | 600 | 700;
+  italic?: boolean;
+  align?: "left" | "center" | "right";
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  radius?: number;
+  thickness?: number;
+  color?: string;
+  src?: string;
+  rows?: number;
+  cols?: number;
+  month?: number;
+  year?: number;
+}
+
+export interface Node {
   id: string;
   type: NodeType;
+  name: string;
   xMm: number;
   yMm: number;
   wMm: number;
   hMm: number;
   z: number;
+  visible: boolean;
+  locked: boolean;
+  props: NodeProps;
 }
-
-export interface TextNode extends NodeBase {
-  type: "text";
-  text: string;
-  fontSize: number;
-}
-
-export interface BoxNode extends NodeBase {
-  type: "box";
-  fill: string;
-  stroke: string;
-  radius: number;
-}
-
-export interface LineNode extends NodeBase {
-  type: "line";
-  stroke: string;
-  thickness: number;
-}
-
-export type Node = TextNode | BoxNode | LineNode;
 
 export interface Page {
   id: string;
@@ -46,7 +68,7 @@ export interface Doc {
   pageSize: PageSize;
   orientation: Orientation;
   zoom: number;
-  grid: { enabled: boolean; stepMm: number };
+  grid: { enabled: boolean; stepMm: 2 | 5 | 10 };
   pages: Page[];
   activePageId: string;
 }
@@ -79,7 +101,7 @@ export function snapMm(v: number, stepMm: number, enabled: boolean) {
 export function defaultDoc(): Doc {
   const page = { id: createId("page"), name: "Page 1", nodes: [] };
   return {
-    version: 1,
+    version: 2,
     pageSize: "A4",
     orientation: "portrait",
     zoom: 1,

@@ -5,17 +5,16 @@ import "../../styles/app.css";
 
 const base = import.meta.env.BASE_URL ?? "/";
 ---
-<BaseLayout lang="en" title="PrintForge App — Pro MVP" description="Interactive printable builder MVP" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+<BaseLayout lang="en" title="PrintForge App — Editor Polish" description="Interactive printable builder" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
   <div class="app-shell" id="app-shell">
     <header class="app-topbar">
       <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-
       <div class="top-controls">
         <label>Zoom
-          <select id="zoom-select">
+          <select id="zoom-select" class="ui-select">
             <option value="0.25">25%</option>
             <option value="0.5">50%</option>
             <option value="0.75">75%</option>
@@ -23,7 +22,6 @@ const base = import.meta.env.BASE_URL ?? "/";
             <option value="fit">Fit</option>
           </select>
         </label>
-
         <div class="segment">
           <button type="button" data-size="A4" class="is-active">A4</button>
           <button type="button" data-size="A5">A5</button>
@@ -34,8 +32,14 @@ const base = import.meta.env.BASE_URL ?? "/";
         </div>
 
         <label class="checkline"><input type="checkbox" id="grid-toggle" /> Grid</label>
-        <button type="button" id="bring-front">Bring front</button>
-        <button type="button" id="send-back">Send back</button>
+        <label>Step
+          <select id="grid-step" class="ui-select">
+            <option value="2">2mm</option>
+            <option value="5" selected>5mm</option>
+            <option value="10">10mm</option>
+          </select>
+        </label>
+
         <button type="button" id="save-btn">Save</button>
         <button type="button" id="load-btn">Load</button>
         <button type="button" id="export-btn">Export JSON</button>
@@ -47,20 +51,43 @@ const base = import.meta.env.BASE_URL ?? "/";
     </header>
 
     <main class="app-main">
-      <aside class="panel">
+      <aside class="panel left-panel">
         <h2>Blocks</h2>
         <div class="block-list" id="block-list">
-          <button type="button" draggable="true" data-block="text" class="block-item"><svg viewBox="0 0 24 24"><path d="M4 6h16M8 12h8M10 18h4"/></svg><span>Text</span></button>
-          <button type="button" draggable="true" data-block="box" class="block-item"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg><span>Box</span></button>
-          <button type="button" draggable="true" data-block="line" class="block-item"><svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg><span>Line</span></button>
-          <button type="button" draggable="true" data-block="image" class="block-item"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 14l3-3 5 5"/></svg><span>Image</span></button>
+          <button class="block-item" data-block="text" draggable="true">🅣 Text</button>
+          <button class="block-item" data-block="heading" draggable="true">Ⓗ Heading</button>
+          <button class="block-item" data-block="paragraph" draggable="true">¶ Paragraph</button>
+          <button class="block-item" data-block="checkbox" draggable="true">☑ Checkbox</button>
+          <button class="block-item" data-block="checklist" draggable="true">☰ Checklist</button>
+          <button class="block-item" data-block="bulletlist" draggable="true">• Bullet list</button>
+          <button class="block-item" data-block="divider" draggable="true">─ Divider</button>
+          <button class="block-item" data-block="highlight" draggable="true">▧ Highlight</button>
+          <button class="block-item" data-block="circle" draggable="true">◯ Circle</button>
+          <button class="block-item" data-block="roundedrect" draggable="true">▢ Rounded rect</button>
+          <button class="block-item" data-block="datelabel" draggable="true">🗓 Date label</button>
+          <button class="block-item" data-block="table" draggable="true">▦ Table</button>
+          <button class="block-item" data-block="calendar" draggable="true">📅 Calendar</button>
+          <button class="block-item" data-block="image" draggable="true">🖼 Image</button>
+          <button class="block-item" data-block="box" draggable="true">⬚ Box</button>
+          <button class="block-item" data-block="line" draggable="true">⎯ Line</button>
         </div>
+
+        <h2 class="layers-title">Layers</h2>
+        <div class="layer-actions">
+          <button type="button" id="z-front">Front</button>
+          <button type="button" id="z-forward">+1</button>
+          <button type="button" id="z-backward">-1</button>
+          <button type="button" id="z-back">Back</button>
+        </div>
+        <div id="layers-list" class="layers-list"></div>
       </aside>
 
       <section class="panel canvas-panel">
         <div id="workspace" class="workspace">
           <div id="page" class="page">
-            <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
+            <div id="drop-preview" class="drop-preview"></div>
+            <div id="guide-x" class="guide guide-x"></div>
+            <div id="guide-y" class="guide guide-y"></div>
             <div id="stage" class="stage"></div>
           </div>
         </div>
@@ -74,18 +101,33 @@ const base = import.meta.env.BASE_URL ?? "/";
           <label>W (mm)<input id="ins-w" type="number" step="0.5" /></label>
           <label>H (mm)<input id="ins-h" type="number" step="0.5" /></label>
 
+          <label>Font
+            <select id="ins-font-family" class="ui-select">
+              <option value="Inter,system-ui">Inter/system-ui</option>
+              <option value="Arial,sans-serif">Arial</option>
+              <option value="Georgia,serif">Georgia</option>
+              <option value="'Times New Roman',serif">Times New Roman</option>
+              <option value="'Courier New',monospace">Courier New</option>
+              <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+              <option value="Verdana,sans-serif">Verdana</option>
+            </select>
+          </label>
           <label>Font size<input id="ins-font-size" type="number" step="1" /></label>
+          <label>Weight
+            <select id="ins-font-weight" class="ui-select"><option value="400">400</option><option value="600">600</option><option value="700">700</option></select>
+          </label>
+          <label>Italic<input id="ins-italic" type="checkbox" /></label>
           <label>Align
-            <select id="ins-align"><option>left</option><option>center</option><option>right</option></select>
+            <select id="ins-align" class="ui-select"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
           </label>
 
           <label>Fill<input id="ins-fill" type="color" /></label>
           <label>Stroke<input id="ins-stroke" type="color" /></label>
-          <label>Stroke w<input id="ins-stroke-w" type="number" step="0.5" /></label>
+          <label>Stroke w<input id="ins-stroke-width" type="number" step="0.5" /></label>
           <label>Radius<input id="ins-radius" type="number" step="1" /></label>
 
           <label>Line w<input id="ins-thickness" type="number" step="0.5" /></label>
-          <label>Line color<input id="ins-line-color" type="color" /></label>
+          <label>Line color<input id="ins-color" type="color" /></label>
         </div>
       </aside>
     </main>
@@ -102,72 +144,47 @@ const base = import.meta.env.BASE_URL ?? "/";
     <div class="toast" id="toast"></div>
   </div>
 
-  <script type="module">
-    console.log("PrintForge editor booted");
-
+  <script>
     const PX_PER_MM = 3.7795275591;
     const mmToPx = (mm) => mm * PX_PER_MM;
     const pxToMm = (px) => px / PX_PER_MM;
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-    const id = (p = "id") => `${p}_${Math.random().toString(36).slice(2, 10)}`;
-    const snapMm = (v, step, enabled) => (enabled ? Math.round(v / step) * step : v);
+    const createId = (prefix = "id") => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const pageDimensionsMm = (size, orientation) => {
+      const base = size === "A4" ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
+      return orientation === "portrait" ? base : { wMm: base.hMm, hMm: base.wMm };
+    };
+    const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
+    const defaultDoc = () => {
+      const page = { id: createId("page"), name: "Page 1", nodes: [] };
+      return { version: 2, pageSize: "A4", orientation: "portrait", zoom: 1, grid: { enabled: false, stepMm: 5 }, pages: [page], activePageId: page.id };
+    };
+    const saveToLocal = (doc) => localStorage.setItem("printforge_doc_v2c", JSON.stringify(doc));
+    const loadFromLocal = () => { try { const raw = localStorage.getItem("printforge_doc_v2c"); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+    const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
+    const importJSON = async (file) => JSON.parse(await file.text());
 
+    const snapThresholdMm = 2;
     const el = {
-      workspace: document.getElementById("workspace"),
-      page: document.getElementById("page"),
-      stage: document.getElementById("stage"),
-      pagesList: document.getElementById("pages-list"),
-      zoom: document.getElementById("zoom-select"),
-      grid: document.getElementById("grid-toggle"),
-      addPage: document.getElementById("add-page"),
-      dupPage: document.getElementById("dup-page"),
-      delPage: document.getElementById("del-page"),
-      save: document.getElementById("save-btn"),
-      load: document.getElementById("load-btn"),
-      ex: document.getElementById("export-btn"),
-      im: document.getElementById("import-btn"),
-      imInput: document.getElementById("import-input"),
-      imageInput: document.getElementById("image-input"),
-      bringFront: document.getElementById("bring-front"),
-      sendBack: document.getElementById("send-back"),
-      dropPreview: document.getElementById("drop-preview"),
-      toast: document.getElementById("toast"),
-      blockList: document.getElementById("block-list"),
-      insX: document.getElementById("ins-x"),
-      insY: document.getElementById("ins-y"),
-      insW: document.getElementById("ins-w"),
-      insH: document.getElementById("ins-h"),
-      insFontSize: document.getElementById("ins-font-size"),
-      insAlign: document.getElementById("ins-align"),
-      insFill: document.getElementById("ins-fill"),
-      insStroke: document.getElementById("ins-stroke"),
-      insStrokeW: document.getElementById("ins-stroke-w"),
-      insRadius: document.getElementById("ins-radius"),
-      insThickness: document.getElementById("ins-thickness"),
-      insLineColor: document.getElementById("ins-line-color"),
+      page: document.getElementById('page'), stage: document.getElementById('stage'), workspace: document.getElementById('workspace'),
+      blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
+      gridToggle: document.getElementById('grid-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
+      addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
+      save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'),
+      zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
+      insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
+      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'),
+      insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
+      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'),
+      insRadius: document.getElementById('ins-radius'), insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'),
     };
 
-    const key = "printforge_doc_v2b";
-    const blank = () => ({
-      version: 2,
-      pageSize: "A4",
-      orientation: "portrait",
-      zoom: 1,
-      grid: { enabled: false, stepMm: 5 },
-      pages: [{ id: id("page"), name: "Page 1", nodes: [] }],
-      activePageId: null,
-    });
-
-    let doc = (() => {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : blank();
-      } catch { return blank(); }
-    })();
-    if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
-
+    let doc = loadFromLocal() || defaultDoc();
     let selectedNodeId = null;
     let draggingBlock = null;
+    let draggingLayerId = null;
     let undoStack = [structuredClone(doc)];
     let redoStack = [];
 
@@ -177,102 +194,177 @@ const base = import.meta.env.BASE_URL ?? "/";
       redoStack = [];
     };
 
-    const pageDims = () => {
-      const b = doc.pageSize === "A4" ? { w: 210, h: 297 } : { w: 148, h: 210 };
-      return doc.orientation === "portrait" ? b : { w: b.h, h: b.w };
-    };
     const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
     const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
-    const snap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+    const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
+    const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
 
-    const toast = (msg) => {
-      el.toast.textContent = msg;
-      el.toast.classList.add("show");
-      setTimeout(() => el.toast.classList.remove("show"), 1000);
-    };
+    function gridSnap(v) { return snapMm(v, doc.grid.stepMm, doc.grid.enabled); }
 
     function renderFrame() {
-      const d = pageDims();
-      el.page.style.width = `${mmToPx(d.w)}px`;
-      el.page.style.height = `${mmToPx(d.h)}px`;
+      const d = dims();
+      el.page.style.width = `${mmToPx(d.wMm)}px`;
+      el.page.style.height = `${mmToPx(d.hMm)}px`;
       el.page.style.transform = `scale(${doc.zoom})`;
-      el.page.classList.toggle("grid", doc.grid.enabled);
-      el.stage.style.width = `${mmToPx(d.w)}px`;
-      el.stage.style.height = `${mmToPx(d.h)}px`;
+      el.page.classList.toggle('grid', doc.grid.enabled);
+      el.page.style.setProperty('--grid-step-px', `${mmToPx(doc.grid.stepMm)}px`);
+      el.page.style.setProperty('--grid-major-px', `${mmToPx(doc.grid.stepMm * 5)}px`);
+      el.stage.style.width = `${mmToPx(d.wMm)}px`;
+      el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function formatNodeName(n, index) {
+      return n.name || `${n.type[0].toUpperCase() + n.type.slice(1)} ${index + 1}`;
+    }
+
+    function renderLayers() {
+      const p = activePage();
+      el.layersList.innerHTML = '';
+      if (!p) return;
+      const ordered = [...p.nodes].sort((a, b) => b.z - a.z);
+      ordered.forEach((n, idx) => {
+        const row = document.createElement('div');
+        row.className = `layer-row ${n.id === selectedNodeId ? 'active' : ''}`;
+        row.draggable = true;
+        row.dataset.id = n.id;
+        row.innerHTML = `
+          <span class="layer-icon">${n.type.slice(0,1).toUpperCase()}</span>
+          <span class="layer-name">${formatNodeName(n, idx)}</span>
+          <button type="button" class="layer-eye">${n.visible ? '👁' : '🚫'}</button>
+          <button type="button" class="layer-lock">${n.locked ? '🔒' : '🔓'}</button>
+        `;
+
+        row.onclick = (ev) => {
+          if (ev.target.classList.contains('layer-eye')) { n.visible = !n.visible; pushHistory(); render(); return; }
+          if (ev.target.classList.contains('layer-lock')) { n.locked = !n.locked; pushHistory(); render(); return; }
+          selectedNodeId = n.id; render();
+        };
+
+        row.ondblclick = (ev) => {
+          if (!ev.target.classList.contains('layer-name')) return;
+          const nameEl = ev.target;
+          const input = document.createElement('input');
+          input.className = 'layer-rename';
+          input.value = nameEl.textContent;
+          nameEl.replaceWith(input);
+          input.focus();
+          const finish = (save) => {
+            if (save) { n.name = input.value.trim() || n.name; pushHistory(); }
+            renderLayers();
+          };
+          input.onkeydown = (e) => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); };
+          input.onblur = () => finish(true);
+        };
+
+        row.ondragstart = () => { draggingLayerId = n.id; };
+        row.ondragover = (ev) => ev.preventDefault();
+        row.ondrop = (ev) => {
+          ev.preventDefault();
+          if (!draggingLayerId || draggingLayerId === n.id) return;
+          const sorted = [...p.nodes].sort((a,b) => b.z-a.z);
+          const from = sorted.findIndex((x) => x.id === draggingLayerId);
+          const to = sorted.findIndex((x) => x.id === n.id);
+          const [item] = sorted.splice(from, 1);
+          sorted.splice(to, 0, item);
+          sorted.forEach((node, i) => { node.z = sorted.length - i; });
+          pushHistory();
+          render();
+        };
+
+        el.layersList.appendChild(row);
+      });
     }
 
     function renderPages() {
-      el.pagesList.innerHTML = "";
-      doc.pages.forEach((p, i) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "page-chip";
-        const btn = document.createElement("button");
-        btn.className = `page-thumb ${p.id === doc.activePageId ? "active" : ""}`;
-        btn.textContent = p.name || `Page ${i + 1}`;
-        btn.onclick = () => { doc.activePageId = p.id; selectedNodeId = null; render(); };
-
-        btn.ondblclick = (ev) => {
-          ev.stopPropagation();
-          const inp = document.createElement("input");
-          inp.value = p.name;
-          inp.className = "page-rename";
-          wrapper.replaceChild(inp, btn);
-          inp.focus();
-          inp.select();
-          const commit = () => {
-            p.name = inp.value.trim() || `Page ${i + 1}`;
-            pushHistory();
+      const p = activePage();
+      el.pagesList.innerHTML = '';
+      doc.pages.forEach((page, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'page-chip';
+        const b = document.createElement('button');
+        b.className = `page-thumb ${page.id === p?.id ? 'active' : ''}`;
+        b.textContent = page.name || `Page ${i + 1}`;
+        b.onclick = () => { doc.activePageId = page.id; selectedNodeId = null; render(); };
+        b.ondblclick = () => {
+          const input = document.createElement('input');
+          input.className = 'page-rename';
+          input.value = page.name;
+          wrap.replaceChild(input, b);
+          input.focus();
+          const save = (ok) => {
+            if (ok) { page.name = input.value.trim() || `Page ${i + 1}`; pushHistory(); }
             renderPages();
           };
-          inp.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") commit();
-            if (e.key === "Escape") renderPages();
-          });
-          inp.addEventListener("blur", commit);
+          input.onkeydown = (e) => { if (e.key === 'Enter') save(true); if (e.key === 'Escape') save(false); };
+          input.onblur = () => save(true);
         };
-
-        wrapper.appendChild(btn);
-        el.pagesList.appendChild(wrapper);
+        wrap.appendChild(b);
+        el.pagesList.appendChild(wrap);
       });
       el.delPage.disabled = doc.pages.length <= 1;
     }
 
-    function nodeInner(n) {
-      if (n.type === "text") return `<div class=\"text-content\" contenteditable=\"true\">${n.text}</div>`;
-      if (n.type === "box") return `<div class=\"box-content\" style=\"background:${n.fill};border:${n.strokeWidth || 1}px solid ${n.stroke};border-radius:${n.radius || 0}px\"></div>`;
-      if (n.type === "line") return `<div class=\"line-content\" style=\"height:${n.thickness || 2}px;background:${n.color || '#334155'}\"></div>`;
-      if (n.type === "image") return `<img class=\"image-content\" src=\"${n.src}\" alt=\"uploaded\" />`;
-      return "";
+    function nodeHtml(n) {
+      if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+        const style = `font-size:${n.props.fontSize || 14}px;font-family:${n.props.fontFamily || 'Inter,system-ui'};font-weight:${n.props.fontWeight || 400};font-style:${n.props.italic ? 'italic':'normal'};text-align:${n.props.align || 'left'};`;
+        return `<div class=\"text-content\" style=\"${style}\" contenteditable=\"true\">${n.props.text || ''}</div>`;
+      }
+      if (["box","highlight","roundedrect","circle"].includes(n.type)) {
+        const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
+        return `<div class=\"box-content\" style=\"background:${n.props.fill || '#e2e8f0'};border:${n.props.strokeWidth || 1}px solid ${n.props.stroke || '#94a3b8'};border-radius:${radius};\"></div>`;
+      }
+      if (["line","divider"].includes(n.type)) {
+        return `<div class=\"line-content\" style=\"height:${n.props.thickness || 2}px;background:${n.props.color || '#334155'}\"></div>`;
+      }
+      if (n.type === 'checkbox') {
+        return `<div class=\"meta-content\">${n.props.checked ? '☑' : '☐'} ${n.props.text || 'Checkbox item'}</div>`;
+      }
+      if (n.type === 'checklist' || n.type === 'bulletlist') {
+        const arr = n.props.items || [];
+        return `<div class=\"meta-content\" contenteditable=\"true\">${arr.map((x) => n.type === 'bulletlist' ? `• ${x}` : `☐ ${x}`).join('<br>')}</div>`;
+      }
+      if (n.type === 'table') {
+        const rows = n.props.rows || 3; const cols = n.props.cols || 3;
+        return `<div class=\"table-content\" style=\"grid-template-columns:repeat(${cols},1fr)\">${Array.from({length: rows * cols}, () => '<div></div>').join('')}</div>`;
+      }
+      if (n.type === 'calendar') {
+        return `<div class=\"calendar-content\"><div class=\"cal-title\">${new Date(n.props.year || 2026, (n.props.month || 1)-1, 1).toLocaleString('en', {month:'long', year:'numeric'})}</div><div class=\"cal-grid\">${Array.from({length:42}, (_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
+      }
+      if (n.type === 'image') return `<img class=\"image-content\" src=\"${n.props.src || ''}\" alt=\"uploaded\"/>`;
+      return '';
     }
 
     function renderNodes() {
       const p = activePage();
-      el.stage.innerHTML = "";
+      el.stage.innerHTML = '';
       if (!p) return;
       [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
-        const d = document.createElement("div");
-        d.className = `node node-${n.type} ${n.id === selectedNodeId ? "selected" : ""}`;
+        if (!n.visible) return;
+        const d = document.createElement('div');
+        d.className = `node node-${n.type} ${n.id === selectedNodeId ? 'selected' : ''}`;
         d.dataset.id = n.id;
         d.style.left = `${mmToPx(n.xMm)}px`;
         d.style.top = `${mmToPx(n.yMm)}px`;
         d.style.width = `${mmToPx(n.wMm)}px`;
         d.style.height = `${mmToPx(n.hMm)}px`;
         d.style.zIndex = String(n.z);
-        d.innerHTML = nodeInner(n);
+        d.innerHTML = nodeHtml(n);
 
-        if (n.type === "text") {
-          const c = d.querySelector('.text-content');
-          c.oninput = () => { n.text = c.textContent || "Text"; };
-          c.onblur = () => pushHistory();
+        const editable = d.querySelector('[contenteditable="true"]');
+        if (editable) {
+          editable.oninput = () => {
+            if (n.type === 'checklist' || n.type === 'bulletlist') {
+              n.props.items = editable.innerText.split('\n').map((s)=>s.replace(/^•\s|^☐\s/, '').trim()).filter(Boolean);
+            } else n.props.text = editable.innerText;
+          };
+          editable.onblur = () => pushHistory();
         }
 
-        if (n.id === selectedNodeId) {
+        if (n.id === selectedNodeId && !n.locked) {
           ["nw","ne","sw","se"].forEach((h) => {
-            const handle = document.createElement("button");
-            handle.type = "button";
-            handle.className = `handle ${h}`;
-            handle.dataset.handle = h;
-            d.appendChild(handle);
+            const hEl = document.createElement('button');
+            hEl.type = 'button'; hEl.className = `handle ${h}`; hEl.dataset.handle = h;
+            d.appendChild(hEl);
           });
         }
 
@@ -283,205 +375,243 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function syncInspector() {
       const n = activeNode();
-      const disable = !n;
-      const set = (input, val) => { input.value = val ?? ""; input.disabled = disable; };
-      set(el.insX, n?.xMm?.toFixed?.(1));
-      set(el.insY, n?.yMm?.toFixed?.(1));
-      set(el.insW, n?.wMm?.toFixed?.(1));
-      set(el.insH, n?.hMm?.toFixed?.(1));
-      set(el.insFontSize, n?.type === "text" ? n.fontSize : "");
-      set(el.insAlign, n?.type === "text" ? n.align || "left" : "left");
-      set(el.insFill, n?.type === "box" ? n.fill : "#e2e8f0");
-      set(el.insStroke, n?.type === "box" ? n.stroke : "#94a3b8");
-      set(el.insStrokeW, n?.type === "box" ? n.strokeWidth || 1 : "1");
-      set(el.insRadius, n?.type === "box" ? n.radius || 0 : "0");
-      set(el.insThickness, n?.type === "line" ? n.thickness || 2 : "2");
-      set(el.insLineColor, n?.type === "line" ? n.color || "#334155" : "#334155");
+      const set = (inp, v, enabled=true) => { inp.disabled = !n || !enabled; if (v !== undefined) inp.type === 'checkbox' ? inp.checked = !!v : inp.value = String(v); };
+      set(el.insX, n?.xMm?.toFixed(1));
+      set(el.insY, n?.yMm?.toFixed(1));
+      set(el.insW, n?.wMm?.toFixed(1));
+      set(el.insH, n?.hMm?.toFixed(1));
+      set(el.insFontFamily, n?.props.fontFamily || 'Inter,system-ui', ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFontSize, n?.props.fontSize || 14, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFontWeight, n?.props.fontWeight || 400, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insItalic, n?.props.italic || false, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insAlign, n?.props.align || 'left', ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFill, n?.props.fill || '#e2e8f0', ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insStroke, n?.props.stroke || '#94a3b8', ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insStrokeWidth, n?.props.strokeWidth || 1, ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insRadius, n?.props.radius || 0, ["box","highlight","roundedrect"].includes(n?.type));
+      set(el.insThickness, n?.props.thickness || 2, ["line","divider"].includes(n?.type));
+      set(el.insColor, n?.props.color || '#334155', ["line","divider"].includes(n?.type));
     }
 
     function render() {
       renderFrame();
       renderPages();
+      renderLayers();
       renderNodes();
-      document.querySelectorAll("[data-size]").forEach((b) => b.classList.toggle("is-active", b.dataset.size === doc.pageSize));
-      document.querySelectorAll("[data-orientation]").forEach((b) => b.classList.toggle("is-active", b.dataset.orientation === doc.orientation));
+      document.querySelectorAll('[data-size]').forEach((b) => b.classList.toggle('is-active', b.dataset.size === doc.pageSize));
+      document.querySelectorAll('[data-orientation]').forEach((b) => b.classList.toggle('is-active', b.dataset.orientation === doc.orientation));
     }
 
-    function createNode(type, xMm, yMm, extra = {}) {
-      const p = activePage();
-      if (!p) return;
+    function applyPreset(type, xMm, yMm, extra = {}) {
+      const p = activePage(); if (!p) return;
       const z = p.nodes.length ? Math.max(...p.nodes.map((n) => n.z)) + 1 : 1;
-      const base = { id: id("node"), type, xMm, yMm, wMm: 60, hMm: 30, z };
-      if (type === "text") p.nodes.push({ ...base, wMm: 70, hMm: 16, text: "Text", fontSize: 14, align: "left", ...extra });
-      if (type === "box") p.nodes.push({ ...base, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1, radius: 6, ...extra });
-      if (type === "line") p.nodes.push({ ...base, wMm: 70, hMm: 3, thickness: 2, color: "#334155", ...extra });
-      if (type === "image") p.nodes.push({ ...base, wMm: 80, hMm: 50, src: extra.src, ...extra });
+      const common = { id: createId('node'), name: '', xMm, yMm, wMm: 60, hMm: 24, z, visible: true, locked: false, props: {} };
+      const today = new Date();
+      const presets = {
+        text: { type, name:'Text', wMm:60, hMm:16, props:{ text:'Text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left' } },
+        heading: { type, name:'Heading', wMm:90, hMm:18, props:{ text:'Heading', fontSize:22, fontFamily:'Inter,system-ui', fontWeight:700, align:'left' } },
+        paragraph: { type, name:'Paragraph', wMm:100, hMm:30, props:{ text:'Paragraph text', fontSize:13, fontFamily:'Georgia,serif', fontWeight:400, align:'left' } },
+        box: { type, name:'Box', wMm:60, hMm:40, props:{ fill:'#e2e8f0', stroke:'#94a3b8', strokeWidth:1, radius:4 } },
+        line: { type, name:'Line', wMm:70, hMm:3, props:{ thickness:2, color:'#334155' } },
+        checkbox: { type, name:'Checkbox', wMm:70, hMm:12, props:{ checked:false, text:'Task item' } },
+        checklist: { type, name:'Checklist', wMm:80, hMm:40, props:{ items:['Item 1','Item 2','Item 3'] } },
+        bulletlist: { type, name:'Bullet list', wMm:80, hMm:40, props:{ items:['Point 1','Point 2','Point 3'] } },
+        divider: { type, name:'Divider', wMm:100, hMm:3, props:{ thickness:1, color:'#64748b' } },
+        highlight: { type, name:'Highlight', wMm:70, hMm:28, props:{ fill:'#fef9c3', stroke:'#f59e0b', strokeWidth:1, radius:4 } },
+        circle: { type, name:'Circle', wMm:34, hMm:34, props:{ fill:'#e0f2fe', stroke:'#0ea5e9', strokeWidth:1 } },
+        roundedrect: { type, name:'Rounded rect', wMm:70, hMm:30, props:{ fill:'#e2e8f0', stroke:'#64748b', strokeWidth:1, radius:10 } },
+        datelabel: { type, name:'Date', wMm:75, hMm:14, props:{ text:today.toISOString().slice(0,10), fontSize:13, fontFamily:'Verdana,sans-serif', fontWeight:600, align:'left' } },
+        table: { type, name:'Table', wMm:90, hMm:55, props:{ rows:4, cols:4 } },
+        calendar: { type, name:'Calendar', wMm:90, hMm:70, props:{ month:today.getMonth()+1, year:today.getFullYear() } },
+        image: { type, name:'Image', wMm:85, hMm:60, props:{ src: '' } },
+      };
+      const preset = presets[type];
+      if (!preset) return;
+      p.nodes.push({ ...common, ...preset, ...extra, props: { ...preset.props, ...(extra.props || {}) } });
       selectedNodeId = p.nodes[p.nodes.length - 1].id;
       pushHistory();
       render();
     }
 
-    async function createImageAt(xMm, yMm) {
+    async function addImageAt(xMm, yMm) {
       el.imageInput.click();
       const file = await new Promise((resolve) => {
         el.imageInput.onchange = () => resolve(el.imageInput.files?.[0] || null);
       });
-      el.imageInput.value = "";
+      el.imageInput.value = '';
       if (!file) return;
       const src = await new Promise((resolve) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.readAsDataURL(file);
+        const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file);
       });
-      createNode("image", xMm, yMm, { src });
+      applyPreset('image', xMm, yMm, { props: { src } });
     }
 
-    // Drag/drop blocks
-    el.blockList.querySelectorAll('[data-block]').forEach((b) => {
-      b.addEventListener('dragstart', () => { draggingBlock = b.dataset.block; el.page.classList.add('dropping'); });
-      b.addEventListener('dragend', () => { draggingBlock = null; el.page.classList.remove('dropping'); el.dropPreview.classList.remove('show'); });
-      b.addEventListener('click', () => toast('Drag to place on page'));
-    });
-
-    function pagePointFromEvent(ev) {
+    function pagePointFromEvent(e) {
       const rect = el.page.getBoundingClientRect();
-      const xPx = (ev.clientX - rect.left) / doc.zoom;
-      const yPx = (ev.clientY - rect.top) / doc.zoom;
-      return { xMm: clamp(snap(pxToMm(xPx)), 0, pageDims().w), yMm: clamp(snap(pxToMm(yPx)), 0, pageDims().h) };
+      const xPx = (e.clientX - rect.left) / doc.zoom;
+      const yPx = (e.clientY - rect.top) / doc.zoom;
+      return { xMm: clamp(gridSnap(pxToMm(xPx)), 0, dims().wMm), yMm: clamp(gridSnap(pxToMm(yPx)), 0, dims().hMm) };
     }
 
-    el.page.addEventListener('dragover', (ev) => {
-      ev.preventDefault();
-      if (!draggingBlock) return;
-      const { xMm, yMm } = pagePointFromEvent(ev);
-      el.dropPreview.style.left = `${mmToPx(xMm)}px`;
-      el.dropPreview.style.top = `${mmToPx(yMm)}px`;
+    function maybeObjectSnap(node, x, y) {
+      if (doc.grid.enabled) return { x, y, guideX: null, guideY: null };
+      const p = activePage(); if (!p) return { x, y, guideX: null, guideY: null };
+      let sx = x, sy = y, gx = null, gy = null;
+      const candidates = p.nodes.filter((n) => n.id !== node.id && n.visible).flatMap((n) => [
+        { x: n.xMm }, { x: n.xMm + n.wMm }, { x: n.xMm + n.wMm / 2 },
+        { y: n.yMm }, { y: n.yMm + n.hMm }, { y: n.yMm + n.hMm / 2 },
+      ]);
+      for (const c of candidates) {
+        if (c.x !== undefined) {
+          const left = x, center = x + node.wMm / 2, right = x + node.wMm;
+          for (const val of [left, center, right]) {
+            if (Math.abs(val - c.x) <= snapThresholdMm) { sx += c.x - val; gx = c.x; }
+          }
+        }
+        if (c.y !== undefined) {
+          const top = y, middle = y + node.hMm / 2, bottom = y + node.hMm;
+          for (const val of [top, middle, bottom]) {
+            if (Math.abs(val - c.y) <= snapThresholdMm) { sy += c.y - val; gy = c.y; }
+          }
+        }
+      }
+      return { x: sx, y: sy, guideX: gx, guideY: gy };
+    }
+
+    // Blocks drag/drop
+    el.blockList.querySelectorAll('.block-item').forEach((b) => {
+      b.ondragstart = () => { draggingBlock = b.dataset.block; };
+      b.ondragend = () => { draggingBlock = null; el.dropPreview.classList.remove('show'); };
+      b.onclick = () => showToast('Drag onto page to place');
+    });
+
+    el.page.ondragover = (e) => {
+      e.preventDefault(); if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      el.dropPreview.style.left = `${mmToPx(pt.xMm)}px`;
+      el.dropPreview.style.top = `${mmToPx(pt.yMm)}px`;
       el.dropPreview.classList.add('show');
-    });
-    el.page.addEventListener('dragleave', () => el.dropPreview.classList.remove('show'));
-    el.page.addEventListener('drop', async (ev) => {
-      ev.preventDefault();
-      if (!draggingBlock) return;
-      const { xMm, yMm } = pagePointFromEvent(ev);
-      if (draggingBlock === 'image') await createImageAt(xMm, yMm);
-      else createNode(draggingBlock, xMm, yMm);
+    };
+    el.page.ondragleave = () => el.dropPreview.classList.remove('show');
+    el.page.ondrop = async (e) => {
+      e.preventDefault(); if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
+      else applyPreset(draggingBlock, pt.xMm, pt.yMm);
       draggingBlock = null;
-      el.page.classList.remove('dropping');
       el.dropPreview.classList.remove('show');
-    });
+    };
 
-    // stage select/drag/resize
-    function startPointer(ev) {
-      const nodeEl = ev.target.closest('.node');
-      if (!nodeEl) return;
-      const n = activePage()?.nodes.find((x) => x.id === nodeEl.dataset.id);
-      if (!n) return;
+    // Node interactions
+    function startPointer(e) {
+      const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
+      const n = activePage()?.nodes.find((x) => x.id === nodeEl.dataset.id); if (!n || n.locked) return;
       selectedNodeId = n.id;
-      const s = { x: ev.clientX, y: ev.clientY, xMm: n.xMm, yMm: n.yMm, wMm: n.wMm, hMm: n.hMm };
-      const handle = ev.target.dataset.handle || null;
-      const d = pageDims();
+      const start = { x: e.clientX, y: e.clientY, xMm: n.xMm, yMm: n.yMm, wMm: n.wMm, hMm: n.hMm };
+      const handle = e.target.dataset.handle || null;
+      const d = dims();
 
-      const move = (e) => {
-        const dx = pxToMm((e.clientX - s.x) / doc.zoom);
-        const dy = pxToMm((e.clientY - s.y) / doc.zoom);
+      const move = (ev) => {
+        const dx = pxToMm((ev.clientX - start.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - start.y) / doc.zoom);
         if (!handle) {
-          n.xMm = clamp(snap(s.xMm + dx), 0, d.w - n.wMm);
-          n.yMm = clamp(snap(s.yMm + dy), 0, d.h - n.hMm);
+          let nx = clamp(gridSnap(start.xMm + dx), 0, d.wMm - n.wMm);
+          let ny = clamp(gridSnap(start.yMm + dy), 0, d.hMm - n.hMm);
+          const snapped = maybeObjectSnap(n, nx, ny);
+          nx = clamp(snapped.x, 0, d.wMm - n.wMm); ny = clamp(snapped.y, 0, d.hMm - n.hMm);
+          n.xMm = nx; n.yMm = ny;
+          el.guideX.style.display = snapped.guideX == null ? 'none' : 'block';
+          el.guideY.style.display = snapped.guideY == null ? 'none' : 'block';
+          if (snapped.guideX != null) el.guideX.style.left = `${mmToPx(snapped.guideX)}px`;
+          if (snapped.guideY != null) el.guideY.style.top = `${mmToPx(snapped.guideY)}px`;
         } else {
-          if (handle.includes('e')) n.wMm = clamp(snap(s.wMm + dx), 8, d.w - n.xMm);
-          if (handle.includes('s')) n.hMm = clamp(snap(s.hMm + dy), 8, d.h - n.yMm);
+          if (handle.includes('e')) n.wMm = clamp(gridSnap(start.wMm + dx), 8, d.wMm - n.xMm);
+          if (handle.includes('s')) n.hMm = clamp(gridSnap(start.hMm + dy), 8, d.hMm - n.yMm);
           if (handle.includes('w')) {
-            const nx = clamp(snap(s.xMm + dx), 0, s.xMm + s.wMm - 8);
-            n.wMm = clamp(snap(s.wMm - (nx - s.xMm)), 8, d.w);
+            const nx = clamp(gridSnap(start.xMm + dx), 0, start.xMm + start.wMm - 8);
+            n.wMm = clamp(gridSnap(start.wMm - (nx - start.xMm)), 8, d.wMm);
             n.xMm = nx;
           }
           if (handle.includes('n')) {
-            const ny = clamp(snap(s.yMm + dy), 0, s.yMm + s.hMm - 8);
-            n.hMm = clamp(snap(s.hMm - (ny - s.yMm)), 8, d.h);
+            const ny = clamp(gridSnap(start.yMm + dy), 0, start.yMm + start.hMm - 8);
+            n.hMm = clamp(gridSnap(start.hMm - (ny - start.yMm)), 8, d.hMm);
             n.yMm = ny;
           }
         }
         renderNodes();
       };
-      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); pushHistory(); render(); };
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); el.guideX.style.display='none'; el.guideY.style.display='none'; pushHistory(); render(); };
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     }
 
-    el.stage.addEventListener('pointerdown', (ev) => {
-      if (ev.target === el.stage) { selectedNodeId = null; render(); return; }
-      startPointer(ev);
-    });
+    el.stage.onpointerdown = (e) => {
+      if (e.target === el.stage) { selectedNodeId = null; render(); return; }
+      startPointer(e);
+    };
 
-    // inspector edits
-    function applyInspectorChange(mutator) {
-      const n = activeNode();
-      if (!n) return;
-      mutator(n);
-      pushHistory();
-      render();
+    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked) return; fn(n); pushHistory(); render(); };
+    el.insX.onchange = () => applyInspector((n)=> n.xMm = gridSnap(Number(el.insX.value) || 0));
+    el.insY.onchange = () => applyInspector((n)=> n.yMm = gridSnap(Number(el.insY.value) || 0));
+    el.insW.onchange = () => applyInspector((n)=> n.wMm = Math.max(8, Number(el.insW.value) || 8));
+    el.insH.onchange = () => applyInspector((n)=> n.hMm = Math.max(8, Number(el.insH.value) || 8));
+    el.insFontFamily.onchange = () => applyInspector((n)=> n.props.fontFamily = el.insFontFamily.value);
+    el.insFontSize.onchange = () => applyInspector((n)=> n.props.fontSize = Math.max(8, Number(el.insFontSize.value) || 14));
+    el.insFontWeight.onchange = () => applyInspector((n)=> n.props.fontWeight = Number(el.insFontWeight.value));
+    el.insItalic.onchange = () => applyInspector((n)=> n.props.italic = el.insItalic.checked);
+    el.insAlign.onchange = () => applyInspector((n)=> n.props.align = el.insAlign.value);
+    el.insFill.onchange = () => applyInspector((n)=> n.props.fill = el.insFill.value);
+    el.insStroke.onchange = () => applyInspector((n)=> n.props.stroke = el.insStroke.value);
+    el.insStrokeWidth.onchange = () => applyInspector((n)=> n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
+    el.insRadius.onchange = () => applyInspector((n)=> n.props.radius = Math.max(0, Number(el.insRadius.value) || 0));
+    el.insThickness.onchange = () => applyInspector((n)=> n.props.thickness = Math.max(1, Number(el.insThickness.value) || 1));
+    el.insColor.onchange = () => applyInspector((n)=> n.props.color = el.insColor.value);
+
+    function normalizeZ(page) {
+      [...page.nodes].sort((a,b) => a.z - b.z).forEach((n, i) => { n.z = i + 1; });
     }
 
-    el.insX.addEventListener('change', () => applyInspectorChange((n) => n.xMm = snap(Number(el.insX.value) || 0)));
-    el.insY.addEventListener('change', () => applyInspectorChange((n) => n.yMm = snap(Number(el.insY.value) || 0)));
-    el.insW.addEventListener('change', () => applyInspectorChange((n) => n.wMm = Math.max(8, Number(el.insW.value) || 8)));
-    el.insH.addEventListener('change', () => applyInspectorChange((n) => n.hMm = Math.max(8, Number(el.insH.value) || 8)));
-    el.insFontSize.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'text') n.fontSize = Math.max(8, Number(el.insFontSize.value) || 14); }));
-    el.insAlign.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'text') n.align = el.insAlign.value; }));
-    el.insFill.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.fill = el.insFill.value; }));
-    el.insStroke.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.stroke = el.insStroke.value; }));
-    el.insStrokeW.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.strokeWidth = Math.max(0.5, Number(el.insStrokeW.value) || 1); }));
-    el.insRadius.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'box') n.radius = Math.max(0, Number(el.insRadius.value) || 0); }));
-    el.insThickness.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'line') n.thickness = Math.max(1, Number(el.insThickness.value) || 2); }));
-    el.insLineColor.addEventListener('change', () => applyInspectorChange((n) => { if (n.type === 'line') n.color = el.insLineColor.value; }));
-
-    // z-order
-    el.bringFront.onclick = () => {
+    const zMove = (mode) => {
       const p = activePage(); const n = activeNode(); if (!p || !n) return;
-      n.z = Math.max(...p.nodes.map((x) => x.z)) + 1;
+      const sorted = [...p.nodes].sort((a,b)=>a.z-b.z);
+      const idx = sorted.findIndex((x)=>x.id===n.id);
+      if (mode === 'front') { sorted.splice(idx,1); sorted.push(n); }
+      if (mode === 'back') { sorted.splice(idx,1); sorted.unshift(n); }
+      if (mode === 'forward' && idx < sorted.length-1) { [sorted[idx], sorted[idx+1]] = [sorted[idx+1], sorted[idx]]; }
+      if (mode === 'backward' && idx > 0) { [sorted[idx], sorted[idx-1]] = [sorted[idx-1], sorted[idx]]; }
+      sorted.forEach((node, i) => node.z = i + 1);
       pushHistory(); render();
     };
-    el.sendBack.onclick = () => {
-      const p = activePage(); const n = activeNode(); if (!p || !n) return;
-      n.z = Math.min(...p.nodes.map((x) => x.z)) - 1;
-      pushHistory(); render();
-    };
+    el.zFront.onclick = () => zMove('front');
+    el.zBack.onclick = () => zMove('back');
+    el.zForward.onclick = () => zMove('forward');
+    el.zBackward.onclick = () => zMove('backward');
 
-    // controls + persistence
     document.querySelectorAll('[data-size]').forEach((b) => b.onclick = () => { doc.pageSize = b.dataset.size; pushHistory(); render(); });
     document.querySelectorAll('[data-orientation]').forEach((b) => b.onclick = () => { doc.orientation = b.dataset.orientation; pushHistory(); render(); });
-    el.zoom.onchange = () => {
-      if (el.zoom.value === 'fit') doc.zoom = clamp((el.workspace.clientWidth - 40) / mmToPx(pageDims().w), 0.25, 1.5);
-      else doc.zoom = Number(el.zoom.value);
-      pushHistory(); render();
-    };
-    el.grid.onchange = () => { doc.grid.enabled = el.grid.checked; pushHistory(); render(); };
+    el.zoom.onchange = () => { doc.zoom = el.zoom.value === 'fit' ? clamp((el.workspace.clientWidth - 40) / mmToPx(dims().wMm), 0.25, 1.5) : Number(el.zoom.value); pushHistory(); render(); };
+    el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; pushHistory(); render(); };
+    el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); pushHistory(); render(); };
 
-    el.addPage.onclick = () => { const p = { id: id('page'), name: `Page ${doc.pages.length + 1}`, nodes: [] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; pushHistory(); render(); };
-    el.dupPage.onclick = () => { const p = activePage(); if (!p) return; const c = structuredClone(p); c.id = id('page'); c.name = `Page ${doc.pages.length + 1}`; c.nodes.forEach((n) => n.id = id('node')); doc.pages.push(c); doc.activePageId = c.id; selectedNodeId = null; pushHistory(); render(); };
-    el.delPage.onclick = () => { if (doc.pages.length <= 1) return; doc.pages = doc.pages.filter((p) => p.id !== doc.activePageId); doc.activePageId = doc.pages[0].id; selectedNodeId = null; pushHistory(); render(); };
+    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; pushHistory(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if (!p) return; const c = structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId = c.id; selectedNodeId=null; pushHistory(); render(); };
+    el.delPage.onclick = () => { if (doc.pages.length <= 1) return; doc.pages = doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId = doc.pages[0].id; selectedNodeId=null; pushHistory(); render(); };
 
-    el.save.onclick = () => { localStorage.setItem(key, JSON.stringify(doc)); toast('Saved'); };
-    el.load.onclick = () => { const raw = localStorage.getItem(key); if (!raw) return; try { doc = JSON.parse(raw); selectedNodeId = null; undoStack = [structuredClone(doc)]; redoStack = []; render(); toast('Loaded'); } catch { toast('Load failed'); } };
-    el.ex.onclick = () => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = 'printforge-doc.json'; a.click(); URL.revokeObjectURL(u); };
-    el.im.onclick = () => el.imInput.click();
-    el.imInput.onchange = async () => {
-      const f = el.imInput.files?.[0]; if (!f) return;
-      try { doc = JSON.parse(await f.text()); selectedNodeId = null; undoStack = [structuredClone(doc)]; redoStack = []; render(); toast('Imported'); }
-      catch { toast('Invalid JSON'); }
-      el.imInput.value = '';
-    };
+    el.save.onclick = () => { saveToLocal(doc); showToast('Saved'); };
+    el.load.onclick = () => { const loaded = loadFromLocal(); if (!loaded) return; doc = loaded; selectedNodeId = null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Loaded'); };
+    el.ex.onclick = () => exportJSON(doc);
+    el.im.onclick = () => el.importInput.click();
+    el.importInput.onchange = async () => { const f = el.importInput.files?.[0]; if (!f) return; try { doc = await importJSON(f); selectedNodeId = null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
 
-    // keyboard undo/redo + delete
     window.addEventListener('keydown', (e) => {
-      const mod = e.ctrlKey || e.metaKey;
+      const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
           if (!redoStack.length) return;
-          const next = redoStack.pop();
-          undoStack.push(structuredClone(next));
-          doc = structuredClone(next);
+          const nxt = redoStack.pop();
+          undoStack.push(structuredClone(nxt));
+          doc = structuredClone(nxt);
         } else {
           if (undoStack.length <= 1) return;
           const cur = undoStack.pop();
@@ -489,14 +619,6 @@ const base = import.meta.env.BASE_URL ?? "/";
           doc = structuredClone(undoStack[undoStack.length - 1]);
         }
         selectedNodeId = null;
-        render();
-      }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
-        const p = activePage();
-        if (!p) return;
-        p.nodes = p.nodes.filter((n) => n.id !== selectedNodeId);
-        selectedNodeId = null;
-        pushHistory();
         render();
       }
     });
