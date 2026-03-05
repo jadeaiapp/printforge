@@ -41,6 +41,10 @@ export interface NodeProps {
   cols?: number;
   month?: number;
   year?: number;
+  objectFit?: "contain" | "cover";
+  opacity?: number;
+  lineHeight?: number;
+  listStyle?: "bullet" | "checkbox";
 }
 
 export interface Node {
@@ -101,7 +105,7 @@ export function snapMm(v: number, stepMm: number, enabled: boolean) {
 export function defaultDoc(): Doc {
   const page = { id: createId("page"), name: "Page 1", nodes: [] };
   return {
-    version: 2,
+    version: 3,
     pageSize: "A4",
     orientation: "portrait",
     zoom: 1,

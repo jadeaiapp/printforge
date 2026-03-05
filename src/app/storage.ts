@@ -1,6 +1,6 @@
 import type { Doc, NodeType } from "./model";
 
-const STORAGE_KEY = "printforge_doc_v2c";
+const STORAGE_KEY = "printforge_doc_v2d";
 
 const NODE_TYPES = new Set<NodeType>([
   "text", "heading", "paragraph", "box", "line", "checkbox", "checklist", "bulletlist",
