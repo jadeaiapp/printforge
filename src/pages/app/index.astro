@@ -1,45 +1,628 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder";
-const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
 ---
-<BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="topbar">
-    <div class="container topbar-inner">
+<BaseLayout lang="en" title="PrintForge App — Editor Polish" description="Interactive printable builder" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar">
       <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-      <div class="nav">
-        <a class="btn" href={withBase("/en/", base)}>Landing</a>
-        <a class="btn" href={withBase("/tr/", base)}>TR</a>
+      <div class="top-controls">
+        <label>Zoom
+          <select id="zoom-select" class="ui-select">
+            <option value="0.25">25%</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="fit">Fit</option>
+          </select>
+        </label>
+        <div class="segment">
+          <button type="button" data-size="A4" class="is-active">A4</button>
+          <button type="button" data-size="A5">A5</button>
+        </div>
+        <div class="segment">
+          <button type="button" data-orientation="portrait" class="is-active">Portrait</button>
+          <button type="button" data-orientation="landscape">Landscape</button>
+        </div>
+
+        <label class="checkline"><input type="checkbox" id="grid-toggle" /> Grid</label>
+        <label>Step
+          <select id="grid-step" class="ui-select">
+            <option value="2">2mm</option>
+            <option value="5" selected>5mm</option>
+            <option value="10">10mm</option>
+          </select>
+        </label>
+
+        <button type="button" id="save-btn">Save</button>
+        <button type="button" id="load-btn">Load</button>
+        <button type="button" id="export-btn">Export JSON</button>
+        <button type="button" id="import-btn">Import JSON</button>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <input id="image-input" type="file" accept="image/*" hidden />
+        <button type="button" disabled>Export PDF</button>
       </div>
-    </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="panel left-panel">
+        <h2>Blocks</h2>
+        <div class="block-list" id="block-list">
+          <button class="block-item" data-block="text" draggable="true">🅣 Text</button>
+          <button class="block-item" data-block="heading" draggable="true">Ⓗ Heading</button>
+          <button class="block-item" data-block="paragraph" draggable="true">¶ Paragraph</button>
+          <button class="block-item" data-block="checkbox" draggable="true">☑ Checkbox</button>
+          <button class="block-item" data-block="checklist" draggable="true">☰ Checklist</button>
+          <button class="block-item" data-block="bulletlist" draggable="true">• Bullet list</button>
+          <button class="block-item" data-block="divider" draggable="true">─ Divider</button>
+          <button class="block-item" data-block="highlight" draggable="true">▧ Highlight</button>
+          <button class="block-item" data-block="circle" draggable="true">◯ Circle</button>
+          <button class="block-item" data-block="roundedrect" draggable="true">▢ Rounded rect</button>
+          <button class="block-item" data-block="datelabel" draggable="true">🗓 Date label</button>
+          <button class="block-item" data-block="table" draggable="true">▦ Table</button>
+          <button class="block-item" data-block="calendar" draggable="true">📅 Calendar</button>
+          <button class="block-item" data-block="image" draggable="true">🖼 Image</button>
+          <button class="block-item" data-block="box" draggable="true">⬚ Box</button>
+          <button class="block-item" data-block="line" draggable="true">⎯ Line</button>
+        </div>
+
+        <h2 class="layers-title">Layers</h2>
+        <div class="layer-actions">
+          <button type="button" id="z-front">Front</button>
+          <button type="button" id="z-forward">+1</button>
+          <button type="button" id="z-backward">-1</button>
+          <button type="button" id="z-back">Back</button>
+        </div>
+        <div id="layers-list" class="layers-list"></div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div id="workspace" class="workspace">
+          <div id="page" class="page">
+            <div id="drop-preview" class="drop-preview"></div>
+            <div id="guide-x" class="guide guide-x"></div>
+            <div id="guide-y" class="guide guide-y"></div>
+            <div id="stage" class="stage"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Inspector</h2>
+        <div class="inspector-grid">
+          <label>X (mm)<input id="ins-x" type="number" step="0.5" /></label>
+          <label>Y (mm)<input id="ins-y" type="number" step="0.5" /></label>
+          <label>W (mm)<input id="ins-w" type="number" step="0.5" /></label>
+          <label>H (mm)<input id="ins-h" type="number" step="0.5" /></label>
+
+          <label>Font
+            <select id="ins-font-family" class="ui-select">
+              <option value="Inter,system-ui">Inter/system-ui</option>
+              <option value="Arial,sans-serif">Arial</option>
+              <option value="Georgia,serif">Georgia</option>
+              <option value="'Times New Roman',serif">Times New Roman</option>
+              <option value="'Courier New',monospace">Courier New</option>
+              <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+              <option value="Verdana,sans-serif">Verdana</option>
+            </select>
+          </label>
+          <label>Font size<input id="ins-font-size" type="number" step="1" /></label>
+          <label>Weight
+            <select id="ins-font-weight" class="ui-select"><option value="400">400</option><option value="600">600</option><option value="700">700</option></select>
+          </label>
+          <label>Italic<input id="ins-italic" type="checkbox" /></label>
+          <label>Align
+            <select id="ins-align" class="ui-select"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+          </label>
+
+          <label>Fill<input id="ins-fill" type="color" /></label>
+          <label>Stroke<input id="ins-stroke" type="color" /></label>
+          <label>Stroke w<input id="ins-stroke-width" type="number" step="0.5" /></label>
+          <label>Radius<input id="ins-radius" type="number" step="1" /></label>
+
+          <label>Line w<input id="ins-thickness" type="number" step="0.5" /></label>
+          <label>Line color<input id="ins-color" type="color" /></label>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page">Add page</button>
+        <button type="button" id="dup-page">Duplicate</button>
+        <button type="button" id="del-page">Delete</button>
+      </div>
+      <div class="pages-list" id="pages-list"></div>
+    </section>
+
+    <div class="toast" id="toast"></div>
   </div>
 
-  <main class="container" style="padding:60px 0 50px;">
-    <div class="kicker">/app</div>
-    <h1>Builder shell (Sprint 1)</h1>
-    <p class="lead" style="max-width:72ch;">
-      This route is reserved for the drag & drop editor. Next sprint we’ll add:
-      canvas, blocks palette, inspector, pages panel, and PDF export.
-    </p>
+  <script>
+    const PX_PER_MM = 3.7795275591;
+    const mmToPx = (mm) => mm * PX_PER_MM;
+    const pxToMm = (px) => px / PX_PER_MM;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const createId = (prefix = "id") => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const pageDimensionsMm = (size, orientation) => {
+      const base = size === "A4" ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
+      return orientation === "portrait" ? base : { wMm: base.hMm, hMm: base.wMm };
+    };
+    const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
+    const defaultDoc = () => {
+      const page = { id: createId("page"), name: "Page 1", nodes: [] };
+      return { version: 2, pageSize: "A4", orientation: "portrait", zoom: 1, grid: { enabled: false, stepMm: 5 }, pages: [page], activePageId: page.id };
+    };
+    const saveToLocal = (doc) => localStorage.setItem("printforge_doc_v2c", JSON.stringify(doc));
+    const loadFromLocal = () => { try { const raw = localStorage.getItem("printforge_doc_v2c"); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+    const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
+    const importJSON = async (file) => JSON.parse(await file.text());
 
-    <div class="card" style="margin-top:22px;">
-      <h3 style="margin:0 0 10px;">Next up</h3>
-      <ul style="margin:0; padding-left:18px; color:var(--muted);">
-        <li>Freeform A4/A5 canvas + snap</li>
-        <li>Blocks: Text, Box, Line, Checklist</li>
-        <li>Multi-page + export PDF</li>
-        <li>Project save/load (JSON)</li>
-      </ul>
-    </div>
+    const snapThresholdMm = 2;
+    const el = {
+      page: document.getElementById('page'), stage: document.getElementById('stage'), workspace: document.getElementById('workspace'),
+      blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
+      gridToggle: document.getElementById('grid-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
+      addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
+      save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'),
+      zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
+      insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
+      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'),
+      insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
+      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'),
+      insRadius: document.getElementById('ins-radius'), insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'),
+    };
 
-    <div class="hero-cta" style="margin-top:18px;">
-      <a class="btn primary" href={withBase("/en/#features", base)}>See features</a>
-      <a class="btn" href={withBase("/tr/#features", base)}>Özelliklere bak</a>
-    </div>
-  </main>
+    let doc = loadFromLocal() || defaultDoc();
+    let selectedNodeId = null;
+    let draggingBlock = null;
+    let draggingLayerId = null;
+    let undoStack = [structuredClone(doc)];
+    let redoStack = [];
+
+    const pushHistory = () => {
+      undoStack.push(structuredClone(doc));
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+    };
+
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
+    const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
+
+    function gridSnap(v) { return snapMm(v, doc.grid.stepMm, doc.grid.enabled); }
+
+    function renderFrame() {
+      const d = dims();
+      el.page.style.width = `${mmToPx(d.wMm)}px`;
+      el.page.style.height = `${mmToPx(d.hMm)}px`;
+      el.page.style.transform = `scale(${doc.zoom})`;
+      el.page.classList.toggle('grid', doc.grid.enabled);
+      el.page.style.setProperty('--grid-step-px', `${mmToPx(doc.grid.stepMm)}px`);
+      el.page.style.setProperty('--grid-major-px', `${mmToPx(doc.grid.stepMm * 5)}px`);
+      el.stage.style.width = `${mmToPx(d.wMm)}px`;
+      el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function formatNodeName(n, index) {
+      return n.name || `${n.type[0].toUpperCase() + n.type.slice(1)} ${index + 1}`;
+    }
+
+    function renderLayers() {
+      const p = activePage();
+      el.layersList.innerHTML = '';
+      if (!p) return;
+      const ordered = [...p.nodes].sort((a, b) => b.z - a.z);
+      ordered.forEach((n, idx) => {
+        const row = document.createElement('div');
+        row.className = `layer-row ${n.id === selectedNodeId ? 'active' : ''}`;
+        row.draggable = true;
+        row.dataset.id = n.id;
+        row.innerHTML = `
+          <span class="layer-icon">${n.type.slice(0,1).toUpperCase()}</span>
+          <span class="layer-name">${formatNodeName(n, idx)}</span>
+          <button type="button" class="layer-eye">${n.visible ? '👁' : '🚫'}</button>
+          <button type="button" class="layer-lock">${n.locked ? '🔒' : '🔓'}</button>
+        `;
+
+        row.onclick = (ev) => {
+          if (ev.target.classList.contains('layer-eye')) { n.visible = !n.visible; pushHistory(); render(); return; }
+          if (ev.target.classList.contains('layer-lock')) { n.locked = !n.locked; pushHistory(); render(); return; }
+          selectedNodeId = n.id; render();
+        };
+
+        row.ondblclick = (ev) => {
+          if (!ev.target.classList.contains('layer-name')) return;
+          const nameEl = ev.target;
+          const input = document.createElement('input');
+          input.className = 'layer-rename';
+          input.value = nameEl.textContent;
+          nameEl.replaceWith(input);
+          input.focus();
+          const finish = (save) => {
+            if (save) { n.name = input.value.trim() || n.name; pushHistory(); }
+            renderLayers();
+          };
+          input.onkeydown = (e) => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); };
+          input.onblur = () => finish(true);
+        };
+
+        row.ondragstart = () => { draggingLayerId = n.id; };
+        row.ondragover = (ev) => ev.preventDefault();
+        row.ondrop = (ev) => {
+          ev.preventDefault();
+          if (!draggingLayerId || draggingLayerId === n.id) return;
+          const sorted = [...p.nodes].sort((a,b) => b.z-a.z);
+          const from = sorted.findIndex((x) => x.id === draggingLayerId);
+          const to = sorted.findIndex((x) => x.id === n.id);
+          const [item] = sorted.splice(from, 1);
+          sorted.splice(to, 0, item);
+          sorted.forEach((node, i) => { node.z = sorted.length - i; });
+          pushHistory();
+          render();
+        };
+
+        el.layersList.appendChild(row);
+      });
+    }
+
+    function renderPages() {
+      const p = activePage();
+      el.pagesList.innerHTML = '';
+      doc.pages.forEach((page, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'page-chip';
+        const b = document.createElement('button');
+        b.className = `page-thumb ${page.id === p?.id ? 'active' : ''}`;
+        b.textContent = page.name || `Page ${i + 1}`;
+        b.onclick = () => { doc.activePageId = page.id; selectedNodeId = null; render(); };
+        b.ondblclick = () => {
+          const input = document.createElement('input');
+          input.className = 'page-rename';
+          input.value = page.name;
+          wrap.replaceChild(input, b);
+          input.focus();
+          const save = (ok) => {
+            if (ok) { page.name = input.value.trim() || `Page ${i + 1}`; pushHistory(); }
+            renderPages();
+          };
+          input.onkeydown = (e) => { if (e.key === 'Enter') save(true); if (e.key === 'Escape') save(false); };
+          input.onblur = () => save(true);
+        };
+        wrap.appendChild(b);
+        el.pagesList.appendChild(wrap);
+      });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
+
+    function nodeHtml(n) {
+      if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+        const style = `font-size:${n.props.fontSize || 14}px;font-family:${n.props.fontFamily || 'Inter,system-ui'};font-weight:${n.props.fontWeight || 400};font-style:${n.props.italic ? 'italic':'normal'};text-align:${n.props.align || 'left'};`;
+        return `<div class=\"text-content\" style=\"${style}\" contenteditable=\"true\">${n.props.text || ''}</div>`;
+      }
+      if (["box","highlight","roundedrect","circle"].includes(n.type)) {
+        const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
+        return `<div class=\"box-content\" style=\"background:${n.props.fill || '#e2e8f0'};border:${n.props.strokeWidth || 1}px solid ${n.props.stroke || '#94a3b8'};border-radius:${radius};\"></div>`;
+      }
+      if (["line","divider"].includes(n.type)) {
+        return `<div class=\"line-content\" style=\"height:${n.props.thickness || 2}px;background:${n.props.color || '#334155'}\"></div>`;
+      }
+      if (n.type === 'checkbox') {
+        return `<div class=\"meta-content\">${n.props.checked ? '☑' : '☐'} ${n.props.text || 'Checkbox item'}</div>`;
+      }
+      if (n.type === 'checklist' || n.type === 'bulletlist') {
+        const arr = n.props.items || [];
+        return `<div class=\"meta-content\" contenteditable=\"true\">${arr.map((x) => n.type === 'bulletlist' ? `• ${x}` : `☐ ${x}`).join('<br>')}</div>`;
+      }
+      if (n.type === 'table') {
+        const rows = n.props.rows || 3; const cols = n.props.cols || 3;
+        return `<div class=\"table-content\" style=\"grid-template-columns:repeat(${cols},1fr)\">${Array.from({length: rows * cols}, () => '<div></div>').join('')}</div>`;
+      }
+      if (n.type === 'calendar') {
+        return `<div class=\"calendar-content\"><div class=\"cal-title\">${new Date(n.props.year || 2026, (n.props.month || 1)-1, 1).toLocaleString('en', {month:'long', year:'numeric'})}</div><div class=\"cal-grid\">${Array.from({length:42}, (_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
+      }
+      if (n.type === 'image') return `<img class=\"image-content\" src=\"${n.props.src || ''}\" alt=\"uploaded\"/>`;
+      return '';
+    }
+
+    function renderNodes() {
+      const p = activePage();
+      el.stage.innerHTML = '';
+      if (!p) return;
+      [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const d = document.createElement('div');
+        d.className = `node node-${n.type} ${n.id === selectedNodeId ? 'selected' : ''}`;
+        d.dataset.id = n.id;
+        d.style.left = `${mmToPx(n.xMm)}px`;
+        d.style.top = `${mmToPx(n.yMm)}px`;
+        d.style.width = `${mmToPx(n.wMm)}px`;
+        d.style.height = `${mmToPx(n.hMm)}px`;
+        d.style.zIndex = String(n.z);
+        d.innerHTML = nodeHtml(n);
+
+        const editable = d.querySelector('[contenteditable="true"]');
+        if (editable) {
+          editable.oninput = () => {
+            if (n.type === 'checklist' || n.type === 'bulletlist') {
+              n.props.items = editable.innerText.split('\n').map((s)=>s.replace(/^•\s|^☐\s/, '').trim()).filter(Boolean);
+            } else n.props.text = editable.innerText;
+          };
+          editable.onblur = () => pushHistory();
+        }
+
+        if (n.id === selectedNodeId && !n.locked) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const hEl = document.createElement('button');
+            hEl.type = 'button'; hEl.className = `handle ${h}`; hEl.dataset.handle = h;
+            d.appendChild(hEl);
+          });
+        }
+
+        el.stage.appendChild(d);
+      });
+      syncInspector();
+    }
+
+    function syncInspector() {
+      const n = activeNode();
+      const set = (inp, v, enabled=true) => { inp.disabled = !n || !enabled; if (v !== undefined) inp.type === 'checkbox' ? inp.checked = !!v : inp.value = String(v); };
+      set(el.insX, n?.xMm?.toFixed(1));
+      set(el.insY, n?.yMm?.toFixed(1));
+      set(el.insW, n?.wMm?.toFixed(1));
+      set(el.insH, n?.hMm?.toFixed(1));
+      set(el.insFontFamily, n?.props.fontFamily || 'Inter,system-ui', ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFontSize, n?.props.fontSize || 14, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFontWeight, n?.props.fontWeight || 400, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insItalic, n?.props.italic || false, ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insAlign, n?.props.align || 'left', ["text","heading","paragraph","datelabel"].includes(n?.type));
+      set(el.insFill, n?.props.fill || '#e2e8f0', ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insStroke, n?.props.stroke || '#94a3b8', ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insStrokeWidth, n?.props.strokeWidth || 1, ["box","highlight","roundedrect","circle"].includes(n?.type));
+      set(el.insRadius, n?.props.radius || 0, ["box","highlight","roundedrect"].includes(n?.type));
+      set(el.insThickness, n?.props.thickness || 2, ["line","divider"].includes(n?.type));
+      set(el.insColor, n?.props.color || '#334155', ["line","divider"].includes(n?.type));
+    }
+
+    function render() {
+      renderFrame();
+      renderPages();
+      renderLayers();
+      renderNodes();
+      document.querySelectorAll('[data-size]').forEach((b) => b.classList.toggle('is-active', b.dataset.size === doc.pageSize));
+      document.querySelectorAll('[data-orientation]').forEach((b) => b.classList.toggle('is-active', b.dataset.orientation === doc.orientation));
+    }
+
+    function applyPreset(type, xMm, yMm, extra = {}) {
+      const p = activePage(); if (!p) return;
+      const z = p.nodes.length ? Math.max(...p.nodes.map((n) => n.z)) + 1 : 1;
+      const common = { id: createId('node'), name: '', xMm, yMm, wMm: 60, hMm: 24, z, visible: true, locked: false, props: {} };
+      const today = new Date();
+      const presets = {
+        text: { type, name:'Text', wMm:60, hMm:16, props:{ text:'Text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left' } },
+        heading: { type, name:'Heading', wMm:90, hMm:18, props:{ text:'Heading', fontSize:22, fontFamily:'Inter,system-ui', fontWeight:700, align:'left' } },
+        paragraph: { type, name:'Paragraph', wMm:100, hMm:30, props:{ text:'Paragraph text', fontSize:13, fontFamily:'Georgia,serif', fontWeight:400, align:'left' } },
+        box: { type, name:'Box', wMm:60, hMm:40, props:{ fill:'#e2e8f0', stroke:'#94a3b8', strokeWidth:1, radius:4 } },
+        line: { type, name:'Line', wMm:70, hMm:3, props:{ thickness:2, color:'#334155' } },
+        checkbox: { type, name:'Checkbox', wMm:70, hMm:12, props:{ checked:false, text:'Task item' } },
+        checklist: { type, name:'Checklist', wMm:80, hMm:40, props:{ items:['Item 1','Item 2','Item 3'] } },
+        bulletlist: { type, name:'Bullet list', wMm:80, hMm:40, props:{ items:['Point 1','Point 2','Point 3'] } },
+        divider: { type, name:'Divider', wMm:100, hMm:3, props:{ thickness:1, color:'#64748b' } },
+        highlight: { type, name:'Highlight', wMm:70, hMm:28, props:{ fill:'#fef9c3', stroke:'#f59e0b', strokeWidth:1, radius:4 } },
+        circle: { type, name:'Circle', wMm:34, hMm:34, props:{ fill:'#e0f2fe', stroke:'#0ea5e9', strokeWidth:1 } },
+        roundedrect: { type, name:'Rounded rect', wMm:70, hMm:30, props:{ fill:'#e2e8f0', stroke:'#64748b', strokeWidth:1, radius:10 } },
+        datelabel: { type, name:'Date', wMm:75, hMm:14, props:{ text:today.toISOString().slice(0,10), fontSize:13, fontFamily:'Verdana,sans-serif', fontWeight:600, align:'left' } },
+        table: { type, name:'Table', wMm:90, hMm:55, props:{ rows:4, cols:4 } },
+        calendar: { type, name:'Calendar', wMm:90, hMm:70, props:{ month:today.getMonth()+1, year:today.getFullYear() } },
+        image: { type, name:'Image', wMm:85, hMm:60, props:{ src: '' } },
+      };
+      const preset = presets[type];
+      if (!preset) return;
+      p.nodes.push({ ...common, ...preset, ...extra, props: { ...preset.props, ...(extra.props || {}) } });
+      selectedNodeId = p.nodes[p.nodes.length - 1].id;
+      pushHistory();
+      render();
+    }
+
+    async function addImageAt(xMm, yMm) {
+      el.imageInput.click();
+      const file = await new Promise((resolve) => {
+        el.imageInput.onchange = () => resolve(el.imageInput.files?.[0] || null);
+      });
+      el.imageInput.value = '';
+      if (!file) return;
+      const src = await new Promise((resolve) => {
+        const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file);
+      });
+      applyPreset('image', xMm, yMm, { props: { src } });
+    }
+
+    function pagePointFromEvent(e) {
+      const rect = el.page.getBoundingClientRect();
+      const xPx = (e.clientX - rect.left) / doc.zoom;
+      const yPx = (e.clientY - rect.top) / doc.zoom;
+      return { xMm: clamp(gridSnap(pxToMm(xPx)), 0, dims().wMm), yMm: clamp(gridSnap(pxToMm(yPx)), 0, dims().hMm) };
+    }
+
+    function maybeObjectSnap(node, x, y) {
+      if (doc.grid.enabled) return { x, y, guideX: null, guideY: null };
+      const p = activePage(); if (!p) return { x, y, guideX: null, guideY: null };
+      let sx = x, sy = y, gx = null, gy = null;
+      const candidates = p.nodes.filter((n) => n.id !== node.id && n.visible).flatMap((n) => [
+        { x: n.xMm }, { x: n.xMm + n.wMm }, { x: n.xMm + n.wMm / 2 },
+        { y: n.yMm }, { y: n.yMm + n.hMm }, { y: n.yMm + n.hMm / 2 },
+      ]);
+      for (const c of candidates) {
+        if (c.x !== undefined) {
+          const left = x, center = x + node.wMm / 2, right = x + node.wMm;
+          for (const val of [left, center, right]) {
+            if (Math.abs(val - c.x) <= snapThresholdMm) { sx += c.x - val; gx = c.x; }
+          }
+        }
+        if (c.y !== undefined) {
+          const top = y, middle = y + node.hMm / 2, bottom = y + node.hMm;
+          for (const val of [top, middle, bottom]) {
+            if (Math.abs(val - c.y) <= snapThresholdMm) { sy += c.y - val; gy = c.y; }
+          }
+        }
+      }
+      return { x: sx, y: sy, guideX: gx, guideY: gy };
+    }
+
+    // Blocks drag/drop
+    el.blockList.querySelectorAll('.block-item').forEach((b) => {
+      b.ondragstart = () => { draggingBlock = b.dataset.block; };
+      b.ondragend = () => { draggingBlock = null; el.dropPreview.classList.remove('show'); };
+      b.onclick = () => showToast('Drag onto page to place');
+    });
+
+    el.page.ondragover = (e) => {
+      e.preventDefault(); if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      el.dropPreview.style.left = `${mmToPx(pt.xMm)}px`;
+      el.dropPreview.style.top = `${mmToPx(pt.yMm)}px`;
+      el.dropPreview.classList.add('show');
+    };
+    el.page.ondragleave = () => el.dropPreview.classList.remove('show');
+    el.page.ondrop = async (e) => {
+      e.preventDefault(); if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
+      else applyPreset(draggingBlock, pt.xMm, pt.yMm);
+      draggingBlock = null;
+      el.dropPreview.classList.remove('show');
+    };
+
+    // Node interactions
+    function startPointer(e) {
+      const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
+      const n = activePage()?.nodes.find((x) => x.id === nodeEl.dataset.id); if (!n || n.locked) return;
+      selectedNodeId = n.id;
+      const start = { x: e.clientX, y: e.clientY, xMm: n.xMm, yMm: n.yMm, wMm: n.wMm, hMm: n.hMm };
+      const handle = e.target.dataset.handle || null;
+      const d = dims();
+
+      const move = (ev) => {
+        const dx = pxToMm((ev.clientX - start.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - start.y) / doc.zoom);
+        if (!handle) {
+          let nx = clamp(gridSnap(start.xMm + dx), 0, d.wMm - n.wMm);
+          let ny = clamp(gridSnap(start.yMm + dy), 0, d.hMm - n.hMm);
+          const snapped = maybeObjectSnap(n, nx, ny);
+          nx = clamp(snapped.x, 0, d.wMm - n.wMm); ny = clamp(snapped.y, 0, d.hMm - n.hMm);
+          n.xMm = nx; n.yMm = ny;
+          el.guideX.style.display = snapped.guideX == null ? 'none' : 'block';
+          el.guideY.style.display = snapped.guideY == null ? 'none' : 'block';
+          if (snapped.guideX != null) el.guideX.style.left = `${mmToPx(snapped.guideX)}px`;
+          if (snapped.guideY != null) el.guideY.style.top = `${mmToPx(snapped.guideY)}px`;
+        } else {
+          if (handle.includes('e')) n.wMm = clamp(gridSnap(start.wMm + dx), 8, d.wMm - n.xMm);
+          if (handle.includes('s')) n.hMm = clamp(gridSnap(start.hMm + dy), 8, d.hMm - n.yMm);
+          if (handle.includes('w')) {
+            const nx = clamp(gridSnap(start.xMm + dx), 0, start.xMm + start.wMm - 8);
+            n.wMm = clamp(gridSnap(start.wMm - (nx - start.xMm)), 8, d.wMm);
+            n.xMm = nx;
+          }
+          if (handle.includes('n')) {
+            const ny = clamp(gridSnap(start.yMm + dy), 0, start.yMm + start.hMm - 8);
+            n.hMm = clamp(gridSnap(start.hMm - (ny - start.yMm)), 8, d.hMm);
+            n.yMm = ny;
+          }
+        }
+        renderNodes();
+      };
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); el.guideX.style.display='none'; el.guideY.style.display='none'; pushHistory(); render(); };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    el.stage.onpointerdown = (e) => {
+      if (e.target === el.stage) { selectedNodeId = null; render(); return; }
+      startPointer(e);
+    };
+
+    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked) return; fn(n); pushHistory(); render(); };
+    el.insX.onchange = () => applyInspector((n)=> n.xMm = gridSnap(Number(el.insX.value) || 0));
+    el.insY.onchange = () => applyInspector((n)=> n.yMm = gridSnap(Number(el.insY.value) || 0));
+    el.insW.onchange = () => applyInspector((n)=> n.wMm = Math.max(8, Number(el.insW.value) || 8));
+    el.insH.onchange = () => applyInspector((n)=> n.hMm = Math.max(8, Number(el.insH.value) || 8));
+    el.insFontFamily.onchange = () => applyInspector((n)=> n.props.fontFamily = el.insFontFamily.value);
+    el.insFontSize.onchange = () => applyInspector((n)=> n.props.fontSize = Math.max(8, Number(el.insFontSize.value) || 14));
+    el.insFontWeight.onchange = () => applyInspector((n)=> n.props.fontWeight = Number(el.insFontWeight.value));
+    el.insItalic.onchange = () => applyInspector((n)=> n.props.italic = el.insItalic.checked);
+    el.insAlign.onchange = () => applyInspector((n)=> n.props.align = el.insAlign.value);
+    el.insFill.onchange = () => applyInspector((n)=> n.props.fill = el.insFill.value);
+    el.insStroke.onchange = () => applyInspector((n)=> n.props.stroke = el.insStroke.value);
+    el.insStrokeWidth.onchange = () => applyInspector((n)=> n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
+    el.insRadius.onchange = () => applyInspector((n)=> n.props.radius = Math.max(0, Number(el.insRadius.value) || 0));
+    el.insThickness.onchange = () => applyInspector((n)=> n.props.thickness = Math.max(1, Number(el.insThickness.value) || 1));
+    el.insColor.onchange = () => applyInspector((n)=> n.props.color = el.insColor.value);
+
+    function normalizeZ(page) {
+      [...page.nodes].sort((a,b) => a.z - b.z).forEach((n, i) => { n.z = i + 1; });
+    }
+
+    const zMove = (mode) => {
+      const p = activePage(); const n = activeNode(); if (!p || !n) return;
+      const sorted = [...p.nodes].sort((a,b)=>a.z-b.z);
+      const idx = sorted.findIndex((x)=>x.id===n.id);
+      if (mode === 'front') { sorted.splice(idx,1); sorted.push(n); }
+      if (mode === 'back') { sorted.splice(idx,1); sorted.unshift(n); }
+      if (mode === 'forward' && idx < sorted.length-1) { [sorted[idx], sorted[idx+1]] = [sorted[idx+1], sorted[idx]]; }
+      if (mode === 'backward' && idx > 0) { [sorted[idx], sorted[idx-1]] = [sorted[idx-1], sorted[idx]]; }
+      sorted.forEach((node, i) => node.z = i + 1);
+      pushHistory(); render();
+    };
+    el.zFront.onclick = () => zMove('front');
+    el.zBack.onclick = () => zMove('back');
+    el.zForward.onclick = () => zMove('forward');
+    el.zBackward.onclick = () => zMove('backward');
+
+    document.querySelectorAll('[data-size]').forEach((b) => b.onclick = () => { doc.pageSize = b.dataset.size; pushHistory(); render(); });
+    document.querySelectorAll('[data-orientation]').forEach((b) => b.onclick = () => { doc.orientation = b.dataset.orientation; pushHistory(); render(); });
+    el.zoom.onchange = () => { doc.zoom = el.zoom.value === 'fit' ? clamp((el.workspace.clientWidth - 40) / mmToPx(dims().wMm), 0.25, 1.5) : Number(el.zoom.value); pushHistory(); render(); };
+    el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; pushHistory(); render(); };
+    el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); pushHistory(); render(); };
+
+    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; pushHistory(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if (!p) return; const c = structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId = c.id; selectedNodeId=null; pushHistory(); render(); };
+    el.delPage.onclick = () => { if (doc.pages.length <= 1) return; doc.pages = doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId = doc.pages[0].id; selectedNodeId=null; pushHistory(); render(); };
+
+    el.save.onclick = () => { saveToLocal(doc); showToast('Saved'); };
+    el.load.onclick = () => { const loaded = loadFromLocal(); if (!loaded) return; doc = loaded; selectedNodeId = null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Loaded'); };
+    el.ex.onclick = () => exportJSON(doc);
+    el.im.onclick = () => el.importInput.click();
+    el.importInput.onchange = async () => { const f = el.importInput.files?.[0]; if (!f) return; try { doc = await importJSON(f); selectedNodeId = null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
+
+    window.addEventListener('keydown', (e) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (!redoStack.length) return;
+          const nxt = redoStack.pop();
+          undoStack.push(structuredClone(nxt));
+          doc = structuredClone(nxt);
+        } else {
+          if (undoStack.length <= 1) return;
+          const cur = undoStack.pop();
+          redoStack.push(structuredClone(cur));
+          doc = structuredClone(undoStack[undoStack.length - 1]);
+        }
+        selectedNodeId = null;
+        render();
+      }
+    });
+
+    render();
+  </script>
 </BaseLayout>
