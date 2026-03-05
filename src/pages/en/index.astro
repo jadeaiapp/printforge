@@ -66,10 +66,10 @@
           <div class="container">
             <h2 class="section-title">FAQ</h2>
             <p class="section-lead">Quick answers. We’ll keep this updated as we ship.</p>
-            <details><summary>Do I need an account?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">No for v1. We’ll add email login later for daily quotas and cloud projects.</div></details>
-<details><summary>Is it only for planners?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">No. Any printable layout: worksheets, bingo cards, trackers, checklists, labels.</div></details>
-<details><summary>Will it work on mobile?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Yes, but the best editing experience is on desktop/tablet. Mobile is great for preview/export.</div></details>
-<details><summary>How will pricing work?</summary><div style="margin-top:10px;color:var(--muted);font-size:14px;">Start free. Later: login-required daily quotas + a paid plan for higher limits and premium packs.</div></details>
+            <details><summary>Do I need an account?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">No for v1. We’ll add email login later for daily quotas and cloud projects.</div></details>
+<details><summary>Is it only for planners?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">No. Any printable layout: worksheets, bingo cards, trackers, checklists, labels.</div></details>
+<details><summary>Will it work on mobile?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">Yes, but the best editing experience is on desktop/tablet. Mobile is great for preview/export.</div></details>
+<details><summary>How will pricing work?</summary><div class="faq-content" style="margin-top:10px;color:var(--muted);font-size:14px;">Start free. Later: login-required daily quotas + a paid plan for higher limits and premium packs.</div></details>
           </div>
         </section>
 
@@ -90,4 +90,47 @@
           </div>
         </footer>
       </main>
+
+  <script is:inline>
+    (() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      const allDetails = document.querySelectorAll("#faq details");
+      allDetails.forEach((detailsEl) => {
+        const content = detailsEl.querySelector(".faq-content");
+        if (!content) return;
+
+        if (detailsEl.open) {
+          content.style.maxHeight = `${content.scrollHeight}px`;
+          content.style.opacity = "1";
+          content.style.transform = "translateY(0)";
+        } else {
+          content.style.maxHeight = "0px";
+          content.style.opacity = "0";
+          content.style.transform = "translateY(-6px)";
+        }
+
+        detailsEl.addEventListener("toggle", () => {
+          const targetHeight = `${content.scrollHeight}px`;
+
+          if (detailsEl.open) {
+            content.style.maxHeight = targetHeight;
+            content.style.opacity = "1";
+            content.style.transform = "translateY(0)";
+            return;
+          }
+
+          content.style.maxHeight = targetHeight;
+          requestAnimationFrame(() => {
+            content.style.maxHeight = "0px";
+            content.style.opacity = "0";
+            content.style.transform = "translateY(-6px)";
+          });
+        });
+      });
+    })();
+  </script>
+
     </BaseLayout>

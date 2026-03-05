@@ -9,15 +9,30 @@
 }
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
+html{ scroll-behavior:smooth; }
 body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-  background: radial-gradient(1200px 700px at 20% 10%, rgba(99,102,241,0.18), transparent 60%),
-              radial-gradient(900px 600px at 80% 30%, rgba(16,185,129,0.10), transparent 60%),
-              var(--bg);
+  background: var(--bg);
   color: var(--text);
   line-height: 1.45;
+  position: relative;
+}
+body::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events:none;
+  background:
+    radial-gradient(1400px 900px at 16% 8%, rgba(99,102,241,0.22), transparent 62%),
+    radial-gradient(1100px 760px at 82% 28%, rgba(16,185,129,0.14), transparent 64%),
+    radial-gradient(980px 700px at 50% 100%, rgba(14,165,233,0.12), transparent 68%),
+    var(--bg);
 }
 a{ color: inherit; text-decoration: none; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+}
 .container{
   width:min(1120px, calc(100% - 48px));
   margin-inline:auto;
@@ -185,7 +200,7 @@ h1{
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.05);
 }
-section{ padding: 36px 0; }
+section{ padding: 36px 0; scroll-margin-top: 90px; }
 .section-title{ font-size: 24px; margin: 0 0 10px; letter-spacing: -0.2px; }
 .section-lead{ color: var(--muted); margin: 0 0 18px; max-width: 70ch; }
 .grid-3{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -227,6 +242,19 @@ details{
 details + details{ margin-top: 10px; }
 summary{ cursor:pointer; list-style:none; font-weight: 600; }
 summary::-webkit-details-marker{ display:none; }
+details .faq-content{
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: max-height .28s ease, opacity .2s ease, transform .28s ease;
+  will-change: max-height, opacity, transform;
+}
+details[open] .faq-content{
+  max-height: 420px;
+  opacity: 1;
+  transform: translateY(0);
+}
 .footer{
   padding: 34px 0 50px;
   color: var(--muted);
@@ -241,3 +269,10 @@ summary::-webkit-details-marker{ display:none; }
   flex-wrap: wrap;
 }
 .tiny{ font-size: 13px; color: rgba(229,231,235,0.70); }
+
+@media (prefers-reduced-motion: reduce){
+  details .faq-content{
+    transition: none;
+    transform: none;
+  }
+}
