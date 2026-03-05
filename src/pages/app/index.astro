@@ -1,45 +1,632 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+
 const base = import.meta.env.BASE_URL ?? "/";
-const title = "PrintForge App — Builder";
-const description = "The editor will live here. This is the app shell placeholder for Sprint 1.";
 ---
-<BaseLayout lang="en" title={title} description={description} canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
-  <div class="topbar">
-    <div class="container topbar-inner">
+<BaseLayout lang="en" title="PrintForge App — Stabilized" description="Interactive printable builder" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar">
       <a class="brand" href={withBase("/en/", base)}>
         <span class="brand-badge" aria-hidden="true">✦</span>
         <span>PrintForge</span>
       </a>
-      <div class="nav">
-        <a class="btn" href={withBase("/en/", base)}>Landing</a>
-        <a class="btn" href={withBase("/tr/", base)}>TR</a>
+      <div class="top-controls">
+        <label class="field inline"><span>Zoom</span>
+          <select id="zoom-select" class="control"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="fit">Fit</option></select>
+        </label>
+        <div class="segment"><button type="button" data-size="A4" class="is-active">A4</button><button type="button" data-size="A5">A5</button></div>
+        <div class="segment"><button type="button" data-orientation="portrait" class="is-active">Portrait</button><button type="button" data-orientation="landscape">Landscape</button></div>
+
+        <label class="checkline"><input type="checkbox" id="grid-toggle" /> Grid</label>
+        <label class="field inline"><span>Step</span>
+          <select id="grid-step" class="control"><option value="2">2mm</option><option value="5" selected>5mm</option><option value="10">10mm</option></select>
+        </label>
+
+        <button type="button" id="delete-btn" class="btn btn-danger" disabled>Delete</button>
+        <button type="button" id="save-btn" class="btn btn-primary">Save</button>
+        <button type="button" id="load-btn" class="btn">Load</button>
+        <button type="button" id="export-btn" class="btn">Export JSON</button>
+        <button type="button" id="import-btn" class="btn">Import JSON</button>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <input id="image-input" type="file" accept="image/*" hidden />
+        <button type="button" class="btn btn-ghost" disabled>Export PDF</button>
       </div>
-    </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="panel left-panel">
+        <h2>Blocks</h2>
+        <div id="block-list" class="block-list">
+          <button class="block-item" data-block="text" draggable="true">🅣 Text</button>
+          <button class="block-item" data-block="heading" draggable="true">Ⓗ Heading</button>
+          <button class="block-item" data-block="paragraph" draggable="true">¶ Paragraph</button>
+          <button class="block-item" data-block="checkbox" draggable="true">☑ Checkbox</button>
+          <button class="block-item" data-block="checklist" draggable="true">☰ Checklist</button>
+          <button class="block-item" data-block="bulletlist" draggable="true">• Bullet list</button>
+          <button class="block-item" data-block="divider" draggable="true">─ Divider</button>
+          <button class="block-item" data-block="highlight" draggable="true">▧ Highlight</button>
+          <button class="block-item" data-block="circle" draggable="true">◯ Circle</button>
+          <button class="block-item" data-block="roundedrect" draggable="true">▢ Rounded rect</button>
+          <button class="block-item" data-block="datelabel" draggable="true">🗓 Date</button>
+          <button class="block-item" data-block="table" draggable="true">▦ Table</button>
+          <button class="block-item" data-block="calendar" draggable="true">📅 Calendar</button>
+          <button class="block-item" data-block="image" draggable="true">🖼 Image</button>
+          <button class="block-item" data-block="box" draggable="true">⬚ Box</button>
+          <button class="block-item" data-block="line" draggable="true">⎯ Line</button>
+        </div>
+
+        <h2 class="layers-title">Layers</h2>
+        <div class="layer-actions">
+          <button type="button" id="z-front" class="btn">Front</button>
+          <button type="button" id="z-forward" class="btn">+1</button>
+          <button type="button" id="z-backward" class="btn">-1</button>
+          <button type="button" id="z-back" class="btn">Back</button>
+        </div>
+        <div id="layers-list" class="layers-list"></div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div id="workspace" class="workspace">
+          <div id="page" class="page">
+            <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
+            <div id="guide-x" class="guide guide-x"></div>
+            <div id="guide-y" class="guide guide-y"></div>
+            <div id="stage" class="stage"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Inspector</h2>
+        <div class="inspector-grid">
+          <label class="field"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
+          <label class="field"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
+          <label class="field"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
+          <label class="field"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
+
+          <label class="field"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter/system-ui</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option><option value="'Times New Roman',serif">Times New Roman</option><option value="'Courier New',monospace">Courier New</option><option value="'Trebuchet MS',sans-serif">Trebuchet MS</option><option value="Verdana,sans-serif">Verdana</option></select></label>
+          <label class="field"><span>Font size</span><input id="ins-font-size" class="control" type="number" step="1" /></label>
+          <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">400</option><option value="600">600</option><option value="700">700</option></select></label>
+          <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
+          <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+
+          <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
+          <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
+          <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" step="0.5" /></label>
+          <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" step="1" /></label>
+
+          <label class="field"><span>Line w</span><input id="ins-thickness" class="control" type="number" step="0.5" /></label>
+          <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
+          <label class="field"><span>Object fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
+          <label class="field"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
+          <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2" step="0.1" /></label>
+          <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="bullet">Bullet</option><option value="checkbox">Checkbox</option></select></label>
+        </div>
+        <p id="ins-note" class="ins-note">Select an object to edit controls.</p>
+        <div id="status-line" class="status-line">No selection</div>
+      </aside>
+    </main>
+
+    <section class="panel pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page" class="btn">Add page</button>
+        <button type="button" id="dup-page" class="btn">Duplicate</button>
+        <button type="button" id="del-page" class="btn">Delete</button>
+      </div>
+      <div id="pages-list" class="pages-list"></div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <main class="container" style="padding:60px 0 50px;">
-    <div class="kicker">/app</div>
-    <h1>Builder shell (Sprint 1)</h1>
-    <p class="lead" style="max-width:72ch;">
-      This route is reserved for the drag & drop editor. Next sprint we’ll add:
-      canvas, blocks palette, inspector, pages panel, and PDF export.
-    </p>
+  <script>
+    const PX_PER_MM = 3.7795275591;
+    const mmToPx = (mm) => mm * PX_PER_MM;
+    const pxToMm = (px) => px / PX_PER_MM;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const createId = (prefix = 'id') => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const pageDimensionsMm = (size, orientation) => {
+      const base = size === 'A4' ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
+      return orientation === 'portrait' ? base : { wMm: base.hMm, hMm: base.wMm };
+    };
+    const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
 
-    <div class="card" style="margin-top:22px;">
-      <h3 style="margin:0 0 10px;">Next up</h3>
-      <ul style="margin:0; padding-left:18px; color:var(--muted);">
-        <li>Freeform A4/A5 canvas + snap</li>
-        <li>Blocks: Text, Box, Line, Checklist</li>
-        <li>Multi-page + export PDF</li>
-        <li>Project save/load (JSON)</li>
-      </ul>
-    </div>
+    const loadFromLocal = () => { try { const raw = localStorage.getItem('printforge_doc_v2d'); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+    const saveToLocal = (doc) => localStorage.setItem('printforge_doc_v2d', JSON.stringify(doc));
+    const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
+    const importJSON = async (file) => JSON.parse(await file.text());
 
-    <div class="hero-cta" style="margin-top:18px;">
-      <a class="btn primary" href={withBase("/en/#features", base)}>See features</a>
-      <a class="btn" href={withBase("/tr/#features", base)}>Özelliklere bak</a>
-    </div>
-  </main>
+    const defaultDoc = () => {
+      const page = { id: createId('page'), name: 'Page 1', nodes: [] };
+      return { version: 3, pageSize: 'A4', orientation: 'portrait', zoom: 1, grid: { enabled: false, stepMm: 5 }, pages: [page], activePageId: page.id };
+    };
+
+    const el = {
+      page: document.getElementById('page'), stage: document.getElementById('stage'), workspace: document.getElementById('workspace'),
+      blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
+      gridToggle: document.getElementById('grid-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
+      addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
+      save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'),
+      zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
+      delBtn: document.getElementById('delete-btn'), status: document.getElementById('status-line'), note: document.getElementById('ins-note'),
+      insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
+      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
+      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
+      insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'),
+      insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'),
+    };
+
+    let doc = loadFromLocal() || defaultDoc();
+    if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
+    let selectedNodeId = null;
+    let draggingBlock = null;
+    let draggingLayerId = null;
+    let undoStack = [structuredClone(doc)];
+    let redoStack = [];
+
+    const pushHistory = () => { undoStack.push(structuredClone(doc)); if (undoStack.length > 50) undoStack.shift(); redoStack = []; };
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
+    const gridSnap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+
+    const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
+
+    function renderFrame() {
+      const d = dims();
+      el.page.style.width = `${mmToPx(d.wMm)}px`;
+      el.page.style.height = `${mmToPx(d.hMm)}px`;
+      el.page.style.transform = `scale(${doc.zoom})`;
+      el.page.classList.toggle('grid', doc.grid.enabled);
+      el.page.style.setProperty('--grid-step-px', `${mmToPx(doc.grid.stepMm)}px`);
+      el.page.style.setProperty('--grid-major-px', `${mmToPx(doc.grid.stepMm * 5)}px`);
+      el.stage.style.width = `${mmToPx(d.wMm)}px`;
+      el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function updateStatus() {
+      const n = activeNode();
+      el.status.textContent = n
+        ? `Selected: ${n.id} (${n.type}) • ${doc.pageSize} ${doc.orientation}`
+        : `Selected: none • ${doc.pageSize} ${doc.orientation}`;
+      el.delBtn.disabled = !n;
+    }
+
+    function renderPages() {
+      el.pagesList.innerHTML = '';
+      doc.pages.forEach((page, i) => {
+        const chip = document.createElement('button');
+        chip.className = `page-thumb ${page.id === doc.activePageId ? 'active' : ''}`;
+        chip.textContent = page.name || `Page ${i + 1}`;
+        chip.onclick = () => { selectedNodeId = null; doc.activePageId = page.id; render(); };
+        el.pagesList.appendChild(chip);
+      });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
+
+    function renderLayers() {
+      const p = activePage();
+      el.layersList.innerHTML = '';
+      if (!p) return;
+      const sorted = [...p.nodes].sort((a,b)=>b.z-a.z);
+      sorted.forEach((n, idx) => {
+        const row = document.createElement('div');
+        row.className = `layer-row ${n.id === selectedNodeId ? 'active' : ''}`;
+        row.draggable = true;
+        row.dataset.id = n.id;
+        row.innerHTML = `<span class=\"layer-icon\">${n.type[0].toUpperCase()}</span><span class=\"layer-name\">${n.name || `${n.type} ${idx+1}`}</span><button type=\"button\" class=\"layer-eye\">${n.visible ? '👁' : '🚫'}</button><button type=\"button\" class=\"layer-lock\">${n.locked ? '🔒' : '🔓'}</button><button type=\"button\" class=\"layer-trash\">🗑</button>`;
+        row.onclick = (e) => {
+          if (e.target.classList.contains('layer-eye')) { n.visible = !n.visible; pushHistory(); render(); return; }
+          if (e.target.classList.contains('layer-lock')) { n.locked = !n.locked; pushHistory(); render(); return; }
+          if (e.target.classList.contains('layer-trash')) { deleteNodeById(n.id, true); return; }
+          selectedNodeId = n.id; render();
+        };
+        row.ondragstart = () => { draggingLayerId = n.id; };
+        row.ondragover = (e) => e.preventDefault();
+        row.ondrop = (e) => {
+          e.preventDefault();
+          if (!draggingLayerId || draggingLayerId === n.id) return;
+          const list = [...p.nodes].sort((a,b)=>b.z-a.z);
+          const from = list.findIndex((x)=>x.id===draggingLayerId); const to = list.findIndex((x)=>x.id===n.id);
+          const [item] = list.splice(from,1); list.splice(to,0,item);
+          list.forEach((node, i) => node.z = list.length - i);
+          pushHistory(); render();
+        };
+        el.layersList.appendChild(row);
+      });
+    }
+
+    function nodeHtml(n) {
+      if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+        const style = `font-size:${n.props.fontSize||14}px;font-family:${n.props.fontFamily||'Inter,system-ui'};font-weight:${n.props.fontWeight||400};font-style:${n.props.italic?'italic':'normal'};text-align:${n.props.align||'left'};line-height:${n.props.lineHeight||1.3};opacity:${n.props.opacity||1};`;
+        return `<div class=\"text-content\" style=\"${style}\" contenteditable=\"true\">${n.props.text || ''}</div>`;
+      }
+      if (["box","highlight","roundedrect","circle"].includes(n.type)) {
+        const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
+        return `<div class=\"box-content\" style=\"background:${n.props.fill||'#e2e8f0'};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};\"></div>`;
+      }
+      if (["line","divider"].includes(n.type)) return `<div class=\"line-content\" style=\"height:${n.props.thickness||2}px;background:${n.props.color||'#334155'};opacity:${n.props.opacity||1}\"></div>`;
+      if (n.type === 'checkbox') return `<div class=\"meta-content\">${n.props.checked?'☑':'☐'} ${n.props.text||'Checkbox item'}</div>`;
+      if (n.type === 'checklist' || n.type === 'bulletlist') {
+        const marker = n.props.listStyle === 'checkbox' ? '☐ ' : '• ';
+        const content = (n.props.items||[]).map((x)=>marker+x).join('<br>');
+        return `<div class=\"meta-content\" style=\"line-height:${n.props.lineHeight||1.4};opacity:${n.props.opacity||1}\" contenteditable=\"true\">${content}</div>`;
+      }
+      if (n.type === 'table') {
+        const rows=n.props.rows||3, cols=n.props.cols||3;
+        return `<div class=\"table-content\" style=\"grid-template-columns:repeat(${cols},1fr);opacity:${n.props.opacity||1}\">${Array.from({length:rows*cols},()=>'<div></div>').join('')}</div>`;
+      }
+      if (n.type === 'calendar') {
+        const month = new Date(n.props.year||2026,(n.props.month||1)-1,1).toLocaleString('en',{month:'long',year:'numeric'});
+        return `<div class=\"calendar-content\" style=\"opacity:${n.props.opacity||1}\"><div class=\"cal-title\">${month}</div><div class=\"cal-grid\">${Array.from({length:42},(_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
+      }
+      if (n.type === 'image') return `<img class=\"image-content\" style=\"object-fit:${n.props.objectFit||'contain'};opacity:${n.props.opacity||1}\" src=\"${n.props.src||''}\" alt=\"image\"/>`;
+      return '';
+    }
+
+    function renderNodes() {
+      const p = activePage();
+      el.stage.innerHTML = '';
+      if (!p) return;
+      [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const d = document.createElement('div');
+        d.className = `node node-${n.type} ${n.id === selectedNodeId ? 'selected' : ''}`;
+        d.dataset.id = n.id;
+        d.style.left = `${mmToPx(n.xMm)}px`;
+        d.style.top = `${mmToPx(n.yMm)}px`;
+        d.style.width = `${mmToPx(n.wMm)}px`;
+        d.style.height = `${mmToPx(n.hMm)}px`;
+        d.style.zIndex = String(n.z);
+        d.innerHTML = nodeHtml(n);
+
+        const editable = d.querySelector('[contenteditable="true"]');
+        if (editable) {
+          editable.oninput = () => {
+            if (n.type === 'checklist' || n.type === 'bulletlist') {
+              n.props.items = editable.innerText.split('\n').map((s)=>s.replace(/^•\s|^☐\s/, '').trim()).filter(Boolean);
+            } else {
+              n.props.text = editable.innerText;
+            }
+          };
+          editable.onblur = () => pushHistory();
+        }
+
+        if (n.id === selectedNodeId && !n.locked) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const hEl = document.createElement('button');
+            hEl.type='button'; hEl.className=`handle ${h}`; hEl.dataset.handle=h;
+            d.appendChild(hEl);
+          });
+        }
+
+        el.stage.appendChild(d);
+      });
+      syncInspector();
+    }
+
+    function enableControl(ctrl, enabled, value, isCheckbox=false) {
+      ctrl.disabled = !enabled;
+      if (value !== undefined) {
+        if (isCheckbox) ctrl.checked = !!value;
+        else ctrl.value = String(value);
+      }
+    }
+
+    function syncInspector() {
+      const n = activeNode();
+      const has = !!n;
+      enableControl(el.insX, has, n?.xMm?.toFixed?.(1));
+      enableControl(el.insY, has, n?.yMm?.toFixed?.(1));
+      enableControl(el.insW, has, n?.wMm?.toFixed?.(1));
+      enableControl(el.insH, has, n?.hMm?.toFixed?.(1));
+
+      const isText = n && ["text","heading","paragraph","datelabel"].includes(n.type);
+      enableControl(el.insFontFamily, isText, n?.props.fontFamily || 'Inter,system-ui');
+      enableControl(el.insFontSize, isText, n?.props.fontSize || 14);
+      enableControl(el.insFontWeight, isText, n?.props.fontWeight || 400);
+      enableControl(el.insItalic, isText, n?.props.italic || false, true);
+      enableControl(el.insAlign, isText, n?.props.align || 'left');
+
+      const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
+      enableControl(el.insFill, isShape, n?.props.fill || '#e2e8f0');
+      enableControl(el.insStroke, isShape, n?.props.stroke || '#94a3b8');
+      enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
+      enableControl(el.insRadius, isShape && n.type !== 'circle', n?.props.radius || 0);
+
+      const isLine = n && ["line","divider"].includes(n.type);
+      enableControl(el.insThickness, isLine, n?.props.thickness || 2);
+      enableControl(el.insColor, isLine, n?.props.color || '#334155');
+
+      const isImage = n && n.type === 'image';
+      enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
+      enableControl(el.insOpacity, has, n?.props.opacity ?? 1);
+
+      const isList = n && ["checklist","bulletlist"].includes(n.type);
+      enableControl(el.insLineHeight, isList || isText, n?.props.lineHeight || 1.4);
+      enableControl(el.insListStyle, isList, n?.props.listStyle || (n?.type === 'checklist' ? 'checkbox' : 'bullet'));
+
+      if (n && !isText && !isShape && !isLine && !isImage && !isList) {
+        el.note.textContent = 'Basic controls only for this block type.';
+      } else {
+        el.note.textContent = has ? 'Inspector synced.' : 'Select an object to edit controls.';
+      }
+      updateStatus();
+    }
+
+    function render() {
+      renderFrame();
+      renderPages();
+      renderLayers();
+      renderNodes();
+      document.querySelectorAll('[data-size]').forEach((b)=>b.classList.toggle('is-active', b.dataset.size===doc.pageSize));
+      document.querySelectorAll('[data-orientation]').forEach((b)=>b.classList.toggle('is-active', b.dataset.orientation===doc.orientation));
+    }
+
+    function createPreset(type, xMm, yMm, extra = {}) {
+      const p = activePage(); if (!p) return;
+      const z = p.nodes.length ? Math.max(...p.nodes.map((n)=>n.z)) + 1 : 1;
+      const base = { id:createId('node'), type, name:'', xMm, yMm, wMm:60, hMm:24, z, visible:true, locked:false, props:{ opacity:1 } };
+      const now = new Date();
+      const presets = {
+        text: { name:'Text', wMm:70, hMm:16, props:{ text:'Text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left', lineHeight:1.3 } },
+        heading: { name:'Heading', wMm:90, hMm:20, props:{ text:'Heading', fontSize:22, fontFamily:'Inter,system-ui', fontWeight:700, align:'left', lineHeight:1.2 } },
+        paragraph: { name:'Paragraph', wMm:100, hMm:30, props:{ text:'Paragraph text', fontSize:13, fontFamily:'Georgia,serif', fontWeight:400, align:'left', lineHeight:1.4 } },
+        box: { name:'Box', wMm:60, hMm:40, props:{ fill:'#e2e8f0', stroke:'#94a3b8', strokeWidth:1, radius:4 } },
+        line: { name:'Line', wMm:70, hMm:3, props:{ thickness:2, color:'#334155' } },
+        checkbox: { name:'Checkbox', wMm:70, hMm:14, props:{ checked:false, text:'Checkbox item' } },
+        checklist: { name:'Checklist', wMm:80, hMm:42, props:{ items:['Item 1','Item 2'], listStyle:'checkbox', lineHeight:1.4 } },
+        bulletlist: { name:'Bullet list', wMm:80, hMm:42, props:{ items:['Point 1','Point 2'], listStyle:'bullet', lineHeight:1.4 } },
+        divider: { name:'Divider', wMm:100, hMm:3, props:{ thickness:1, color:'#64748b' } },
+        highlight: { name:'Highlight', wMm:70, hMm:30, props:{ fill:'#fef9c3', stroke:'#f59e0b', strokeWidth:1, radius:4 } },
+        circle: { name:'Circle', wMm:34, hMm:34, props:{ fill:'#e0f2fe', stroke:'#0ea5e9', strokeWidth:1, radius:9999 } },
+        roundedrect: { name:'Rounded rect', wMm:70, hMm:30, props:{ fill:'#e2e8f0', stroke:'#64748b', strokeWidth:1, radius:10 } },
+        datelabel: { name:'Date', wMm:78, hMm:16, props:{ text:now.toISOString().slice(0,10), fontSize:13, fontFamily:'Verdana,sans-serif', fontWeight:600, align:'left' } },
+        table: { name:'Table', wMm:92, hMm:58, props:{ rows:4, cols:4 } },
+        calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
+        image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
+      };
+      const preset = presets[type]; if (!preset) return;
+      p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
+      selectedNodeId = p.nodes[p.nodes.length - 1].id;
+      pushHistory();
+      render();
+    }
+
+    async function addImageAt(xMm, yMm) {
+      el.imageInput.click();
+      const file = await new Promise((resolve) => { el.imageInput.onchange = () => resolve(el.imageInput.files?.[0] || null); });
+      el.imageInput.value = '';
+      if (!file) return;
+      const src = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file); });
+      createPreset('image', xMm, yMm, { props: { src } });
+    }
+
+    function pagePointFromEvent(e) {
+      const rect = el.page.getBoundingClientRect();
+      const xPx = (e.clientX - rect.left) / doc.zoom;
+      const yPx = (e.clientY - rect.top) / doc.zoom;
+      const d = dims();
+      return {
+        xMm: clamp(gridSnap(pxToMm(xPx)), 0, d.wMm),
+        yMm: clamp(gridSnap(pxToMm(yPx)), 0, d.hMm),
+      };
+    }
+
+    function maybeObjectSnap(node, x, y) {
+      if (doc.grid.enabled) return { x, y, gx:null, gy:null };
+      const p = activePage(); if (!p) return { x, y, gx:null, gy:null };
+      let sx = x, sy = y, gx = null, gy = null;
+      const others = p.nodes.filter((n)=>n.id!==node.id && n.visible);
+      others.forEach((o) => {
+        const xVals=[o.xMm, o.xMm+o.wMm, o.xMm+o.wMm/2];
+        const yVals=[o.yMm, o.yMm+o.hMm, o.yMm+o.hMm/2];
+        const myX=[sx, sx+node.wMm, sx+node.wMm/2];
+        const myY=[sy, sy+node.hMm, sy+node.hMm/2];
+        xVals.forEach((v)=>myX.forEach((mv)=>{ if(Math.abs(v-mv)<=2){ sx += (v-mv); gx=v; }}));
+        yVals.forEach((v)=>myY.forEach((mv)=>{ if(Math.abs(v-mv)<=2){ sy += (v-mv); gy=v; }}));
+      });
+      return { x:sx, y:sy, gx, gy };
+    }
+
+    function deleteNodeById(nodeId, fromLayer = false) {
+      const p = activePage(); if (!p) return;
+      const n = p.nodes.find((x)=>x.id===nodeId); if (!n) return;
+      if (n.locked && !fromLayer) { showToast('Locked node cannot be deleted from canvas keys'); return; }
+      if (n.locked && fromLayer) {
+        const ok = window.confirm('Layer is locked. Delete anyway?');
+        if (!ok) return;
+      }
+      p.nodes = p.nodes.filter((x)=>x.id!==nodeId);
+      if (selectedNodeId === nodeId) selectedNodeId = null;
+      pushHistory();
+      render();
+    }
+
+    function startPointer(e) {
+      const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
+      const n = activePage()?.nodes.find((x)=>x.id===nodeEl.dataset.id); if (!n) return;
+      selectedNodeId = n.id;
+      if (n.locked) { render(); return; }
+
+      const s = { x:e.clientX, y:e.clientY, xMm:n.xMm, yMm:n.yMm, wMm:n.wMm, hMm:n.hMm };
+      const handle = e.target.dataset.handle || null;
+      const d = dims();
+
+      const move = (ev) => {
+        const dx = pxToMm((ev.clientX - s.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - s.y) / doc.zoom);
+        if (!handle) {
+          let nx = clamp(gridSnap(s.xMm + dx), 0, d.wMm - n.wMm);
+          let ny = clamp(gridSnap(s.yMm + dy), 0, d.hMm - n.hMm);
+          const snapped = maybeObjectSnap(n, nx, ny);
+          nx = clamp(snapped.x, 0, d.wMm - n.wMm);
+          ny = clamp(snapped.y, 0, d.hMm - n.hMm);
+          n.xMm = nx; n.yMm = ny;
+          el.guideX.style.display = snapped.gx == null ? 'none' : 'block';
+          el.guideY.style.display = snapped.gy == null ? 'none' : 'block';
+          if (snapped.gx != null) el.guideX.style.left = `${mmToPx(snapped.gx)}px`;
+          if (snapped.gy != null) el.guideY.style.top = `${mmToPx(snapped.gy)}px`;
+        } else {
+          if (handle.includes('e')) n.wMm = clamp(gridSnap(s.wMm + dx), 8, d.wMm - n.xMm);
+          if (handle.includes('s')) n.hMm = clamp(gridSnap(s.hMm + dy), 8, d.hMm - n.yMm);
+          if (handle.includes('w')) {
+            const nx = clamp(gridSnap(s.xMm + dx), 0, s.xMm + s.wMm - 8);
+            n.wMm = clamp(gridSnap(s.wMm - (nx - s.xMm)), 8, d.wMm);
+            n.xMm = nx;
+          }
+          if (handle.includes('n')) {
+            const ny = clamp(gridSnap(s.yMm + dy), 0, s.yMm + s.hMm - 8);
+            n.hMm = clamp(gridSnap(s.hMm - (ny - s.yMm)), 8, d.hMm);
+            n.yMm = ny;
+          }
+        }
+        renderNodes();
+      };
+
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        el.guideX.style.display = 'none';
+        el.guideY.style.display = 'none';
+        pushHistory();
+        render();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    // Drag/drop blocks
+    el.blockList.querySelectorAll('.block-item').forEach((b) => {
+      b.ondragstart = () => { draggingBlock = b.dataset.block; };
+      b.ondragend = () => { draggingBlock = null; el.dropPreview.classList.remove('show'); };
+      b.onclick = () => showToast('Drag block onto page');
+    });
+
+    el.page.ondragover = (e) => {
+      e.preventDefault();
+      if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      el.dropPreview.style.left = `${mmToPx(pt.xMm)}px`;
+      el.dropPreview.style.top = `${mmToPx(pt.yMm)}px`;
+      el.dropPreview.classList.add('show');
+    };
+    el.page.ondragleave = () => el.dropPreview.classList.remove('show');
+    el.page.ondrop = async (e) => {
+      e.preventDefault();
+      if (!draggingBlock) return;
+      const pt = pagePointFromEvent(e);
+      if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
+      else createPreset(draggingBlock, pt.xMm, pt.yMm);
+      draggingBlock = null;
+      el.dropPreview.classList.remove('show');
+    };
+
+    // Canvas selection logic
+    el.stage.onpointerdown = (e) => {
+      if (e.target === el.stage) {
+        selectedNodeId = null;
+        render();
+        return;
+      }
+      startPointer(e);
+    };
+
+    // Inspector bindings for all types x/y/w/h etc
+    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked) return; fn(n); pushHistory(); render(); };
+    el.insX.onchange = () => applyInspector((n)=>n.xMm = gridSnap(Number(el.insX.value) || 0));
+    el.insY.onchange = () => applyInspector((n)=>n.yMm = gridSnap(Number(el.insY.value) || 0));
+    el.insW.onchange = () => applyInspector((n)=>n.wMm = Math.max(8, Number(el.insW.value) || 8));
+    el.insH.onchange = () => applyInspector((n)=>n.hMm = Math.max(8, Number(el.insH.value) || 8));
+
+    el.insFontFamily.onchange = () => applyInspector((n)=>n.props.fontFamily = el.insFontFamily.value);
+    el.insFontSize.onchange = () => applyInspector((n)=>n.props.fontSize = Math.max(8, Number(el.insFontSize.value) || 14));
+    el.insFontWeight.onchange = () => applyInspector((n)=>n.props.fontWeight = Number(el.insFontWeight.value));
+    el.insItalic.onchange = () => applyInspector((n)=>n.props.italic = el.insItalic.checked);
+    el.insAlign.onchange = () => applyInspector((n)=>n.props.align = el.insAlign.value);
+
+    el.insFill.onchange = () => applyInspector((n)=>n.props.fill = el.insFill.value);
+    el.insStroke.onchange = () => applyInspector((n)=>n.props.stroke = el.insStroke.value);
+    el.insStrokeWidth.onchange = () => applyInspector((n)=>n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
+    el.insRadius.onchange = () => applyInspector((n)=>n.props.radius = Math.max(0, Number(el.insRadius.value) || 0));
+
+    el.insThickness.onchange = () => applyInspector((n)=>n.props.thickness = Math.max(1, Number(el.insThickness.value) || 1));
+    el.insColor.onchange = () => applyInspector((n)=>n.props.color = el.insColor.value);
+    el.insObjectFit.onchange = () => applyInspector((n)=>n.props.objectFit = el.insObjectFit.value);
+    el.insOpacity.onchange = () => applyInspector((n)=>n.props.opacity = Number(el.insOpacity.value));
+    el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
+    el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
+
+    function zMove(mode) {
+      const p = activePage(); const n = activeNode(); if (!p || !n) return;
+      const arr = [...p.nodes].sort((a,b)=>a.z-b.z);
+      const i = arr.findIndex((x)=>x.id===n.id);
+      if (mode === 'front') { arr.splice(i,1); arr.push(n); }
+      if (mode === 'back') { arr.splice(i,1); arr.unshift(n); }
+      if (mode === 'forward' && i < arr.length - 1) [arr[i], arr[i+1]] = [arr[i+1], arr[i]];
+      if (mode === 'backward' && i > 0) [arr[i], arr[i-1]] = [arr[i-1], arr[i]];
+      arr.forEach((node, idx)=>node.z = idx + 1);
+      pushHistory(); render();
+    }
+    el.zFront.onclick = () => zMove('front');
+    el.zBack.onclick = () => zMove('back');
+    el.zForward.onclick = () => zMove('forward');
+    el.zBackward.onclick = () => zMove('backward');
+
+    // Controls
+    document.querySelectorAll('[data-size]').forEach((b)=>b.onclick = () => { doc.pageSize = b.dataset.size; pushHistory(); render(); });
+    document.querySelectorAll('[data-orientation]').forEach((b)=>b.onclick = () => { doc.orientation = b.dataset.orientation; pushHistory(); render(); });
+    el.zoom.onchange = () => { doc.zoom = el.zoom.value === 'fit' ? clamp((el.workspace.clientWidth - 40) / mmToPx(dims().wMm), 0.25, 1.5) : Number(el.zoom.value); pushHistory(); render(); };
+    el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; pushHistory(); render(); };
+    el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); pushHistory(); render(); };
+
+    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; pushHistory(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; selectedNodeId=null; pushHistory(); render(); };
+    el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; selectedNodeId=null; pushHistory(); render(); };
+
+    el.save.onclick = () => { saveToLocal(doc); showToast('Saved'); };
+    el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; doc=loaded; selectedNodeId=null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Loaded'); };
+    el.ex.onclick = () => exportJSON(doc);
+    el.im.onclick = () => el.importInput.click();
+    el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ doc=await importJSON(f); selectedNodeId=null; undoStack=[structuredClone(doc)]; redoStack=[]; render(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
+
+    el.delBtn.onclick = () => { if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
+
+    // Keyboard delete + undo/redo (safe focus rules)
+    window.addEventListener('keydown', (e) => {
+      const active = document.activeElement;
+      const typing = active && (active.matches('input,textarea,select') || active.isContentEditable);
+
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (!redoStack.length) return;
+          const next = redoStack.pop();
+          undoStack.push(structuredClone(next));
+          doc = structuredClone(next);
+        } else {
+          if (undoStack.length <= 1) return;
+          const current = undoStack.pop();
+          redoStack.push(structuredClone(current));
+          doc = structuredClone(undoStack[undoStack.length - 1]);
+        }
+        selectedNodeId = null;
+        render();
+        return;
+      }
+
+      if (typing) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
+        e.preventDefault();
+        deleteNodeById(selectedNodeId, false);
+      }
+    });
+
+    render();
+  </script>
 </BaseLayout>
