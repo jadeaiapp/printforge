@@ -53,8 +53,9 @@ const base = import.meta.env.BASE_URL ?? "/";
       <aside class="panel left-panel">
         <div class="left-tabs" role="tablist" aria-label="Left panel tabs">
           <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">Blocks</button>
-          <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">Assets</button>
           <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">Layers</button>
+          <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">Assets</button>
+          <button type="button" class="left-tab" id="tab-theme" data-tab="theme" role="tab" aria-selected="false">Theme</button>
         </div>
 
         <div id="left-scroll" class="left-scroll">
@@ -102,6 +103,34 @@ const base = import.meta.env.BASE_URL ?? "/";
             </div>
             <div id="assets-list" class="assets-list"></div>
           </section>
+
+          <section id="panel-theme" class="tab-panel" role="tabpanel" aria-labelledby="tab-theme" hidden>
+            <div class="theme-panel">
+              <h3>Workspace</h3>
+              <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
+              <div class="field"><span>Gradient presets</span>
+                <div id="theme-gradients" class="theme-preset-list"></div>
+              </div>
+              <label class="checkline"><input id="theme-workspace-pattern" type="checkbox" />Subtle dots/grid background</label>
+
+              <h3>Page background</h3>
+              <div id="theme-page-colors" class="theme-preset-list"></div>
+
+              <h3>Brand kit lite (5 max)</h3>
+              <div class="brand-kit-row">
+                <input id="brand-swatch-input" class="control" type="color" />
+                <button type="button" id="brand-swatch-add" class="btn">Add swatch</button>
+              </div>
+              <div id="brand-swatches" class="swatch-row"></div>
+
+              <h3>Global style presets</h3>
+              <div id="style-presets" class="theme-preset-list"></div>
+              <div class="brand-kit-row">
+                <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
+                <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
+              </div>
+            </div>
+          </section>
         </div>
       </aside>
 
@@ -142,6 +171,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
           <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
           <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+          <label class="field"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
 
           <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
           <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
@@ -157,6 +187,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
           <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
         </div>
+        <div id="ins-swatches" class="swatch-row"></div>
         <p id="ins-note" class="ins-note">Select an object to edit controls.</p>
       </aside>
     </main>
@@ -240,9 +271,45 @@ const base = import.meta.env.BASE_URL ?? "/";
     const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
     const importJSON = async (file) => JSON.parse(await file.text());
 
+    const WORKSPACE_GRADIENTS = [
+      { id: 'midnight', name: 'Midnight', value: 'linear-gradient(135deg,#0b1d3a,#1e3a8a)' },
+      { id: 'aurora', name: 'Aurora', value: 'linear-gradient(135deg,#0f766e,#0ea5e9)' },
+      { id: 'sunset', name: 'Sunset', value: 'linear-gradient(135deg,#fb923c,#ec4899)' },
+      { id: 'plum', name: 'Plum', value: 'linear-gradient(135deg,#581c87,#c026d3)' },
+      { id: 'slate', name: 'Slate', value: 'linear-gradient(135deg,#334155,#64748b)' },
+      { id: 'minimal', name: 'Minimal', value: 'linear-gradient(145deg,#0f172a,#1e293b)' },
+    ];
+    const PAGE_BACKGROUNDS = [
+      { id: 'white', name: 'White', value: '#ffffff' },
+      { id: 'cream', name: 'Cream', value: '#fff7e6' },
+      { id: 'light-gray', name: 'Light Gray', value: '#f3f4f6' },
+      { id: 'pastel-blue', name: 'Pastel Blue', value: '#eaf2ff' },
+      { id: 'pastel-pink', name: 'Pastel Pink', value: '#ffeef5' },
+    ];
+    const STYLE_PRESETS = {
+      minimal: { id: 'minimal', name: 'Minimal', defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 4 } },
+      classic: { id: 'classic', name: 'Classic', defaults: { fontFamily: 'Georgia,serif', textColor: '#1f2937', strokeColor: '#6b7280', fillColor: '#f5f5f4', radius: 8 } },
+      bold: { id: 'bold', name: 'Bold', defaults: { fontFamily: 'Arial,sans-serif', textColor: '#0f172a', strokeColor: '#1d4ed8', fillColor: '#f59e0b', radius: 12 } },
+    };
+
     const defaultDoc = () => {
       const page = { id: createId('page'), name: 'Page 1', nodes: [] };
-      return { version: 3, pageSize: 'A4', orientation: 'portrait', zoom: 1, grid: { enabled: false, stepMm: 5 }, meta: { projectName: 'Untitled project' }, pages: [page], activePageId: page.id };
+      return {
+        version: 3,
+        pageSize: 'A4',
+        orientation: 'portrait',
+        zoom: 1,
+        grid: { enabled: false, stepMm: 5 },
+        workspaceBg: '#0b1220',
+        workspaceGradientId: 'minimal',
+        workspacePatternOn: false,
+        pageBg: '#ffffff',
+        brandSwatches: ['#6366f1', '#14b8a6', '#f97316'],
+        defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 6 },
+        meta: { projectName: 'Untitled project' },
+        pages: [page],
+        activePageId: page.id,
+      };
     };
 
     const TEMPLATE_HIDE_KEY = 'printforge_hide_template_starter_v1';
@@ -260,13 +327,17 @@ const base = import.meta.env.BASE_URL ?? "/";
       zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       saveIndicator: document.getElementById('save-indicator'),
-      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), assets: document.getElementById('panel-assets'), layers: document.getElementById('panel-layers') },
+      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets'), theme: document.getElementById('panel-theme') },
       assetSearch: document.getElementById('asset-search'), assetCategory: document.getElementById('asset-category'), assetsList: document.getElementById('assets-list'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
-      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
+      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'), insTextColor: document.getElementById('ins-text-color'),
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insRotation: document.getElementById('ins-rotation'),
       insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'),
+      insSwatches: document.getElementById('ins-swatches'),
+      themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'), themePageColors: document.getElementById('theme-page-colors'),
+      brandSwatchInput: document.getElementById('brand-swatch-input'), brandSwatchAdd: document.getElementById('brand-swatch-add'), brandSwatches: document.getElementById('brand-swatches'),
+      stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'),
       templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
@@ -291,13 +362,27 @@ const base = import.meta.env.BASE_URL ?? "/";
     let marqueeState = null;
 
 
-    const normalizeDoc = (sourceDoc) => {
+    function normalizeDoc(sourceDoc) {
       const nextDoc = structuredClone(sourceDoc || defaultDoc());
       if (!nextDoc.meta) nextDoc.meta = {};
       if (!nextDoc.meta.projectName) nextDoc.meta.projectName = 'Untitled project';
+      if (!nextDoc.workspaceBg) nextDoc.workspaceBg = '#0b1220';
+      if (!nextDoc.workspaceGradientId) nextDoc.workspaceGradientId = 'minimal';
+      if (typeof nextDoc.workspacePatternOn !== 'boolean') nextDoc.workspacePatternOn = false;
+      if (!nextDoc.pageBg) nextDoc.pageBg = '#ffffff';
+      if (!Array.isArray(nextDoc.brandSwatches)) nextDoc.brandSwatches = [];
+      nextDoc.brandSwatches = nextDoc.brandSwatches.slice(0, 5);
+      if (!nextDoc.defaults) nextDoc.defaults = {};
+      nextDoc.defaults = {
+        fontFamily: nextDoc.defaults.fontFamily || 'Inter,system-ui',
+        textColor: nextDoc.defaults.textColor || '#111827',
+        strokeColor: nextDoc.defaults.strokeColor || '#94a3b8',
+        fillColor: nextDoc.defaults.fillColor || '#e2e8f0',
+        radius: Number.isFinite(nextDoc.defaults.radius) ? nextDoc.defaults.radius : 6,
+      };
       nextDoc.pages?.forEach((page) => page.nodes?.forEach((node) => { if (!Object.prototype.hasOwnProperty.call(node, 'groupId')) node.groupId = null; }));
       return nextDoc;
-    };
+    }
 
     const loadRecentProjects = () => { try { const raw = localStorage.getItem(RECENT_PROJECTS_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; } };
     const saveRecentProjects = (items) => localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(items.slice(0, 8)));
@@ -540,6 +625,11 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function renderFrame() {
       const d = dims();
+      const gradient = WORKSPACE_GRADIENTS.find((item) => item.id === doc.workspaceGradientId) || WORKSPACE_GRADIENTS[0];
+      el.workspace.style.setProperty('--workspace-solid', doc.workspaceBg || '#0b1220');
+      el.workspace.style.setProperty('--workspace-gradient', gradient.value);
+      el.workspace.classList.toggle('with-pattern', !!doc.workspacePatternOn);
+      el.page.style.setProperty('--page-bg', doc.pageBg || '#ffffff');
       el.page.style.width = `${mmToPx(d.wMm)}px`;
       el.page.style.height = `${mmToPx(d.hMm)}px`;
       el.page.style.transform = `scale(${doc.zoom})`;
@@ -548,6 +638,57 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.page.style.setProperty('--grid-major-px', `${mmToPx(doc.grid.stepMm * 5)}px`);
       el.stage.style.width = `${mmToPx(d.wMm)}px`;
       el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function renderThemePanel() {
+      el.themeWorkspaceColor.value = doc.workspaceBg || '#0b1220';
+      el.themeWorkspacePattern.checked = !!doc.workspacePatternOn;
+      el.themeGradients.innerHTML = WORKSPACE_GRADIENTS.map((item) => `<button type="button" class="btn ${doc.workspaceGradientId === item.id ? 'is-active' : ''}" data-gradient-id="${item.id}">${item.name}</button>`).join('');
+      el.themeGradients.querySelectorAll('[data-gradient-id]').forEach((btn) => {
+        btn.onclick = () => { doc.workspaceGradientId = btn.dataset.gradientId; commitChange(); render(); };
+      });
+
+      el.themePageColors.innerHTML = PAGE_BACKGROUNDS.map((item) => `<button type="button" class="page-bg-btn ${doc.pageBg === item.value ? 'is-active' : ''}" data-page-bg="${item.value}"><span style="background:${item.value}"></span>${item.name}</button>`).join('');
+      el.themePageColors.querySelectorAll('[data-page-bg]').forEach((btn) => {
+        btn.onclick = () => { doc.pageBg = btn.dataset.pageBg; commitChange(); render(); };
+      });
+
+      el.brandSwatches.innerHTML = doc.brandSwatches.map((swatch, idx) => `<button type="button" class="swatch" title="${swatch}" data-swatch="${swatch}" style="--sw:${swatch}"></button><button type="button" class="swatch-remove" data-remove-swatch="${idx}" aria-label="Remove swatch ${idx + 1}">✕</button>`).join('');
+      el.brandSwatches.querySelectorAll('[data-remove-swatch]').forEach((btn) => {
+        btn.onclick = () => {
+          doc.brandSwatches.splice(Number(btn.dataset.removeSwatch), 1);
+          commitChange();
+          render();
+        };
+      });
+
+      el.stylePresets.innerHTML = Object.values(STYLE_PRESETS).map((item) => `<button type="button" class="btn" data-style-preset="${item.id}">${item.name}</button>`).join('');
+      el.stylePresets.querySelectorAll('[data-style-preset]').forEach((btn) => {
+        btn.onclick = () => {
+          doc.pendingStylePreset = btn.dataset.stylePreset;
+          el.stylePresets.querySelectorAll('[data-style-preset]').forEach((item) => item.classList.toggle('is-active', item === btn));
+        };
+      });
+      if (!doc.pendingStylePreset) {
+        doc.pendingStylePreset = 'minimal';
+        const first = el.stylePresets.querySelector('[data-style-preset]');
+        if (first) first.classList.add('is-active');
+      }
+      renderInspectorSwatches();
+    }
+
+    function renderInspectorSwatches() {
+      el.insSwatches.innerHTML = doc.brandSwatches.map((swatch) => `<button type="button" class="swatch" data-apply-swatch="${swatch}" style="--sw:${swatch}" title="Apply ${swatch}"></button>`).join('');
+      el.insSwatches.querySelectorAll('[data-apply-swatch]').forEach((btn) => {
+        btn.onclick = () => {
+          const color = btn.dataset.applySwatch;
+          const n = activeNode();
+          if (!n) return;
+          if (["text","heading","paragraph","datelabel"].includes(n.type)) applyInspector((node) => node.props.color = color);
+          else if (["line","divider"].includes(n.type)) applyInspector((node) => node.props.color = color);
+          else applyInspector((node) => { node.props.fill = color; node.props.stroke = color; });
+        };
+      });
     }
 
     function renderPages() {
@@ -606,12 +747,12 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function nodeHtml(n) {
       if (["text","heading","paragraph","datelabel"].includes(n.type)) {
-        const style = `font-size:${n.props.fontSize||14}px;font-family:${n.props.fontFamily||'Inter,system-ui'};font-weight:${n.props.fontWeight||400};font-style:${n.props.italic?'italic':'normal'};text-align:${n.props.align||'left'};line-height:${n.props.lineHeight||1.3};opacity:${n.props.opacity||1};`;
+        const style = `font-size:${n.props.fontSize||14}px;font-family:${n.props.fontFamily||doc.defaults.fontFamily||'Inter,system-ui'};font-weight:${n.props.fontWeight||400};font-style:${n.props.italic?'italic':'normal'};text-align:${n.props.align||'left'};line-height:${n.props.lineHeight||1.3};opacity:${n.props.opacity||1};color:${n.props.color||doc.defaults.textColor||'#111827'};`;
         return `<div class="text-content" style="${style}" contenteditable="true">${n.props.text || ''}</div>`;
       }
       if (["box","highlight","roundedrect","circle"].includes(n.type)) {
         const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
-        return `<div class="box-content" style="background:${n.props.fill||'#e2e8f0'};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};"></div>`;
+        return `<div class="box-content" style="background:${n.props.fill||doc.defaults.fillColor||'#e2e8f0'};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||doc.defaults.strokeColor||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};"></div>`;
       }
       if (["line","divider"].includes(n.type)) return `<div class="line-content" style="height:${n.props.thickness||2}px;background:${n.props.color||'#334155'};opacity:${n.props.opacity||1}"></div>`;
       if (n.type === 'checkbox') return `<div class="meta-content">${n.props.checked?'☑':'☐'} ${n.props.text||'Checkbox item'}</div>`;
@@ -768,6 +909,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insFontWeight, isText, n?.props.fontWeight || 400);
       enableControl(el.insItalic, isText, n?.props.italic || false, true);
       enableControl(el.insAlign, isText, n?.props.align || 'left');
+      enableControl(el.insTextColor, isText, n?.props.color || doc.defaults.textColor || '#111827');
 
       const isShape = n && ["box","highlight","roundedrect","circle","svg"].includes(n.type);
       enableControl(el.insFill, isShape, n?.props.fill || '#e2e8f0');
@@ -867,6 +1009,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       renderLayers();
       renderNodes();
       renderSelectionOverlays();
+      renderThemePanel();
       switchLeftTab(activeLeftTab);
       ensureProjectName();
       document.querySelectorAll('[data-size]').forEach((b)=>b.classList.toggle('is-active', b.dataset.size===doc.pageSize));
@@ -879,19 +1022,19 @@ const base = import.meta.env.BASE_URL ?? "/";
       const now = new Date();
       const base = { id:createId('node'), type, name:type, xMm, yMm, wMm:80, hMm:24, z:(p.nodes.reduce((m,n)=>Math.max(m,n.z),0)+1), visible:true, locked:false, groupId:null, props:{} };
       const presets = {
-        text: { name:'Text', wMm:80, hMm:22, props:{ text:'Text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left' } },
-        heading: { name:'Heading', wMm:92, hMm:24, props:{ text:'Heading', fontSize:24, fontFamily:'Inter,system-ui', fontWeight:700, align:'left' } },
-        paragraph: { name:'Paragraph', wMm:100, hMm:40, props:{ text:'Paragraph text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left', lineHeight:1.45 } },
+        text: { name:'Text', wMm:80, hMm:22, props:{ text:'Text', fontSize:14, fontFamily:doc.defaults.fontFamily, fontWeight:400, align:'left', color: doc.defaults.textColor } },
+        heading: { name:'Heading', wMm:92, hMm:24, props:{ text:'Heading', fontSize:24, fontFamily:doc.defaults.fontFamily, fontWeight:700, align:'left', color: doc.defaults.textColor } },
+        paragraph: { name:'Paragraph', wMm:100, hMm:40, props:{ text:'Paragraph text', fontSize:14, fontFamily:doc.defaults.fontFamily, fontWeight:400, align:'left', lineHeight:1.45, color: doc.defaults.textColor } },
         checkbox: { name:'Checkbox', wMm:80, hMm:16, props:{ text:'Task', checked:false } },
         checklist: { name:'Checklist', wMm:80, hMm:42, props:{ items:['Item 1','Item 2'], listStyle:'checkbox', lineHeight:1.4 } },
         bulletlist: { name:'Bullet list', wMm:80, hMm:42, props:{ items:['Point 1','Point 2'], listStyle:'bullet', lineHeight:1.4 } },
         divider: { name:'Divider', wMm:100, hMm:4, props:{ thickness:2, color:'#334155' } },
         line: { name:'Line', wMm:80, hMm:4, props:{ thickness:2, color:'#334155' } },
-        box: { name:'Box', wMm:80, hMm:45, props:{ fill:'#e2e8f0', stroke:'#94a3b8', strokeWidth:1, radius:0 } },
-        highlight: { name:'Highlight', wMm:80, hMm:28, props:{ fill:'#fde68a', stroke:'#f59e0b', strokeWidth:1, radius:4 } },
-        circle: { name:'Circle', wMm:32, hMm:32, props:{ fill:'#dbeafe', stroke:'#3b82f6', strokeWidth:1 } },
-        roundedrect: { name:'Rounded rect', wMm:80, hMm:42, props:{ fill:'#f1f5f9', stroke:'#94a3b8', strokeWidth:1, radius:10 } },
-        datelabel: { name:'Date', wMm:78, hMm:16, props:{ text:now.toISOString().slice(0,10), fontSize:13, fontFamily:'Verdana,sans-serif', fontWeight:600, align:'left' } },
+        box: { name:'Box', wMm:80, hMm:45, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        highlight: { name:'Highlight', wMm:80, hMm:28, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        circle: { name:'Circle', wMm:32, hMm:32, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1 } },
+        roundedrect: { name:'Rounded rect', wMm:80, hMm:42, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        datelabel: { name:'Date', wMm:78, hMm:16, props:{ text:now.toISOString().slice(0,10), fontSize:13, fontFamily:doc.defaults.fontFamily, fontWeight:600, align:'left', color: doc.defaults.textColor } },
         table: { name:'Table', wMm:92, hMm:58, props:{ rows:4, cols:4 } },
         calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
         image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
@@ -1193,6 +1336,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insFontWeight.onchange = () => applyInspector((n)=>n.props.fontWeight = Number(el.insFontWeight.value));
     el.insItalic.onchange = () => applyInspector((n)=>n.props.italic = el.insItalic.checked);
     el.insAlign.onchange = () => applyInspector((n)=>n.props.align = el.insAlign.value);
+    el.insTextColor.onchange = () => applyInspector((n)=>n.props.color = el.insTextColor.value);
     el.insFill.onchange = () => applyInspector((n)=>n.props.fill = el.insFill.value);
     el.insStroke.onchange = () => applyInspector((n)=>n.props.stroke = el.insStroke.value);
     el.insStrokeWidth.onchange = () => applyInspector((n)=>n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
@@ -1204,6 +1348,30 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insRotation.onchange = () => applyInspector((n)=>n.props.rotation = Number(el.insRotation.value));
     el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
     el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
+
+    function applyStylePreset(target = 'selection') {
+      const preset = STYLE_PRESETS[doc.pendingStylePreset || 'minimal'];
+      const targetNodes = target === 'all'
+        ? activePage()?.nodes || []
+        : selectedNodes();
+      if (!targetNodes.length) return;
+      doc.defaults = { ...preset.defaults };
+      targetNodes.forEach((n) => {
+        if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+          n.props.fontFamily = preset.defaults.fontFamily;
+          n.props.color = preset.defaults.textColor;
+        }
+        if (["box","highlight","roundedrect","circle","svg"].includes(n.type)) {
+          n.props.fill = preset.defaults.fillColor;
+          n.props.stroke = preset.defaults.strokeColor;
+          if (n.type !== 'circle') n.props.radius = preset.defaults.radius;
+        }
+        if (["line","divider"].includes(n.type)) n.props.color = preset.defaults.strokeColor;
+      });
+      commitChange();
+      render();
+      showToast(`${preset.name} preset applied`);
+    }
 
     function zMove(mode) {
       const p = activePage(); const n = activeNode(); if (!p || !n) return;
@@ -1226,6 +1394,21 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.zoom.onchange = () => { doc.zoom = el.zoom.value === 'fit' ? clamp((el.workspace.clientWidth - 40) / mmToPx(dims().wMm), 0.25, 1.5) : Number(el.zoom.value); commitChange(); render(); };
     el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; commitChange(); render(); };
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
+    el.themeWorkspaceColor.onchange = () => { doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
+    el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
+    el.brandSwatchAdd.onclick = () => {
+      if (doc.brandSwatches.length >= 5) {
+        showToast('Brand swatches limit reached (5)');
+        return;
+      }
+      const color = el.brandSwatchInput.value;
+      if (doc.brandSwatches.includes(color)) return;
+      doc.brandSwatches.push(color);
+      commitChange();
+      render();
+    };
+    el.presetApplySelection.onclick = () => applyStylePreset('selection');
+    el.presetApplyAll.onclick = () => applyStylePreset('all');
 
     el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; setPrimarySelection(null); commitChange(); render(); };
     el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; setPrimarySelection(null); commitChange(); render(); };

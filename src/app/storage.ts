@@ -4,7 +4,7 @@ const STORAGE_KEY = "printforge_doc_v2d";
 
 const NODE_TYPES = new Set<NodeType>([
   "text", "heading", "paragraph", "box", "line", "checkbox", "checklist", "bulletlist",
-  "divider", "highlight", "circle", "roundedrect", "datelabel", "table", "calendar", "image",
+  "divider", "highlight", "circle", "roundedrect", "datelabel", "table", "calendar", "image", "svg",
 ]);
 
 function isObj(v: unknown): v is Record<string, unknown> {
@@ -16,6 +16,10 @@ export function validateDoc(input: unknown): input is Doc {
   if ((input.pageSize !== "A4" && input.pageSize !== "A5") || (input.orientation !== "portrait" && input.orientation !== "landscape")) return false;
   if (!Array.isArray(input.pages) || typeof input.activePageId !== "string") return false;
   if (!isObj(input.grid) || typeof input.grid.enabled !== "boolean" || typeof input.grid.stepMm !== "number") return false;
+  if (typeof input.workspaceBg !== "string" || typeof input.workspaceGradientId !== "string" || typeof input.workspacePatternOn !== "boolean") return false;
+  if (typeof input.pageBg !== "string" || !Array.isArray(input.brandSwatches) || input.brandSwatches.length > 5) return false;
+  if (!isObj(input.defaults)) return false;
+  if (typeof input.defaults.fontFamily !== "string" || typeof input.defaults.textColor !== "string" || typeof input.defaults.strokeColor !== "string" || typeof input.defaults.fillColor !== "string" || typeof input.defaults.radius !== "number") return false;
 
   for (const p of input.pages) {
     if (!isObj(p) || typeof p.id !== "string" || typeof p.name !== "string" || !Array.isArray(p.nodes)) return false;

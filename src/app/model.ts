@@ -77,6 +77,18 @@ export interface Doc {
   orientation: Orientation;
   zoom: number;
   grid: { enabled: boolean; stepMm: 2 | 5 | 10 };
+  workspaceBg: string;
+  workspaceGradientId: string;
+  workspacePatternOn: boolean;
+  pageBg: string;
+  brandSwatches: string[];
+  defaults: {
+    fontFamily: string;
+    textColor: string;
+    strokeColor: string;
+    fillColor: string;
+    radius: number;
+  };
   meta?: { projectName?: string };
   pages: Page[];
   activePageId: string;
@@ -115,6 +127,18 @@ export function defaultDoc(): Doc {
     orientation: "portrait",
     zoom: 1,
     grid: { enabled: false, stepMm: 5 },
+    workspaceBg: "#0b1220",
+    workspaceGradientId: "minimal",
+    workspacePatternOn: false,
+    pageBg: "#ffffff",
+    brandSwatches: ["#6366f1", "#14b8a6", "#f97316"],
+    defaults: {
+      fontFamily: "Inter,system-ui",
+      textColor: "#111827",
+      strokeColor: "#94a3b8",
+      fillColor: "#e2e8f0",
+      radius: 6,
+    },
     meta: { projectName: "Untitled project" },
     pages: [page],
     activePageId: page.id,
