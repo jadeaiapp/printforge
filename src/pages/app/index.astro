@@ -27,10 +27,15 @@ const base = import.meta.env.BASE_URL ?? "/";
         <span id="save-indicator" class="save-indicator" aria-live="polite">Saved ✓</span>
 
         <button type="button" id="delete-btn" class="btn btn-danger" disabled>Delete</button>
-        <button type="button" id="save-btn" class="btn btn-primary">Save</button>
-        <button type="button" id="load-btn" class="btn">Load</button>
-        <button type="button" id="export-btn" class="btn">Export JSON</button>
-        <button type="button" id="import-btn" class="btn">Import JSON</button>
+        <details class="file-menu" id="file-menu">
+          <summary class="btn btn-primary">File</summary>
+          <div class="file-menu-list" role="menu" aria-label="File actions">
+            <button type="button" id="save-btn" class="file-menu-item" role="menuitem">Save (local)</button>
+            <button type="button" id="load-btn" class="file-menu-item" role="menuitem">Load (local)</button>
+            <button type="button" id="export-btn" class="file-menu-item" role="menuitem">Export JSON</button>
+            <button type="button" id="import-btn" class="file-menu-item" role="menuitem">Import JSON</button>
+          </div>
+        </details>
         <input id="import-input" type="file" accept="application/json" hidden />
         <input id="image-input" type="file" accept="image/*" hidden />
       </div>
@@ -83,7 +88,7 @@ const base = import.meta.env.BASE_URL ?? "/";
             <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
             <div id="guide-x" class="guide guide-x"></div>
             <div id="guide-y" class="guide guide-y"></div>
-            <div id="stage" class="stage"></div>
+            <div id="stage" class="stage" tabindex="0" aria-label="Canvas"></div>
           </div>
         </div>
       </section>
@@ -127,15 +132,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       </div>
       <div id="pages-list" class="pages-list"></div>
     </footer>
-
-    <div id="palette" class="palette" hidden>
-      <div class="palette-scrim" data-close-palette="true"></div>
-      <div class="palette-card" role="dialog" aria-modal="true" aria-label="Command palette">
-        <input id="palette-input" class="control palette-input" type="text" placeholder="Search blocks..." />
-        <div id="palette-list" class="palette-list"></div>
-      </div>
-    </div>
-
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
@@ -165,39 +161,19 @@ const base = import.meta.env.BASE_URL ?? "/";
       blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
       gridToggle: document.getElementById('grid-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
       addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
-      save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      fileMenu: document.getElementById('file-menu'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
       importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
       dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'),
       zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       saveIndicator: document.getElementById('save-indicator'),
       tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers') },
-      palette: document.getElementById('palette'), paletteInput: document.getElementById('palette-input'), paletteList: document.getElementById('palette-list'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
       insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'),
       insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'),
     };
-
-    const BLOCK_OPTIONS = [
-      { type: 'text', label: 'Text' },
-      { type: 'heading', label: 'Heading' },
-      { type: 'paragraph', label: 'Paragraph' },
-      { type: 'checkbox', label: 'Checkbox' },
-      { type: 'checklist', label: 'Checklist' },
-      { type: 'bulletlist', label: 'Bullet list' },
-      { type: 'divider', label: 'Divider' },
-      { type: 'highlight', label: 'Highlight' },
-      { type: 'circle', label: 'Circle' },
-      { type: 'roundedrect', label: 'Rounded rect' },
-      { type: 'datelabel', label: 'Date' },
-      { type: 'table', label: 'Table' },
-      { type: 'calendar', label: 'Calendar' },
-      { type: 'image', label: 'Image' },
-      { type: 'box', label: 'Box' },
-      { type: 'line', label: 'Line' },
-    ];
 
     let doc = loadFromLocal() || defaultDoc();
     if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
@@ -209,8 +185,6 @@ const base = import.meta.env.BASE_URL ?? "/";
     let dirty = false;
     let autosaveTimer = null;
     let activeLeftTab = 'blocks';
-    let paletteQuery = '';
-    let paletteIndex = 0;
 
     const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
     const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
@@ -218,6 +192,11 @@ const base = import.meta.env.BASE_URL ?? "/";
     const gridSnap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
 
     const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
+    const closeTransientOverlays = () => {
+      el.fileMenu.open = false;
+      el.toast.classList.remove('show');
+    };
+    const focusCanvas = () => requestAnimationFrame(() => el.stage.focus());
     const setSaveIndicator = () => { el.saveIndicator.textContent = dirty ? 'Unsaved ●' : 'Saved ✓'; el.saveIndicator.classList.toggle('dirty', dirty); };
 
     function autosaveSchedule() {
@@ -512,6 +491,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       selectedNodeId = p.nodes[p.nodes.length - 1].id;
       commitChange();
       render();
+      focusCanvas();
     }
 
     async function addImageAt(xMm, yMm) {
@@ -588,35 +568,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       };
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
-    }
-
-    function openPalette() {
-      paletteQuery = '';
-      paletteIndex = 0;
-      el.palette.hidden = false;
-      el.paletteInput.value = '';
-      renderPalette();
-      requestAnimationFrame(() => el.paletteInput.focus());
-    }
-    function closePalette() { el.palette.hidden = true; }
-    function paletteResults() { return BLOCK_OPTIONS.filter((b) => b.label.toLowerCase().includes(paletteQuery.toLowerCase())); }
-    function renderPalette() {
-      const rows = paletteResults();
-      if (!rows.length) {
-        el.paletteList.innerHTML = '<div class="palette-empty">No blocks found</div>';
-        return;
-      }
-      paletteIndex = clamp(paletteIndex, 0, rows.length - 1);
-      el.paletteList.innerHTML = rows.map((row, idx) => `<button type="button" class="palette-item ${idx===paletteIndex?'active':''}" data-idx="${idx}">${row.label}</button>`).join('');
-      [...el.paletteList.querySelectorAll('.palette-item')].forEach((item) => {
-        item.onclick = () => {
-          const idx = Number(item.dataset.idx);
-          const choice = rows[idx];
-          const d = dims();
-          createPreset(choice.type, d.wMm / 2 - 40, d.hMm / 2 - 20);
-          closePalette();
-        };
-      });
     }
 
     el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
@@ -702,10 +653,10 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; selectedNodeId=null; commitChange(); render(); };
     el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; selectedNodeId=null; commitChange(); render(); };
 
-    el.save.onclick = () => { saveToLocal(doc); dirty = false; setSaveIndicator(); showToast('Saved'); };
-    el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; doc=loaded; selectedNodeId=null; undoStack=[structuredClone(doc)]; redoStack=[]; dirty = false; render(); showToast('Loaded'); };
-    el.ex.onclick = () => exportJSON(doc);
-    el.im.onclick = () => el.importInput.click();
+    el.save.onclick = () => { saveToLocal(doc); dirty = false; setSaveIndicator(); showToast('Saved'); closeTransientOverlays(); };
+    el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; doc=loaded; selectedNodeId=null; undoStack=[structuredClone(doc)]; redoStack=[]; dirty = false; render(); showToast('Loaded'); closeTransientOverlays(); focusCanvas(); };
+    el.ex.onclick = () => { exportJSON(doc); closeTransientOverlays(); };
+    el.im.onclick = () => { el.importInput.click(); closeTransientOverlays(); };
     el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ doc=await importJSON(f); selectedNodeId=null; undoStack=[structuredClone(doc)]; redoStack=[]; dirty = true; render(); autosaveSchedule(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
     el.delBtn.onclick = () => { if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
 
@@ -713,29 +664,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       const active = document.activeElement;
       const typing = active && (active.matches('input,textarea,select') || active.isContentEditable);
       const mod = e.ctrlKey || e.metaKey;
-
-      if (mod && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        if (el.palette.hidden) openPalette();
-        else closePalette();
-        return;
-      }
-
-      if (!el.palette.hidden) {
-        if (e.key === 'Escape') { e.preventDefault(); closePalette(); return; }
-        if (e.key === 'ArrowDown') { e.preventDefault(); paletteIndex += 1; renderPalette(); return; }
-        if (e.key === 'ArrowUp') { e.preventDefault(); paletteIndex -= 1; renderPalette(); return; }
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const rows = paletteResults();
-          if (!rows.length) return;
-          const choice = rows[clamp(paletteIndex, 0, rows.length - 1)];
-          const d = dims();
-          createPreset(choice.type, d.wMm / 2 - 40, d.hMm / 2 - 20);
-          closePalette();
-          return;
-        }
-      }
 
       if (mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
@@ -758,23 +686,24 @@ const base = import.meta.env.BASE_URL ?? "/";
         return;
       }
 
+      if (e.key === 'Escape') {
+        const hadOverlay = el.fileMenu.open || el.toast.classList.contains('show');
+        closeTransientOverlays();
+        if (!hadOverlay) {
+          selectedNodeId = null;
+          render();
+        }
+        focusCanvas();
+        return;
+      }
       if (typing) return;
-      if (e.key === 'Escape') { closePalette(); }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
         e.preventDefault();
         deleteNodeById(selectedNodeId, false);
       }
     });
 
-    el.palette.addEventListener('click', (e) => {
-      if (e.target.dataset.closePalette) closePalette();
-    });
-    el.paletteInput.addEventListener('input', () => {
-      paletteQuery = el.paletteInput.value;
-      paletteIndex = 0;
-      renderPalette();
-    });
-
     render();
+    focusCanvas();
   </script>
 </BaseLayout>
