@@ -4,6 +4,9 @@
   --ctrl-text: #e5e7eb;
   --ctrl-muted: #94a3b8;
   --ring: #818cf8;
+  --workspace-solid:#0b1220;
+  --workspace-gradient:linear-gradient(145deg,#0f172a,#1e293b);
+  --page-bg:#ffffff;
 }
 
 .app-shell{ min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
@@ -56,7 +59,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .app-main{ min-height:0; display:grid; grid-template-columns:minmax(250px,320px) 1fr minmax(320px,380px); gap:12px; padding:12px; }
 .panel{ border-radius:14px; padding:12px; min-height:0; overflow:auto; }
 .left-panel{ display:grid; grid-template-rows:auto 1fr; overflow:hidden; }
-.left-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.left-tabs{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
 .left-tab{ border:1px solid var(--ctrl-br); background:rgba(15,23,42,.55); color:var(--ctrl-text); border-radius:10px; padding:8px 10px; }
 .left-scroll{ min-height:0; overflow:auto; overscroll-behavior:contain; padding-right:2px; }
 .tab-panel{ display:none; }
@@ -78,8 +81,9 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .arrange-toolbar span{ color:var(--ctrl-muted); font-size:12px; margin-right:2px; }
 .arrange-toolbar[hidden]{ display:none; }
 
-.workspace{ min-height:560px; border:1px dashed rgba(255,255,255,.2); border-radius:12px; padding:20px; overflow:auto; }
-.page{ margin:0 auto; background:#fff; border:1px solid rgba(17,24,39,.2); border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,.35); transform-origin:top center; transition:transform .15s ease,width .15s ease,height .15s ease; position:relative; }
+.workspace{ min-height:560px; border:1px dashed rgba(255,255,255,.2); border-radius:12px; padding:20px; overflow:auto; background:var(--workspace-gradient),var(--workspace-solid); background-blend-mode:screen,normal; }
+.workspace.with-pattern{ background-image:radial-gradient(rgba(148,163,184,.2) 1px, transparent 1px), var(--workspace-gradient),var(--workspace-solid); background-size:20px 20px, auto, auto; }
+.page{ margin:0 auto; background:var(--page-bg); border:1px solid rgba(17,24,39,.2); border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,.35); transform-origin:top center; transition:transform .15s ease,width .15s ease,height .15s ease; position:relative; }
 .page.grid .stage{
   background-image:
     repeating-linear-gradient(to right, rgba(15,23,42,.10) 0 1px, transparent 1px var(--grid-step-px)),
@@ -125,6 +129,16 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .inspector-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .toggle-field{ align-items:center; }
 .ins-note{ margin:8px 0 4px; color:var(--ctrl-muted); font-size:12px; min-height:16px; }
+.swatch-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; }
+.swatch{ width:26px; height:26px; border-radius:50%; border:1px solid var(--ctrl-br); background:var(--sw); }
+.swatch-remove{ border:1px solid var(--ctrl-br); border-radius:8px; background:rgba(15,23,42,.65); color:#cbd5e1; height:26px; padding:0 6px; }
+
+.theme-panel{ display:grid; gap:10px; }
+.theme-panel h3{ margin:8px 0 0; font-size:13px; color:#cbd5e1; }
+.theme-preset-list{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.page-bg-btn{ border:1px solid var(--ctrl-br); border-radius:10px; background:rgba(15,23,42,.55); color:var(--ctrl-text); display:flex; align-items:center; gap:6px; padding:6px 8px; }
+.page-bg-btn span{ width:18px; height:18px; border-radius:50%; border:1px solid rgba(15,23,42,.2); }
+.brand-kit-row{ display:flex; gap:8px; align-items:center; }
 
 .pages-strip{ margin:0 12px 12px; }
 .pages-actions{ display:inline-flex; gap:8px; }
@@ -164,7 +178,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .recent-project{ border:1px solid rgba(148,163,184,.35); background:rgba(30,41,59,.5); border-radius:8px; color:#e2e8f0; text-align:left; padding:6px 8px; display:grid; gap:2px; }
 .recent-project span{ font-size:11px; color:#94a3b8; }
 
-.left-tabs{ grid-template-columns:1fr 1fr 1fr; }
+
 .asset-tools{ display:grid; gap:8px; margin-bottom:8px; }
 .assets-list{ display:grid; gap:8px; }
 .asset-item{ border:1px solid var(--ctrl-br); background:rgba(15,23,42,.45); border-radius:10px; padding:8px; cursor:grab; color:var(--ctrl-text); display:grid; grid-template-columns:42px 1fr; gap:8px; align-items:center; text-align:left; }
