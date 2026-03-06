@@ -61,9 +61,11 @@ const createStickerSvg = (emoji: string, idx: number) => {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="#ffffff" stroke="${ring}" stroke-width="5"/><text x="60" y="78" text-anchor="middle" font-size="52">${emoji}</text></svg>`;
 };
 
-export const ASSET_LIBRARY: AssetItem[] = [
+export const ASSETS: AssetItem[] = [
   ...iconGlyphs.map((glyph, idx) => ({ id: `icon-${idx + 1}`, name: `Icon ${idx + 1}`, category: "Icons" as const, svgMarkup: createIconSvg(glyph, idx), widthMm: 20, heightMm: 20 })),
   ...dividerPatterns.map((pattern, idx) => ({ id: `divider-${idx + 1}`, name: `Divider ${idx + 1}`, category: "Dividers" as const, svgMarkup: createDividerSvg(pattern), widthMm: 65, heightMm: 8 })),
   ...badgeData.map(([label, color], idx) => ({ id: `badge-${idx + 1}`, name: `Badge ${label}`, category: "Badges" as const, svgMarkup: createBadgeSvg(label, color), widthMm: 36, heightMm: 14 })),
   ...stickers.map(([name, emoji], idx) => ({ id: `sticker-${idx + 1}`, name: `${name} Sticker`, category: "Stickers" as const, svgMarkup: createStickerSvg(emoji, idx), widthMm: 24, heightMm: 24 })),
 ];
+
+export const ASSET_LIBRARY = ASSETS;
