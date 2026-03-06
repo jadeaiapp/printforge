@@ -149,3 +149,30 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .template-checkline{ margin-top:2px; }
 
 @media (max-width:760px){ .template-modal-controls{ grid-template-columns:1fr; } }
+
+.project-name-field input{ min-width:170px; }
+.file-menu-recent{ border-top:1px solid rgba(148,163,184,.25); margin-top:4px; padding-top:6px; display:grid; gap:4px; }
+.file-menu-recent strong{ font-size:12px; color:#cbd5e1; padding:0 4px; }
+.recent-projects-list{ display:grid; gap:4px; max-height:160px; overflow:auto; }
+.recent-projects-empty{ font-size:12px; color:#94a3b8; padding:2px 4px 6px; }
+.recent-project{ border:1px solid rgba(148,163,184,.35); background:rgba(30,41,59,.5); border-radius:8px; color:#e2e8f0; text-align:left; padding:6px 8px; display:grid; gap:2px; }
+.recent-project span{ font-size:11px; color:#94a3b8; }
+
+.left-tabs{ grid-template-columns:1fr 1fr 1fr; }
+.asset-tools{ display:grid; gap:8px; margin-bottom:8px; }
+.assets-list{ display:grid; gap:8px; }
+.asset-item{ border:1px solid var(--ctrl-br); background:rgba(15,23,42,.45); border-radius:10px; padding:8px; cursor:grab; color:var(--ctrl-text); display:grid; grid-template-columns:42px 1fr; gap:8px; align-items:center; text-align:left; }
+.asset-item:active{ cursor:grabbing; }
+.asset-preview{ width:40px; height:40px; display:grid; place-items:center; background:rgba(255,255,255,.9); border-radius:8px; overflow:hidden; }
+.asset-preview svg{ width:30px; height:30px; }
+.asset-meta{ display:grid; gap:2px; }
+.asset-meta span{ font-size:11px; color:#94a3b8; }
+
+.svg-content{ width:100%; height:100%; display:grid; place-items:center; transform-origin:center center; --svg-fill:#1d4ed8; --svg-stroke:#334155; }
+.svg-content svg{ width:100%; height:100%; }
+.svg-content svg *{ fill: var(--svg-fill); stroke: var(--svg-stroke); }
+
+.context-menu{ position:fixed; z-index:200; min-width:180px; border:1px solid var(--ctrl-br); border-radius:10px; background:rgba(15,23,42,.98); box-shadow:0 10px 26px rgba(0,0,0,.4); padding:6px; display:grid; gap:4px; }
+.context-menu[hidden]{ display:none; }
+.context-menu button{ border:1px solid transparent; background:transparent; color:#e2e8f0; border-radius:8px; padding:7px 8px; text-align:left; }
+.context-menu button:hover{ background:rgba(51,65,85,.8); border-color:rgba(148,163,184,.35); }

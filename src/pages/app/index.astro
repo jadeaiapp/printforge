@@ -13,6 +13,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         <span>PrintForge</span>
       </a>
       <div class="top-controls">
+        <label class="field inline project-name-field"><span>Project</span><input id="project-name" class="control" type="text" value="Untitled project" maxlength="80" /></label>
         <label class="field inline"><span>Zoom</span>
           <select id="zoom-select" class="control"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="fit">Fit</option></select>
         </label>
@@ -31,10 +32,16 @@ const base = import.meta.env.BASE_URL ?? "/";
           <summary class="btn btn-primary">File</summary>
           <div class="file-menu-list" role="menu" aria-label="File actions">
             <button type="button" id="new-project-btn" class="file-menu-item" role="menuitem">New project</button>
+            <button type="button" id="duplicate-project-btn" class="file-menu-item" role="menuitem">Duplicate project</button>
+            <button type="button" id="clear-project-btn" class="file-menu-item" role="menuitem">Clear project</button>
             <button type="button" id="save-btn" class="file-menu-item" role="menuitem">Save (local)</button>
             <button type="button" id="load-btn" class="file-menu-item" role="menuitem">Load (local)</button>
             <button type="button" id="export-btn" class="file-menu-item" role="menuitem">Export JSON</button>
             <button type="button" id="import-btn" class="file-menu-item" role="menuitem">Import JSON</button>
+            <div class="file-menu-recent">
+              <strong>Recent projects</strong>
+              <div id="recent-projects" class="recent-projects-empty">No snapshots yet</div>
+            </div>
           </div>
         </details>
         <input id="import-input" type="file" accept="application/json" hidden />
@@ -46,6 +53,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       <aside class="panel left-panel">
         <div class="left-tabs" role="tablist" aria-label="Left panel tabs">
           <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">Blocks</button>
+          <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">Assets</button>
           <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">Layers</button>
         </div>
 
@@ -79,6 +87,20 @@ const base = import.meta.env.BASE_URL ?? "/";
               <button type="button" id="z-back" class="btn">Back</button>
             </div>
             <div id="layers-list" class="layers-list"></div>
+          </section>
+
+          <section id="panel-assets" class="tab-panel" role="tabpanel" aria-labelledby="tab-assets" hidden>
+            <div class="asset-tools">
+              <input id="asset-search" class="control" type="text" placeholder="Search assets..." />
+              <select id="asset-category" class="control">
+                <option value="all">All categories</option>
+                <option value="Icons">Icons</option>
+                <option value="Dividers">Dividers</option>
+                <option value="Badges">Badges</option>
+                <option value="Stickers">Stickers</option>
+              </select>
+            </div>
+            <div id="assets-list" class="assets-list"></div>
           </section>
         </div>
       </aside>
@@ -117,6 +139,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
           <label class="field"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
           <label class="field"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
+          <label class="field"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
 
           <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
           <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
@@ -134,6 +157,16 @@ const base = import.meta.env.BASE_URL ?? "/";
       <div id="pages-list" class="pages-list"></div>
     </footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="context-menu" class="context-menu" hidden>
+      <button type="button" data-context-action="duplicate">Duplicate</button>
+      <button type="button" data-context-action="delete">Delete</button>
+      <button type="button" data-context-action="front">Bring to front</button>
+      <button type="button" data-context-action="back">Send to back</button>
+      <button type="button" data-context-action="lock">Lock/Unlock</button>
+      <button type="button" data-context-action="visibility">Hide/Show</button>
+      <button type="button" data-context-action="copy">Copy node</button>
+      <button type="button" data-context-action="paste">Paste node</button>
+    </div>
 
     <div id="template-modal" class="template-modal" hidden>
       <div class="template-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
@@ -176,6 +209,7 @@ const base = import.meta.env.BASE_URL ?? "/";
   <script type="module">
     import { createDocFromTemplate, listTemplates } from "/src/app/templates/index.ts";
     import { validateTemplates } from "/src/app/templates/validate.ts";
+    import { ASSET_LIBRARY } from "/src/app/assets.ts";
     const mmToPx = (mm) => mm * 3.7795275591;
     const pxToMm = (px) => px / 3.7795275591;
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -186,14 +220,16 @@ const base = import.meta.env.BASE_URL ?? "/";
     };
     const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
 
-    const loadFromLocal = () => { try { const raw = localStorage.getItem('printforge_doc_v2d'); return raw ? JSON.parse(raw) : null; } catch { return null; } };
-    const saveToLocal = (doc) => localStorage.setItem('printforge_doc_v2d', JSON.stringify(doc));
+    const DOC_STORAGE_KEY = 'printforge_doc_v2d';
+    const RECENT_PROJECTS_KEY = 'printforge_recent_projects_v1';
+    const loadFromLocal = () => { try { const raw = localStorage.getItem(DOC_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+    const saveToLocal = (doc) => localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc));
     const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
     const importJSON = async (file) => JSON.parse(await file.text());
 
     const defaultDoc = () => {
       const page = { id: createId('page'), name: 'Page 1', nodes: [] };
-      return { version: 3, pageSize: 'A4', orientation: 'portrait', zoom: 1, grid: { enabled: false, stepMm: 5 }, pages: [page], activePageId: page.id };
+      return { version: 3, pageSize: 'A4', orientation: 'portrait', zoom: 1, grid: { enabled: false, stepMm: 5 }, meta: { projectName: 'Untitled project' }, pages: [page], activePageId: page.id };
     };
 
     const TEMPLATE_HIDE_KEY = 'printforge_hide_template_starter_v1';
@@ -204,27 +240,30 @@ const base = import.meta.env.BASE_URL ?? "/";
       blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
       gridToggle: document.getElementById('grid-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
       addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
-      fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      recentProjects: document.getElementById('recent-projects'), projectName: document.getElementById('project-name'),
       importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
-      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
       zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       saveIndicator: document.getElementById('save-indicator'),
-      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers') },
+      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), assets: document.getElementById('panel-assets'), layers: document.getElementById('panel-layers') },
+      assetSearch: document.getElementById('asset-search'), assetCategory: document.getElementById('asset-category'), assetsList: document.getElementById('assets-list'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
       insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'),
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
-      insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'),
+      insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insRotation: document.getElementById('ins-rotation'),
       insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'),
       templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
     };
 
-    let doc = loadFromLocal() || defaultDoc();
+    let doc = normalizeDoc(loadFromLocal() || defaultDoc());
     if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
     let selectedNodeId = null;
     let draggingBlock = null;
+    let draggingAssetId = null;
     let draggingLayerId = null;
     let undoStack = [structuredClone(doc)];
     let redoStack = [];
@@ -232,6 +271,69 @@ const base = import.meta.env.BASE_URL ?? "/";
     let autosaveTimer = null;
     let listEditCommitTimers = new Map();
     let activeLeftTab = 'blocks';
+    let copiedNode = null;
+    let contextNodeId = null;
+
+
+    const normalizeDoc = (sourceDoc) => {
+      const nextDoc = structuredClone(sourceDoc || defaultDoc());
+      if (!nextDoc.meta) nextDoc.meta = {};
+      if (!nextDoc.meta.projectName) nextDoc.meta.projectName = 'Untitled project';
+      return nextDoc;
+    };
+
+    const loadRecentProjects = () => { try { const raw = localStorage.getItem(RECENT_PROJECTS_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; } };
+    const saveRecentProjects = (items) => localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(items.slice(0, 8)));
+    const timestampText = (iso) => new Date(iso).toLocaleString();
+
+    function captureRecentSnapshot() {
+      const snapshots = loadRecentProjects();
+      snapshots.unshift({ id: createId('snap'), timestamp: new Date().toISOString(), projectName: doc.meta.projectName || 'Untitled project', doc: structuredClone(doc) });
+      saveRecentProjects(snapshots);
+      renderRecentProjects();
+    }
+
+    function renderRecentProjects() {
+      const snapshots = loadRecentProjects();
+      if (!snapshots.length) {
+        el.recentProjects.className = 'recent-projects-empty';
+        el.recentProjects.textContent = 'No snapshots yet';
+        return;
+      }
+      el.recentProjects.className = 'recent-projects-list';
+      el.recentProjects.innerHTML = snapshots.map((snap) => `<button type="button" class="recent-project" data-snapshot-id="${snap.id}"><strong>${snap.projectName}</strong><span>${timestampText(snap.timestamp)}</span></button>`).join('');
+      el.recentProjects.querySelectorAll('[data-snapshot-id]').forEach((btn) => {
+        btn.onclick = () => {
+          const hit = snapshots.find((snap) => snap.id === btn.dataset.snapshotId);
+          if (!hit) return;
+          loadDoc(hit.doc);
+          showToast('Recent project loaded');
+          closeTransientOverlays();
+        };
+      });
+    }
+
+    function ensureProjectName() {
+      if (!doc.meta) doc.meta = {};
+      if (!doc.meta.projectName) doc.meta.projectName = 'Untitled project';
+      el.projectName.value = doc.meta.projectName;
+      document.title = `${doc.meta.projectName} — PrintForge App`;
+    }
+
+    function renderAssets() {
+      const category = el.assetCategory.value;
+      const query = (el.assetSearch.value || '').toLowerCase().trim();
+      const filtered = ASSET_LIBRARY.filter((asset) => {
+        const categoryOk = category === 'all' || asset.category === category;
+        const queryOk = !query || asset.name.toLowerCase().includes(query) || asset.category.toLowerCase().includes(query);
+        return categoryOk && queryOk;
+      });
+      el.assetsList.innerHTML = filtered.map((asset) => `<button type="button" class="asset-item" data-asset-id="${asset.id}" draggable="true"><span class="asset-preview">${asset.svgMarkup}</span><span class="asset-meta"><strong>${asset.name}</strong><span>${asset.category}</span></span></button>`).join('') || '<p class="template-empty">No assets found.</p>';
+      el.assetsList.querySelectorAll('.asset-item').forEach((item) => {
+        item.ondragstart = () => { draggingAssetId = item.dataset.assetId; };
+        item.ondragend = () => { draggingAssetId = null; el.dropPreview.classList.remove('show'); };
+      });
+    }
 
     const categories = [...new Set(templates.map((t) => t.category))];
     categories.forEach((category) => { const option = document.createElement('option'); option.value = category; option.textContent = category; el.templateCategory.appendChild(option); });
@@ -245,12 +347,13 @@ const base = import.meta.env.BASE_URL ?? "/";
     const closeTransientOverlays = () => {
       el.fileMenu.open = false;
       el.toast.classList.remove('show');
+      closeContextMenu();
     };
     const focusCanvas = () => requestAnimationFrame(() => el.stage.focus());
     const setSaveIndicator = () => { el.saveIndicator.textContent = dirty ? 'Unsaved ●' : 'Saved ✓'; el.saveIndicator.classList.toggle('dirty', dirty); };
 
     const resetHistory = () => { undoStack = [structuredClone(doc)]; redoStack = []; dirty = false; setSaveIndicator(); };
-    const loadDoc = (nextDoc) => { doc = structuredClone(nextDoc); selectedNodeId = null; resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
+    const loadDoc = (nextDoc) => { doc = normalizeDoc(nextDoc); selectedNodeId = null; ensureProjectName(); resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
 
     function openTemplateModal() {
       el.templateHideToggle.checked = localStorage.getItem(TEMPLATE_HIDE_KEY) === '1';
@@ -436,6 +539,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         return `<div class="calendar-content" style="opacity:${n.props.opacity||1}"><div class="cal-title">${month}</div><div class="cal-grid">${Array.from({length:42},(_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
       }
       if (n.type === 'image') return `<img class="image-content" style="object-fit:${n.props.objectFit||'contain'};opacity:${n.props.opacity||1}" src="${n.props.src||''}" alt="image"/>`;
+      if (n.type === 'svg') return `<div class="svg-content" style="opacity:${n.props.opacity ?? 1};transform:rotate(${n.props.rotation || 0}deg);--svg-fill:${n.props.fill || '#1d4ed8'};--svg-stroke:${n.props.stroke || '#334155'};">${n.props.svgMarkup || ''}</div>`;
       return '';
     }
 
@@ -532,6 +636,12 @@ const base = import.meta.env.BASE_URL ?? "/";
           editable.onblur = () => commitChange();
         }
         if (n.type === 'checklist' || n.type === 'bulletlist') attachListHandlers(d, n);
+        d.oncontextmenu = (event) => {
+          event.preventDefault();
+          selectedNodeId = n.id;
+          openContextMenu(event.clientX, event.clientY, n.id);
+          render();
+        };
 
         if (n.id === selectedNodeId && !n.locked) {
           ["nw","ne","sw","se"].forEach((h) => {
@@ -572,7 +682,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insItalic, isText, n?.props.italic || false, true);
       enableControl(el.insAlign, isText, n?.props.align || 'left');
 
-      const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
+      const isShape = n && ["box","highlight","roundedrect","circle","svg"].includes(n.type);
       enableControl(el.insFill, isShape, n?.props.fill || '#e2e8f0');
       enableControl(el.insStroke, isShape, n?.props.stroke || '#94a3b8');
       enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
@@ -585,6 +695,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isImage = n && n.type === 'image';
       enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
       enableControl(el.insOpacity, has, n?.props.opacity ?? 1);
+      enableControl(el.insRotation, has && n?.type === 'svg', n?.props.rotation ?? 0);
 
       const isList = n && ["checklist","bulletlist"].includes(n.type);
       enableControl(el.insLineHeight, isList || isText, n?.props.lineHeight || 1.4);
@@ -598,6 +709,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       renderLayers();
       renderNodes();
       switchLeftTab(activeLeftTab);
+      ensureProjectName();
       document.querySelectorAll('[data-size]').forEach((b)=>b.classList.toggle('is-active', b.dataset.size===doc.pageSize));
       document.querySelectorAll('[data-orientation]').forEach((b)=>b.classList.toggle('is-active', b.dataset.orientation===doc.orientation));
       setSaveIndicator();
@@ -624,6 +736,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         table: { name:'Table', wMm:92, hMm:58, props:{ rows:4, cols:4 } },
         calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
         image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
+        svg: { name:'SVG', wMm:30, hMm:30, props:{ svgMarkup:'', fill:'#1d4ed8', stroke:'#334155', opacity:1, rotation:0 } },
       };
       const preset = presets[type]; if (!preset) return;
       p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
@@ -665,6 +778,60 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (selectedNodeId === nodeId) selectedNodeId = null;
       commitChange();
       render();
+    }
+
+
+    function duplicateNode(nodeId) {
+      const p = activePage();
+      const source = p?.nodes.find((item) => item.id === nodeId);
+      if (!p || !source) return;
+      const clone = structuredClone(source);
+      clone.id = createId('node');
+      clone.name = `${source.name} copy`;
+      clone.xMm = clamp(source.xMm + 6, 0, dims().wMm - source.wMm);
+      clone.yMm = clamp(source.yMm + 6, 0, dims().hMm - source.hMm);
+      clone.z = (p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1);
+      p.nodes.push(clone);
+      selectedNodeId = clone.id;
+      commitChange();
+      render();
+    }
+
+    function copyNode(nodeId) {
+      const node = activePage()?.nodes.find((item) => item.id === nodeId);
+      if (!node) return;
+      copiedNode = structuredClone(node);
+      showToast('Node copied');
+    }
+
+    function pasteNode(targetNodeId = null) {
+      if (!copiedNode) return;
+      const p = activePage();
+      if (!p) return;
+      const source = structuredClone(copiedNode);
+      source.id = createId('node');
+      const target = targetNodeId ? p.nodes.find((item) => item.id === targetNodeId) : null;
+      source.xMm = clamp((target?.xMm ?? source.xMm) + 8, 0, dims().wMm - source.wMm);
+      source.yMm = clamp((target?.yMm ?? source.yMm) + 8, 0, dims().hMm - source.hMm);
+      source.z = p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1;
+      p.nodes.push(source);
+      selectedNodeId = source.id;
+      commitChange();
+      render();
+    }
+
+    function openContextMenu(clientX, clientY, nodeId) {
+      contextNodeId = nodeId;
+      el.contextMenu.hidden = false;
+      const menuWidth = 190;
+      const menuHeight = 290;
+      el.contextMenu.style.left = `${Math.min(clientX, window.innerWidth - menuWidth)}px`;
+      el.contextMenu.style.top = `${Math.min(clientY, window.innerHeight - menuHeight)}px`;
+    }
+
+    function closeContextMenu() {
+      contextNodeId = null;
+      el.contextMenu.hidden = true;
     }
 
     function startPointer(e) {
@@ -710,6 +877,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
+    el.assetSearch.oninput = () => renderAssets();
+    el.assetCategory.onchange = () => renderAssets();
 
     el.blockList.querySelectorAll('.block-item').forEach((b) => {
       b.ondragstart = () => { draggingBlock = b.dataset.block; };
@@ -719,7 +888,7 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     el.page.ondragover = (e) => {
       e.preventDefault();
-      if (!draggingBlock) return;
+      if (!draggingBlock && !draggingAssetId) return;
       const pt = pagePointFromEvent(e);
       el.dropPreview.style.left = `${mmToPx(pt.xMm)}px`;
       el.dropPreview.style.top = `${mmToPx(pt.yMm)}px`;
@@ -728,11 +897,17 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.page.ondragleave = () => el.dropPreview.classList.remove('show');
     el.page.ondrop = async (e) => {
       e.preventDefault();
-      if (!draggingBlock) return;
+      if (!draggingBlock && !draggingAssetId) return;
       const pt = pagePointFromEvent(e);
-      if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
+      if (draggingAssetId) {
+        const asset = ASSET_LIBRARY.find((item) => item.id === draggingAssetId);
+        if (asset) {
+          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: '#1d4ed8', stroke: '#334155', opacity: 1, rotation: 0 } });
+        }
+      } else if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
       else createPreset(draggingBlock, pt.xMm, pt.yMm);
       draggingBlock = null;
+      draggingAssetId = null;
       el.dropPreview.classList.remove('show');
     };
 
@@ -764,6 +939,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insColor.onchange = () => applyInspector((n)=>n.props.color = el.insColor.value);
     el.insObjectFit.onchange = () => applyInspector((n)=>n.props.objectFit = el.insObjectFit.value);
     el.insOpacity.onchange = () => applyInspector((n)=>n.props.opacity = Number(el.insOpacity.value));
+    el.insRotation.onchange = () => applyInspector((n)=>n.props.rotation = Number(el.insRotation.value));
     el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
     el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
 
@@ -793,14 +969,14 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; selectedNodeId=null; commitChange(); render(); };
     el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; selectedNodeId=null; commitChange(); render(); };
 
-    el.save.onclick = () => { saveToLocal(doc); dirty = false; setSaveIndicator(); showToast('Saved'); closeTransientOverlays(); };
+    el.save.onclick = () => { saveToLocal(doc); captureRecentSnapshot(); dirty = false; setSaveIndicator(); showToast('Saved'); closeTransientOverlays(); };
     el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; loadDoc(loaded); showToast('Loaded'); closeTransientOverlays(); };
     el.ex.onclick = () => { exportJSON(doc); closeTransientOverlays(); };
     el.im.onclick = () => { el.importInput.click(); closeTransientOverlays(); };
     el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ const imported = await importJSON(f); loadDoc(imported); dirty = true; setSaveIndicator(); autosaveSchedule(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
     el.delBtn.onclick = () => { if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
 
-    el.newProjectBtn.onclick = () => { openTemplateModal(); closeTransientOverlays(); };
+    el.newProjectBtn.onclick = () => { captureRecentSnapshot(); openTemplateModal(); closeTransientOverlays(); };
     el.templateCloseBtn.onclick = () => closeTemplateModal();
     el.templateBlankBtn.onclick = () => applyTemplateSelection(null);
     el.templateSearch.oninput = () => renderTemplateCards();
@@ -808,6 +984,54 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.templateHideToggle.onchange = () => localStorage.setItem(TEMPLATE_HIDE_KEY, el.templateHideToggle.checked ? '1' : '0');
     el.templateModal.addEventListener('click', (event) => {
       if (event.target === el.templateModal) closeTemplateModal();
+    });
+
+    el.duplicateProjectBtn.onclick = () => {
+      const duplicate = structuredClone(doc);
+      duplicate.meta.projectName = `${doc.meta.projectName || 'Untitled project'} copy`;
+      loadDoc(duplicate);
+      commitChange();
+      showToast('Project duplicated');
+      closeTransientOverlays();
+    };
+    el.clearProjectBtn.onclick = () => {
+      const ok = window.confirm('Clear current project?');
+      if (!ok) return;
+      captureRecentSnapshot();
+      loadDoc(defaultDoc());
+      showToast('Project cleared');
+      closeTransientOverlays();
+    };
+    el.projectName.onchange = () => {
+      doc.meta.projectName = (el.projectName.value || 'Untitled project').trim() || 'Untitled project';
+      commitChange();
+      render();
+    };
+
+
+    el.contextMenu.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-context-action]')?.dataset.contextAction;
+      if (!action || !contextNodeId) return;
+      if (action === 'duplicate') duplicateNode(contextNodeId);
+      if (action === 'delete') deleteNodeById(contextNodeId, true);
+      if (action === 'front') { selectedNodeId = contextNodeId; zMove('front'); }
+      if (action === 'back') { selectedNodeId = contextNodeId; zMove('back'); }
+      if (action === 'lock') {
+        const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
+        if (node) { node.locked = !node.locked; commitChange(); render(); }
+      }
+      if (action === 'visibility') {
+        const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
+        if (node) { node.visible = !node.visible; commitChange(); render(); }
+      }
+      if (action === 'copy') copyNode(contextNodeId);
+      if (action === 'paste') pasteNode(contextNodeId);
+      closeContextMenu();
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (el.contextMenu.hidden) return;
+      if (!event.target.closest('#context-menu')) closeContextMenu();
     });
 
     window.addEventListener('keydown', (e) => {
@@ -840,6 +1064,7 @@ const base = import.meta.env.BASE_URL ?? "/";
 
       if (e.key === 'Escape') {
         if (!el.templateModal.hidden) { closeTemplateModal(); focusCanvas(); return; }
+        if (!el.contextMenu.hidden) { closeContextMenu(); focusCanvas(); return; }
         const hadOverlay = el.fileMenu.open || el.toast.classList.contains('show');
         closeTransientOverlays();
         if (!hadOverlay) {
@@ -863,6 +1088,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (failed.length) console.warn('[templates] validation failures', failed);
     }
 
+    renderAssets();
+    renderRecentProjects();
     render();
     if (localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
     focusCanvas();

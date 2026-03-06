@@ -19,7 +19,8 @@ export type NodeType =
   | "datelabel"
   | "table"
   | "calendar"
-  | "image";
+  | "image"
+  | "svg";
 
 export interface NodeProps {
   text?: string;
@@ -45,7 +46,10 @@ export interface NodeProps {
   opacity?: number;
   lineHeight?: number;
   listStyle?: "bullet" | "checkbox";
+  svgMarkup?: string;
+  rotation?: number;
 }
+
 
 export interface Node {
   id: string;
@@ -73,6 +77,7 @@ export interface Doc {
   orientation: Orientation;
   zoom: number;
   grid: { enabled: boolean; stepMm: 2 | 5 | 10 };
+  meta?: { projectName?: string };
   pages: Page[];
   activePageId: string;
 }
@@ -110,6 +115,7 @@ export function defaultDoc(): Doc {
     orientation: "portrait",
     zoom: 1,
     grid: { enabled: false, stepMm: 5 },
+    meta: { projectName: "Untitled project" },
     pages: [page],
     activePageId: page.id,
   };
