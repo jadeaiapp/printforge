@@ -251,9 +251,9 @@ const base = import.meta.env.BASE_URL ?? "/";
   </div>
 
   <script type="module">
-    import { createDocFromTemplate, listTemplates } from "/src/app/templates/index.ts";
-    import { validateTemplates } from "/src/app/templates/validate.ts";
-    import { ASSET_LIBRARY } from "/src/app/assets.ts";
+    import { createDocFromTemplate, listTemplates } from "../../app/templates/index";
+    import { validateTemplates } from "../../app/templates/validate";
+    import { ASSET_LIBRARY } from "../../app/assets";
     const mmToPx = (mm) => mm * 3.7795275591;
     const pxToMm = (px) => px / 3.7795275591;
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
