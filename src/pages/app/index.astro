@@ -184,6 +184,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     let redoStack = [];
     let dirty = false;
     let autosaveTimer = null;
+    let listEditCommitTimers = new Map();
     let activeLeftTab = 'blocks';
 
     const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
@@ -215,6 +216,34 @@ const base = import.meta.env.BASE_URL ?? "/";
       dirty = true;
       setSaveIndicator();
       autosaveSchedule();
+    }
+
+    function markDirtyNow() {
+      dirty = true;
+      setSaveIndicator();
+      autosaveSchedule();
+    }
+
+    function listEditTimerKey(nodeId, idx) {
+      return `${nodeId}:${idx}`;
+    }
+
+    function clearListCommitTimer(nodeId, idx) {
+      const key = listEditTimerKey(nodeId, idx);
+      const timer = listEditCommitTimers.get(key);
+      if (timer) {
+        clearTimeout(timer);
+        listEditCommitTimers.delete(key);
+      }
+    }
+
+    function scheduleListCommit(nodeId, idx, delay = 300) {
+      clearListCommitTimer(nodeId, idx);
+      const key = listEditTimerKey(nodeId, idx);
+      listEditCommitTimers.set(key, setTimeout(() => {
+        listEditCommitTimers.delete(key);
+        commitChange();
+      }, delay));
     }
 
     function switchLeftTab(tab) {
@@ -324,49 +353,70 @@ const base = import.meta.env.BASE_URL ?? "/";
     function attachListHandlers(nodeEl, n) {
       const items = [...nodeEl.querySelectorAll('[data-list-item]')];
       const syncFromDom = () => {
-        n.props.items = items.map((item) => item.textContent.trim());
+        n.props.items = items.map((item) => item.textContent ?? '');
+      };
+      const focusItem = (itemIdx) => {
+        requestAnimationFrame(() => {
+          const target = el.stage.querySelector(`[data-id="${n.id}"] [data-list-item="${itemIdx}"]`);
+          target?.focus();
+        });
       };
       items.forEach((item, idx) => {
-        item.oninput = () => { syncFromDom(); dirty = true; setSaveIndicator(); autosaveSchedule(); };
+        item.onfocus = () => {
+          if (selectedNodeId !== n.id) {
+            selectedNodeId = n.id;
+            render();
+            focusItem(idx);
+            return;
+          }
+        };
+        item.oninput = () => {
+          syncFromDom();
+          markDirtyNow();
+          scheduleListCommit(n.id, idx);
+        };
         item.onkeydown = (ev) => {
           if (ev.key === 'Enter') {
             ev.preventDefault();
+            ev.stopPropagation();
+            syncFromDom();
             const next = [...(n.props.items || [])];
             next.splice(idx + 1, 0, '');
             n.props.items = next;
             commitChange();
             renderNodes();
-            requestAnimationFrame(() => {
-              const target = el.stage.querySelector(`[data-id="${n.id}"] [data-list-item="${idx + 1}"]`);
-              target?.focus();
-            });
+            focusItem(idx + 1);
           }
           if (ev.key === 'Backspace' && item.textContent.trim() === '' && (n.props.items || []).length > 1) {
             ev.preventDefault();
+            ev.stopPropagation();
+            syncFromDom();
             const next = [...(n.props.items || [])];
             next.splice(idx, 1);
             n.props.items = next;
             commitChange();
             renderNodes();
-            requestAnimationFrame(() => {
-              const targetIdx = Math.max(0, idx - 1);
-              const target = el.stage.querySelector(`[data-id="${n.id}"] [data-list-item="${targetIdx}"]`);
-              target?.focus();
-            });
+            focusItem(Math.max(0, idx - 1));
           }
         };
-        item.onblur = () => commitChange();
+        item.onblur = () => {
+          clearListCommitTimer(n.id, idx);
+          syncFromDom();
+          commitChange();
+        };
       });
       const addBtn = nodeEl.querySelector('[data-add-item]');
       if (addBtn) {
-        addBtn.onclick = () => {
+        addBtn.onpointerdown = (ev) => {
+          ev.stopPropagation();
+        };
+        addBtn.onclick = (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
           n.props.items = [...(n.props.items || []), ''];
           commitChange();
           renderNodes();
-          requestAnimationFrame(() => {
-            const target = el.stage.querySelector(`[data-id="${n.id}"] [data-list-item="${(n.props.items || []).length - 1}"]`);
-            target?.focus();
-          });
+          focusItem((n.props.items || []).length - 1);
         };
       }
     }
@@ -599,10 +649,11 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     el.stage.onpointerdown = (e) => {
       if (e.target === el.stage) {
-        selectedNodeId = null;
-        render();
+        const active = document.activeElement;
+        if (active?.isContentEditable) active.blur();
         return;
       }
+      if (e.target.closest('[contenteditable="true"]') || e.target.closest('[data-add-item]')) return;
       startPointer(e);
     };
 
@@ -664,6 +715,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       const active = document.activeElement;
       const typing = active && (active.matches('input,textarea,select') || active.isContentEditable);
       const mod = e.ctrlKey || e.metaKey;
+
+      if (typing && mod && e.key.toLowerCase() === 'z') return;
 
       if (mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
