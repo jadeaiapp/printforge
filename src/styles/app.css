@@ -73,7 +73,11 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .layer-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .icon-btn{ width:30px; height:30px; display:grid; place-items:center; padding:0 !important; }
 
-.canvas-panel{ display:grid; }
+.canvas-panel{ display:grid; align-content:start; }
+.arrange-toolbar{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; }
+.arrange-toolbar span{ color:var(--ctrl-muted); font-size:12px; margin-right:2px; }
+.arrange-toolbar[hidden]{ display:none; }
+
 .workspace{ min-height:560px; border:1px dashed rgba(255,255,255,.2); border-radius:12px; padding:20px; overflow:auto; }
 .page{ margin:0 auto; background:#fff; border:1px solid rgba(17,24,39,.2); border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,.35); transform-origin:top center; transition:transform .15s ease,width .15s ease,height .15s ease; position:relative; }
 .page.grid .stage{
@@ -90,6 +94,8 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.b
 .guide{ position:absolute; display:none; pointer-events:none; z-index:999; }
 .guide-x{ top:0; bottom:0; width:1px; background:#0ea5e9; }
 .guide-y{ left:0; right:0; height:1px; background:#0ea5e9; }
+.multi-box{ position:absolute; border:1px dashed #3b82f6; background:rgba(59,130,246,.08); pointer-events:none; z-index:998; }
+.marquee{ position:absolute; border:1px dashed #0ea5e9; background:rgba(14,165,233,.15); pointer-events:none; z-index:997; }
 
 .node{ position:absolute; transition:box-shadow .08s ease, opacity .1s ease; }
 .node.selected{ box-shadow:0 0 0 2px #3b82f6 inset; }
