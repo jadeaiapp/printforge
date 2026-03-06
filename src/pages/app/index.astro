@@ -106,11 +106,24 @@ const base = import.meta.env.BASE_URL ?? "/";
       </aside>
 
       <section class="panel canvas-panel">
+        <div id="arrange-toolbar" class="arrange-toolbar" hidden>
+          <span>Arrange</span>
+          <button type="button" data-arrange="align-left" class="btn">⟸</button>
+          <button type="button" data-arrange="align-center" class="btn">↔</button>
+          <button type="button" data-arrange="align-right" class="btn">⟹</button>
+          <button type="button" data-arrange="align-top" class="btn">⟰</button>
+          <button type="button" data-arrange="align-middle" class="btn">↕</button>
+          <button type="button" data-arrange="align-bottom" class="btn">⟱</button>
+          <button type="button" data-arrange="dist-h" class="btn">⇆</button>
+          <button type="button" data-arrange="dist-v" class="btn">⇅</button>
+        </div>
         <div id="workspace" class="workspace">
           <div id="page" class="page">
             <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
             <div id="guide-x" class="guide guide-x"></div>
             <div id="guide-y" class="guide guide-y"></div>
+            <div id="multi-box" class="multi-box" hidden></div>
+            <div id="marquee" class="marquee" hidden></div>
             <div id="stage" class="stage" tabindex="0" aria-label="Canvas"></div>
           </div>
         </div>
@@ -243,7 +256,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
       recentProjects: document.getElementById('recent-projects'), projectName: document.getElementById('project-name'),
       importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
-      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), multiBox: document.getElementById('multi-box'), marquee: document.getElementById('marquee'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
       zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       saveIndicator: document.getElementById('save-indicator'),
@@ -257,11 +270,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
+      arrangeToolbar: document.getElementById('arrange-toolbar'),
     };
 
     let doc = normalizeDoc(loadFromLocal() || defaultDoc());
     if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
     let selectedNodeId = null;
+    let selectedNodeIds = new Set();
     let draggingBlock = null;
     let draggingAssetId = null;
     let draggingLayerId = null;
@@ -273,12 +288,14 @@ const base = import.meta.env.BASE_URL ?? "/";
     let activeLeftTab = 'blocks';
     let copiedNode = null;
     let contextNodeId = null;
+    let marqueeState = null;
 
 
     const normalizeDoc = (sourceDoc) => {
       const nextDoc = structuredClone(sourceDoc || defaultDoc());
       if (!nextDoc.meta) nextDoc.meta = {};
       if (!nextDoc.meta.projectName) nextDoc.meta.projectName = 'Untitled project';
+      nextDoc.pages?.forEach((page) => page.nodes?.forEach((node) => { if (!Object.prototype.hasOwnProperty.call(node, 'groupId')) node.groupId = null; }));
       return nextDoc;
     };
 
@@ -342,6 +359,75 @@ const base = import.meta.env.BASE_URL ?? "/";
     const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
     const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
     const gridSnap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+    const SNAP_THRESHOLD_MM = 2;
+
+    const selectedNodes = () => {
+      const page = activePage();
+      if (!page) return [];
+      const ids = [...selectedNodeIds];
+      return page.nodes.filter((n) => ids.includes(n.id));
+    };
+
+    function nodeBounds(node) {
+      return { left: node.xMm, top: node.yMm, right: node.xMm + node.wMm, bottom: node.yMm + node.hMm, centerX: node.xMm + (node.wMm / 2), centerY: node.yMm + (node.hMm / 2) };
+    }
+
+    function selectionBounds(nodes = selectedNodes()) {
+      if (!nodes.length) return null;
+      const left = Math.min(...nodes.map((n) => n.xMm));
+      const top = Math.min(...nodes.map((n) => n.yMm));
+      const right = Math.max(...nodes.map((n) => n.xMm + n.wMm));
+      const bottom = Math.max(...nodes.map((n) => n.yMm + n.hMm));
+      return { left, top, right, bottom, width: right - left, height: bottom - top, centerX: (left + right) / 2, centerY: (top + bottom) / 2 };
+    }
+
+    function setPrimarySelection(nodeId = null) {
+      if (!nodeId) {
+        selectedNodeId = null;
+        selectedNodeIds.clear();
+        return;
+      }
+      selectedNodeId = nodeId;
+      if (!selectedNodeIds.has(nodeId)) selectedNodeIds = new Set([nodeId]);
+    }
+
+    function setSelection(nodeIds = [], primary = null) {
+      const uniq = [...new Set(nodeIds)];
+      selectedNodeIds = new Set(uniq);
+      if (!uniq.length) {
+        selectedNodeId = null;
+      } else if (primary && selectedNodeIds.has(primary)) {
+        selectedNodeId = primary;
+      } else if (selectedNodeId && selectedNodeIds.has(selectedNodeId)) {
+        // keep current primary
+      } else {
+        selectedNodeId = uniq[uniq.length - 1];
+      }
+    }
+
+    function toggleNodeSelection(nodeId) {
+      const next = new Set(selectedNodeIds);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      setSelection([...next], nodeId);
+    }
+
+    function nodesFromSelectionOrGroup(nodeId) {
+      const page = activePage();
+      if (!page) return [];
+      const seed = page.nodes.find((n) => n.id === nodeId);
+      if (!seed) return [];
+      if (selectedNodeIds.has(nodeId) && selectedNodeIds.size > 1) {
+        return selectedNodes().filter((n) => !n.locked);
+      }
+      if (seed.groupId) return page.nodes.filter((n) => n.groupId === seed.groupId && !n.locked);
+      return seed.locked ? [] : [seed];
+    }
+
+    function clearGuides() {
+      el.guideX.style.display = 'none';
+      el.guideY.style.display = 'none';
+    }
 
     const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
     const closeTransientOverlays = () => {
@@ -353,7 +439,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     const setSaveIndicator = () => { el.saveIndicator.textContent = dirty ? 'Unsaved ●' : 'Saved ✓'; el.saveIndicator.classList.toggle('dirty', dirty); };
 
     const resetHistory = () => { undoStack = [structuredClone(doc)]; redoStack = []; dirty = false; setSaveIndicator(); };
-    const loadDoc = (nextDoc) => { doc = normalizeDoc(nextDoc); selectedNodeId = null; ensureProjectName(); resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
+    const loadDoc = (nextDoc) => { doc = normalizeDoc(nextDoc); setPrimarySelection(null); ensureProjectName(); resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
 
     function openTemplateModal() {
       el.templateHideToggle.checked = localStorage.getItem(TEMPLATE_HIDE_KEY) === '1';
@@ -470,7 +556,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         const chip = document.createElement('button');
         chip.className = `page-thumb ${page.id === doc.activePageId ? 'active' : ''}`;
         chip.textContent = page.name || `Page ${i + 1}`;
-        chip.onclick = () => { selectedNodeId = null; doc.activePageId = page.id; render(); };
+        chip.onclick = () => { setPrimarySelection(null); doc.activePageId = page.id; render(); };
         el.pagesList.appendChild(chip);
       });
       el.delPage.disabled = doc.pages.length <= 1;
@@ -483,7 +569,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       const sorted = [...p.nodes].sort((a,b)=>b.z-a.z);
       sorted.forEach((n, idx) => {
         const row = document.createElement('div');
-        row.className = `layer-row ${n.id === selectedNodeId ? 'active' : ''}`;
+        row.className = `layer-row ${selectedNodeIds.has(n.id) ? 'active' : ''}`;
         row.draggable = true;
         row.dataset.id = n.id;
         row.innerHTML = `<span class="layer-icon">${n.type[0].toUpperCase()}</span><span class="layer-name">${n.name || `${n.type} ${idx+1}`}</span><button type="button" class="icon-btn layer-eye" title="Toggle visibility">${n.visible ? '👁' : '🚫'}</button><button type="button" class="icon-btn layer-lock" title="Toggle lock">${n.locked ? '🔒' : '🔓'}</button><button type="button" class="icon-btn layer-trash" title="Delete layer">🗑</button>`;
@@ -491,7 +577,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           if (e.target.classList.contains('layer-eye')) { n.visible = !n.visible; commitChange(); render(); return; }
           if (e.target.classList.contains('layer-lock')) { n.locked = !n.locked; commitChange(); render(); return; }
           if (e.target.classList.contains('layer-trash')) { deleteNodeById(n.id, true); return; }
-          selectedNodeId = n.id; render();
+          if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id); render();
         };
         row.ondragstart = () => { draggingLayerId = n.id; };
         row.ondragover = (e) => e.preventDefault();
@@ -557,7 +643,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       items.forEach((item, idx) => {
         item.onfocus = () => {
           if (selectedNodeId !== n.id) {
-            selectedNodeId = n.id;
+            setSelection([n.id], n.id);
             render();
             focusItem(idx);
             return;
@@ -621,7 +707,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
         if (!n.visible) return;
         const d = document.createElement('div');
-        d.className = `node node-${n.type} ${n.id === selectedNodeId ? 'selected' : ''}`;
+        d.className = `node node-${n.type} ${selectedNodeIds.has(n.id) ? 'selected' : ''}`;
         d.dataset.id = n.id;
         d.style.left = `${mmToPx(n.xMm)}px`;
         d.style.top = `${mmToPx(n.yMm)}px`;
@@ -638,12 +724,12 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (n.type === 'checklist' || n.type === 'bulletlist') attachListHandlers(d, n);
         d.oncontextmenu = (event) => {
           event.preventDefault();
-          selectedNodeId = n.id;
+          setSelection([n.id], n.id);
           openContextMenu(event.clientX, event.clientY, n.id);
           render();
         };
 
-        if (n.id === selectedNodeId && !n.locked) {
+        if (n.id === selectedNodeId && selectedNodeIds.size <= 1 && !n.locked) {
           ["nw","ne","sw","se"].forEach((h) => {
             const hEl = document.createElement('button');
             hEl.type='button'; hEl.className=`handle ${h}`; hEl.dataset.handle=h;
@@ -666,9 +752,10 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function syncInspector() {
       const n = activeNode();
-      const has = !!n;
-      el.inspectorTitle.textContent = has ? `Selected: ${n.type}` : 'No selection';
-      el.delBtn.disabled = !n;
+      const selectedCount = selectedNodeIds.size;
+      const has = !!n && selectedCount <= 1;
+      el.inspectorTitle.textContent = selectedCount > 1 ? `Selected: ${selectedCount} items` : (has ? `Selected: ${n.type}` : 'No selection');
+      el.delBtn.disabled = selectedCount === 0;
 
       enableControl(el.insX, has, n?.xMm?.toFixed?.(1));
       enableControl(el.insY, has, n?.yMm?.toFixed?.(1));
@@ -703,11 +790,83 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.note.textContent = has ? '' : 'Select an object to edit controls.';
     }
 
+    function renderSelectionOverlays() {
+      const box = selectionBounds();
+      if (box && selectedNodeIds.size > 1) {
+        el.multiBox.hidden = false;
+        el.multiBox.style.left = `${mmToPx(box.left)}px`;
+        el.multiBox.style.top = `${mmToPx(box.top)}px`;
+        el.multiBox.style.width = `${mmToPx(box.width)}px`;
+        el.multiBox.style.height = `${mmToPx(box.height)}px`;
+      } else {
+        el.multiBox.hidden = true;
+      }
+      el.arrangeToolbar.hidden = selectedNodeIds.size < 2;
+    }
+
+    function selectionIntersects(rect, node) {
+      const b = nodeBounds(node);
+      return !(b.left > rect.right || b.right < rect.left || b.top > rect.bottom || b.bottom < rect.top);
+    }
+
+    function applyArrange(action) {
+      const nodes = selectedNodes().filter((n) => !n.locked);
+      if (nodes.length < 2) return;
+      const bounds = selectionBounds(nodes);
+      if (!bounds) return;
+      if (action === 'align-left') nodes.forEach((n) => n.xMm = bounds.left);
+      if (action === 'align-center') nodes.forEach((n) => n.xMm = bounds.centerX - (n.wMm / 2));
+      if (action === 'align-right') nodes.forEach((n) => n.xMm = bounds.right - n.wMm);
+      if (action === 'align-top') nodes.forEach((n) => n.yMm = bounds.top);
+      if (action === 'align-middle') nodes.forEach((n) => n.yMm = bounds.centerY - (n.hMm / 2));
+      if (action === 'align-bottom') nodes.forEach((n) => n.yMm = bounds.bottom - n.hMm);
+      if (action === 'dist-h') {
+        const ordered = [...nodes].sort((a, b) => a.xMm - b.xMm);
+        if (ordered.length > 2) {
+          const totalW = ordered.reduce((sum, n) => sum + n.wMm, 0);
+          const gap = Math.max(0, (bounds.width - totalW) / (ordered.length - 1));
+          let x = bounds.left;
+          ordered.forEach((n) => { n.xMm = x; x += n.wMm + gap; });
+        }
+      }
+      if (action === 'dist-v') {
+        const ordered = [...nodes].sort((a, b) => a.yMm - b.yMm);
+        if (ordered.length > 2) {
+          const totalH = ordered.reduce((sum, n) => sum + n.hMm, 0);
+          const gap = Math.max(0, (bounds.height - totalH) / (ordered.length - 1));
+          let y = bounds.top;
+          ordered.forEach((n) => { n.yMm = y; y += n.hMm + gap; });
+        }
+      }
+      commitChange();
+      render();
+    }
+
+    function groupSelection() {
+      const nodes = selectedNodes().filter((n) => !n.locked);
+      if (nodes.length < 2) return;
+      const gid = createId('group');
+      nodes.forEach((n) => n.groupId = gid);
+      commitChange();
+      render();
+    }
+
+    function ungroupSelection() {
+      const p = activePage();
+      if (!p) return;
+      const groupIds = [...new Set(selectedNodes().map((n) => n.groupId).filter(Boolean))];
+      if (!groupIds.length) return;
+      p.nodes.forEach((n) => { if (groupIds.includes(n.groupId)) n.groupId = null; });
+      commitChange();
+      render();
+    }
+
     function render() {
       renderFrame();
       renderPages();
       renderLayers();
       renderNodes();
+      renderSelectionOverlays();
       switchLeftTab(activeLeftTab);
       ensureProjectName();
       document.querySelectorAll('[data-size]').forEach((b)=>b.classList.toggle('is-active', b.dataset.size===doc.pageSize));
@@ -718,7 +877,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function createPreset(type, xMm, yMm, extra = {}) {
       const p = activePage(); if (!p) return;
       const now = new Date();
-      const base = { id:createId('node'), type, name:type, xMm, yMm, wMm:80, hMm:24, z:(p.nodes.reduce((m,n)=>Math.max(m,n.z),0)+1), visible:true, locked:false, props:{} };
+      const base = { id:createId('node'), type, name:type, xMm, yMm, wMm:80, hMm:24, z:(p.nodes.reduce((m,n)=>Math.max(m,n.z),0)+1), visible:true, locked:false, groupId:null, props:{} };
       const presets = {
         text: { name:'Text', wMm:80, hMm:22, props:{ text:'Text', fontSize:14, fontFamily:'Inter,system-ui', fontWeight:400, align:'left' } },
         heading: { name:'Heading', wMm:92, hMm:24, props:{ text:'Heading', fontSize:24, fontFamily:'Inter,system-ui', fontWeight:700, align:'left' } },
@@ -740,7 +899,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       };
       const preset = presets[type]; if (!preset) return;
       p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
-      selectedNodeId = p.nodes[p.nodes.length - 1].id;
+      setSelection([p.nodes[p.nodes.length - 1].id], p.nodes[p.nodes.length - 1].id);
       commitChange();
       render();
       focusCanvas();
@@ -766,6 +925,17 @@ const base = import.meta.env.BASE_URL ?? "/";
       };
     }
 
+    function deleteSelectedNodes() {
+      const p = activePage();
+      if (!p) return;
+      const ids = new Set(selectedNodes().map((n) => n.id));
+      if (!ids.size) return;
+      p.nodes = p.nodes.filter((n) => !ids.has(n.id));
+      setPrimarySelection(null);
+      commitChange();
+      render();
+    }
+
     function deleteNodeById(nodeId, fromLayer = false) {
       const p = activePage(); if (!p) return;
       const n = p.nodes.find((x)=>x.id===nodeId); if (!n) return;
@@ -775,7 +945,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (!ok) return;
       }
       p.nodes = p.nodes.filter((x)=>x.id!==nodeId);
-      if (selectedNodeId === nodeId) selectedNodeId = null;
+      if (selectedNodeIds.has(nodeId)) { const next = [...selectedNodeIds].filter((id) => id !== nodeId); setSelection(next, next[0] || null); }
       commitChange();
       render();
     }
@@ -791,8 +961,9 @@ const base = import.meta.env.BASE_URL ?? "/";
       clone.xMm = clamp(source.xMm + 6, 0, dims().wMm - source.wMm);
       clone.yMm = clamp(source.yMm + 6, 0, dims().hMm - source.hMm);
       clone.z = (p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1);
+      clone.groupId = null;
       p.nodes.push(clone);
-      selectedNodeId = clone.id;
+      setSelection([clone.id], clone.id);
       commitChange();
       render();
     }
@@ -814,8 +985,9 @@ const base = import.meta.env.BASE_URL ?? "/";
       source.xMm = clamp((target?.xMm ?? source.xMm) + 8, 0, dims().wMm - source.wMm);
       source.yMm = clamp((target?.yMm ?? source.yMm) + 8, 0, dims().hMm - source.hMm);
       source.z = p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1;
+      source.groupId = null;
       p.nodes.push(source);
-      selectedNodeId = source.id;
+      setSelection([source.id], source.id);
       commitChange();
       render();
     }
@@ -834,22 +1006,78 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.contextMenu.hidden = true;
     }
 
+    function smartSnapSelection(movingNodes, targetBounds) {
+      if (doc.grid.enabled) {
+        clearGuides();
+        return { dx: 0, dy: 0 };
+      }
+      const p = activePage();
+      if (!p) return { dx: 0, dy: 0 };
+      const movingIds = new Set(movingNodes.map((n) => n.id));
+      const others = p.nodes.filter((n) => n.visible && !movingIds.has(n.id));
+      const axesX = [targetBounds.left, targetBounds.centerX, targetBounds.right];
+      const axesY = [targetBounds.top, targetBounds.centerY, targetBounds.bottom];
+      let bestX = null;
+      let bestY = null;
+      others.forEach((node) => {
+        const b = nodeBounds(node);
+        [b.left, b.centerX, b.right].forEach((candidate) => {
+          axesX.forEach((axis) => {
+            const delta = candidate - axis;
+            if (Math.abs(delta) <= SNAP_THRESHOLD_MM && (!bestX || Math.abs(delta) < Math.abs(bestX.delta))) bestX = { delta, line: candidate };
+          });
+        });
+        [b.top, b.centerY, b.bottom].forEach((candidate) => {
+          axesY.forEach((axis) => {
+            const delta = candidate - axis;
+            if (Math.abs(delta) <= SNAP_THRESHOLD_MM && (!bestY || Math.abs(delta) < Math.abs(bestY.delta))) bestY = { delta, line: candidate };
+          });
+        });
+      });
+      if (bestX) {
+        el.guideX.style.display = 'block';
+        el.guideX.style.left = `${mmToPx(bestX.line)}px`;
+      } else el.guideX.style.display = 'none';
+      if (bestY) {
+        el.guideY.style.display = 'block';
+        el.guideY.style.top = `${mmToPx(bestY.line)}px`;
+      } else el.guideY.style.display = 'none';
+      return { dx: bestX?.delta || 0, dy: bestY?.delta || 0 };
+    }
+
     function startPointer(e) {
       const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
       const n = activePage()?.nodes.find((x)=>x.id===nodeEl.dataset.id); if (!n) return;
-      selectedNodeId = n.id;
+      if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id);
       if (n.locked) { render(); return; }
-      const s = { x:e.clientX, y:e.clientY, xMm:n.xMm, yMm:n.yMm, wMm:n.wMm, hMm:n.hMm };
       const handle = e.target.dataset.handle || null;
       const d = dims();
+      const movingNodes = handle ? [n] : nodesFromSelectionOrGroup(n.id);
+      const start = movingNodes.map((node) => ({ id: node.id, xMm: node.xMm, yMm: node.yMm, wMm: node.wMm, hMm: node.hMm }));
+      const startBounds = selectionBounds(start);
+      const s = { x:e.clientX, y:e.clientY, xMm:n.xMm, yMm:n.yMm, wMm:n.wMm, hMm:n.hMm };
 
       const move = (ev) => {
         const dx = pxToMm((ev.clientX - s.x) / doc.zoom);
         const dy = pxToMm((ev.clientY - s.y) / doc.zoom);
         if (!handle) {
-          n.xMm = clamp(gridSnap(s.xMm + dx), 0, d.wMm - n.wMm);
-          n.yMm = clamp(gridSnap(s.yMm + dy), 0, d.hMm - n.hMm);
+          let nx = s.xMm + dx;
+          let ny = s.yMm + dy;
+          if (doc.grid.enabled) {
+            nx = gridSnap(nx);
+            ny = gridSnap(ny);
+          }
+          const rawBounds = { ...startBounds, left: startBounds.left + (nx - s.xMm), right: startBounds.right + (nx - s.xMm), centerX: startBounds.centerX + (nx - s.xMm), top: startBounds.top + (ny - s.yMm), bottom: startBounds.bottom + (ny - s.yMm), centerY: startBounds.centerY + (ny - s.yMm) };
+          const snap = smartSnapSelection(movingNodes, rawBounds);
+          const finalDx = (nx - s.xMm) + snap.dx;
+          const finalDy = (ny - s.yMm) + snap.dy;
+          movingNodes.forEach((node) => {
+            const origin = start.find((item) => item.id === node.id);
+            node.xMm = clamp(origin.xMm + finalDx, 0, d.wMm - node.wMm);
+            node.yMm = clamp(origin.yMm + finalDy, 0, d.hMm - node.hMm);
+          });
         } else {
+          clearGuides();
           if (handle.includes('e')) n.wMm = clamp(gridSnap(s.wMm + dx), 8, d.wMm - n.xMm);
           if (handle.includes('s')) n.hMm = clamp(gridSnap(s.hMm + dy), 8, d.hMm - n.yMm);
           if (handle.includes('w')) {
@@ -864,11 +1092,13 @@ const base = import.meta.env.BASE_URL ?? "/";
           }
         }
         renderNodes();
+        renderSelectionOverlays();
       };
 
       const up = () => {
         window.removeEventListener('pointermove', move);
         window.removeEventListener('pointerup', up);
+        clearGuides();
         commitChange();
         render();
       };
@@ -915,13 +1145,45 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (e.target === el.stage) {
         const active = document.activeElement;
         if (active?.isContentEditable) active.blur();
+        const start = pagePointFromEvent(e);
+        marqueeState = { x0: start.xMm, y0: start.yMm, x1: start.xMm, y1: start.yMm, additive: e.shiftKey };
+        el.marquee.hidden = false;
+        const drawMarquee = () => {
+          const x = Math.min(marqueeState.x0, marqueeState.x1);
+          const y = Math.min(marqueeState.y0, marqueeState.y1);
+          const w = Math.abs(marqueeState.x1 - marqueeState.x0);
+          const h = Math.abs(marqueeState.y1 - marqueeState.y0);
+          el.marquee.style.left = `${mmToPx(x)}px`;
+          el.marquee.style.top = `${mmToPx(y)}px`;
+          el.marquee.style.width = `${mmToPx(w)}px`;
+          el.marquee.style.height = `${mmToPx(h)}px`;
+        };
+        drawMarquee();
+        const onMove = (ev) => { const pt = pagePointFromEvent(ev); marqueeState.x1 = pt.xMm; marqueeState.y1 = pt.yMm; drawMarquee(); };
+        const onUp = () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          const rect = { left: Math.min(marqueeState.x0, marqueeState.x1), top: Math.min(marqueeState.y0, marqueeState.y1), right: Math.max(marqueeState.x0, marqueeState.x1), bottom: Math.max(marqueeState.y0, marqueeState.y1) };
+          const hits = activePage()?.nodes.filter((n) => selectionIntersects(rect, n)) || [];
+          const next = marqueeState.additive ? [...new Set([...selectedNodeIds, ...hits.map((n) => n.id)])] : hits.map((n) => n.id);
+          setSelection(next, hits[hits.length - 1]?.id || null);
+          el.marquee.hidden = true;
+          marqueeState = null;
+          render();
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
         return;
       }
       if (e.target.closest('[contenteditable="true"]') || e.target.closest('[data-add-item]')) return;
       startPointer(e);
     };
 
-    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked) return; fn(n); commitChange(); render(); };
+    el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => {
+      btn.onclick = () => applyArrange(btn.dataset.arrange);
+    });
+
+    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked || selectedNodeIds.size > 1) return; fn(n); commitChange(); render(); };
     el.insX.onchange = () => applyInspector((n)=>n.xMm = gridSnap(Number(el.insX.value) || 0));
     el.insY.onchange = () => applyInspector((n)=>n.yMm = gridSnap(Number(el.insY.value) || 0));
     el.insW.onchange = () => applyInspector((n)=>n.wMm = Math.max(8, Number(el.insW.value) || 8));
@@ -965,16 +1227,16 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; commitChange(); render(); };
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
 
-    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; selectedNodeId = null; commitChange(); render(); };
-    el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; selectedNodeId=null; commitChange(); render(); };
-    el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; selectedNodeId=null; commitChange(); render(); };
+    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; setPrimarySelection(null); commitChange(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; setPrimarySelection(null); commitChange(); render(); };
+    el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; setPrimarySelection(null); commitChange(); render(); };
 
     el.save.onclick = () => { saveToLocal(doc); captureRecentSnapshot(); dirty = false; setSaveIndicator(); showToast('Saved'); closeTransientOverlays(); };
     el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; loadDoc(loaded); showToast('Loaded'); closeTransientOverlays(); };
     el.ex.onclick = () => { exportJSON(doc); closeTransientOverlays(); };
     el.im.onclick = () => { el.importInput.click(); closeTransientOverlays(); };
     el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ const imported = await importJSON(f); loadDoc(imported); dirty = true; setSaveIndicator(); autosaveSchedule(); showToast('Imported'); } catch { showToast('Invalid JSON'); } el.importInput.value=''; };
-    el.delBtn.onclick = () => { if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
+    el.delBtn.onclick = () => { if (selectedNodeIds.size > 1) deleteSelectedNodes(); else if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
 
     el.newProjectBtn.onclick = () => { captureRecentSnapshot(); openTemplateModal(); closeTransientOverlays(); };
     el.templateCloseBtn.onclick = () => closeTemplateModal();
@@ -1014,8 +1276,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (!action || !contextNodeId) return;
       if (action === 'duplicate') duplicateNode(contextNodeId);
       if (action === 'delete') deleteNodeById(contextNodeId, true);
-      if (action === 'front') { selectedNodeId = contextNodeId; zMove('front'); }
-      if (action === 'back') { selectedNodeId = contextNodeId; zMove('back'); }
+      if (action === 'front') { setSelection([contextNodeId], contextNodeId); zMove('front'); }
+      if (action === 'back') { setSelection([contextNodeId], contextNodeId); zMove('back'); }
       if (action === 'lock') {
         const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
         if (node) { node.locked = !node.locked; commitChange(); render(); }
@@ -1054,11 +1316,18 @@ const base = import.meta.env.BASE_URL ?? "/";
           redoStack.push(structuredClone(current));
           doc = structuredClone(undoStack[undoStack.length - 1]);
         }
-        selectedNodeId = null;
+        setPrimarySelection(null);
         dirty = true;
         setSaveIndicator();
         autosaveSchedule();
         render();
+        return;
+      }
+
+      if (mod && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) ungroupSelection();
+        else groupSelection();
         return;
       }
 
@@ -1068,16 +1337,16 @@ const base = import.meta.env.BASE_URL ?? "/";
         const hadOverlay = el.fileMenu.open || el.toast.classList.contains('show');
         closeTransientOverlays();
         if (!hadOverlay) {
-          selectedNodeId = null;
+          setPrimarySelection(null);
           render();
         }
         focusCanvas();
         return;
       }
       if (typing) return;
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIds.size) {
         e.preventDefault();
-        deleteNodeById(selectedNodeId, false);
+        deleteSelectedNodes();
       }
     });
 
