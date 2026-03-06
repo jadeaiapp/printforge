@@ -106,29 +106,46 @@ const base = import.meta.env.BASE_URL ?? "/";
 
           <section id="panel-theme" class="tab-panel" role="tabpanel" aria-labelledby="tab-theme" hidden>
             <div class="theme-panel">
-              <h3>Workspace</h3>
-              <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
-              <div class="field"><span>Gradient presets</span>
-                <div id="theme-gradients" class="theme-preset-list"></div>
+              <div class="theme-subtabs" role="tablist" aria-label="Theme subtabs">
+                <button type="button" class="theme-subtab is-active" data-theme-subtab="page" role="tab" aria-selected="true">Page (PDF)</button>
+                <button type="button" class="theme-subtab" data-theme-subtab="brand" role="tab" aria-selected="false">Brand</button>
               </div>
-              <label class="checkline"><input id="theme-workspace-pattern" type="checkbox" />Subtle dots/grid background</label>
 
-              <h3>Page background</h3>
-              <div id="theme-page-colors" class="theme-preset-list"></div>
+              <section class="theme-subpanel active" data-theme-panel="page" role="tabpanel">
+                <p class="theme-note">Affects exported PDF output.</p>
+                <h3>Page background</h3>
+                <div id="theme-page-colors" class="theme-preset-list"></div>
 
-              <h3>Brand kit lite (5 max)</h3>
-              <div class="brand-kit-row">
-                <input id="brand-swatch-input" class="control" type="color" />
-                <button type="button" id="brand-swatch-add" class="btn">Add swatch</button>
-              </div>
-              <div id="brand-swatches" class="swatch-row"></div>
+                <h3>Default node style</h3>
+                <div id="style-presets" class="theme-preset-list"></div>
+                <div class="brand-kit-row">
+                  <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
+                  <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
+                </div>
+              </section>
 
-              <h3>Global style presets</h3>
-              <div id="style-presets" class="theme-preset-list"></div>
-              <div class="brand-kit-row">
-                <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
-                <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
-              </div>
+              <section class="theme-subpanel" data-theme-panel="brand" role="tabpanel" hidden>
+                <p class="theme-note">Brand swatches and quick defaults.</p>
+                <h3>Brand kit lite (5 max)</h3>
+                <div class="brand-kit-row">
+                  <input id="brand-swatch-input" class="control" type="color" />
+                  <button type="button" id="brand-swatch-add" class="btn">Add swatch</button>
+                  <button type="button" id="brand-default-fill" class="btn">Set fill default</button>
+                  <button type="button" id="brand-default-text" class="btn">Set text default</button>
+                  <button type="button" id="brand-default-stroke" class="btn">Set stroke default</button>
+                </div>
+                <div id="brand-swatches" class="swatch-row"></div>
+              </section>
+
+              <details class="theme-advanced">
+                <summary>Workspace (Advanced, editor only)</summary>
+                <p class="theme-note">Does not affect PDF export.</p>
+                <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
+                <div class="field"><span>Gradient presets</span>
+                  <div id="theme-gradients" class="theme-preset-list"></div>
+                </div>
+                <label class="checkline"><input id="theme-workspace-pattern" type="checkbox" />Subtle dots/grid background</label>
+              </details>
             </div>
           </section>
         </div>
@@ -161,31 +178,33 @@ const base = import.meta.env.BASE_URL ?? "/";
       <aside class="panel">
         <h2 id="inspector-title">No selection</h2>
         <div class="inspector-grid">
-          <label class="field"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
-          <label class="field"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
-          <label class="field"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
-          <label class="field"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
+          <label class="field" data-control="geometry"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
+          <label class="field" data-control="geometry"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
+          <label class="field" data-control="geometry"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
+          <label class="field" data-control="geometry"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
 
-          <label class="field"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter/system-ui</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option></select></label>
-          <label class="field"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
-          <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
-          <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
-          <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-          <label class="field"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
+          <label class="field" data-control="text"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter/system-ui</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option></select></label>
+          <label class="field" data-control="text"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
+          <label class="field" data-control="text"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
+          <label class="field toggle-field" data-control="text"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
+          <label class="field" data-control="text"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+          <label class="field" data-control="text"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
 
-          <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
-          <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
-          <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
-          <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+          <label class="field" data-control="shape"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
+          <label class="field" data-control="shape"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
+          <label class="field" data-control="shape"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
+          <label class="field" data-control="shape"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
 
-          <label class="field"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
-          <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
-          <label class="field"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
-          <label class="field"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
-          <label class="field"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
+          <label class="field" data-control="line"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
+          <label class="field" data-control="line"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
+          <label class="field" data-control="image"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
+          <label class="field" data-control="appearance"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
+          <label class="field" data-control="svg"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
 
-          <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
-          <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
+          <label class="field" data-control="textlist"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
+          <label class="field" data-control="list"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
+          <label class="field" data-control="table"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
+          <label class="field" data-control="table"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
         </div>
         <div id="ins-swatches" class="swatch-row"></div>
         <p id="ins-note" class="ins-note">Select an object to edit controls.</p>
@@ -333,11 +352,14 @@ const base = import.meta.env.BASE_URL ?? "/";
       insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'), insTextColor: document.getElementById('ins-text-color'),
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insRotation: document.getElementById('ins-rotation'),
-      insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'),
+      insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
       insSwatches: document.getElementById('ins-swatches'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'), themePageColors: document.getElementById('theme-page-colors'),
       brandSwatchInput: document.getElementById('brand-swatch-input'), brandSwatchAdd: document.getElementById('brand-swatch-add'), brandSwatches: document.getElementById('brand-swatches'),
+      brandDefaultFill: document.getElementById('brand-default-fill'), brandDefaultText: document.getElementById('brand-default-text'), brandDefaultStroke: document.getElementById('brand-default-stroke'),
       stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'),
+      themeSubtabs: [...document.querySelectorAll('[data-theme-subtab]')], themePanels: [...document.querySelectorAll('[data-theme-panel]')],
+      inspectorFields: [...document.querySelectorAll('.inspector-grid [data-control]')],
       templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
@@ -380,7 +402,20 @@ const base = import.meta.env.BASE_URL ?? "/";
         fillColor: nextDoc.defaults.fillColor || '#e2e8f0',
         radius: Number.isFinite(nextDoc.defaults.radius) ? nextDoc.defaults.radius : 6,
       };
-      nextDoc.pages?.forEach((page) => page.nodes?.forEach((node) => { if (!Object.prototype.hasOwnProperty.call(node, 'groupId')) node.groupId = null; }));
+      nextDoc.pages?.forEach((page) => page.nodes?.forEach((node) => {
+        if (!Object.prototype.hasOwnProperty.call(node, 'groupId')) node.groupId = null;
+        if (!node.props) node.props = {};
+        if (node.type === 'table') {
+          node.props.rows = clamp(Math.round(Number(node.props.rows) || 4), 2, 10);
+          node.props.cols = clamp(Math.round(Number(node.props.cols) || 4), 2, 10);
+        }
+        if (["line", "divider"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.strokeColor;
+        if (["box", "highlight", "roundedrect", "circle", "svg"].includes(node.type)) {
+          if (!node.props.fill) node.props.fill = nextDoc.defaults.fillColor;
+          if (!node.props.stroke) node.props.stroke = nextDoc.defaults.strokeColor;
+        }
+        if (["text", "heading", "paragraph", "datelabel"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.textColor;
+      }));
       return nextDoc;
     }
 
@@ -623,6 +658,19 @@ const base = import.meta.env.BASE_URL ?? "/";
       });
     }
 
+    function switchThemeSubtab(tab) {
+      el.themeSubtabs.forEach((btn) => {
+        const active = btn.dataset.themeSubtab === tab;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      el.themePanels.forEach((panel) => {
+        const active = panel.dataset.themePanel === tab;
+        panel.hidden = !active;
+        panel.classList.toggle('active', active);
+      });
+    }
+
     function renderFrame() {
       const d = dims();
       const gradient = WORKSPACE_GRADIENTS.find((item) => item.id === doc.workspaceGradientId) || WORKSPACE_GRADIENTS[0];
@@ -661,6 +709,11 @@ const base = import.meta.env.BASE_URL ?? "/";
           render();
         };
       });
+      el.brandSwatches.querySelectorAll('[data-swatch]').forEach((btn) => {
+        btn.onclick = () => {
+          el.brandSwatchInput.value = btn.dataset.swatch;
+        };
+      });
 
       el.stylePresets.innerHTML = Object.values(STYLE_PRESETS).map((item) => `<button type="button" class="btn" data-style-preset="${item.id}">${item.name}</button>`).join('');
       el.stylePresets.querySelectorAll('[data-style-preset]').forEach((btn) => {
@@ -675,6 +728,10 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (first) first.classList.add('is-active');
       }
       renderInspectorSwatches();
+    }
+
+    function firstBrandColor(fallback) {
+      return doc.brandSwatches[0] || fallback;
     }
 
     function renderInspectorSwatches() {
@@ -766,7 +823,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         return `<div class="calendar-content" style="opacity:${n.props.opacity||1}"><div class="cal-title">${month}</div><div class="cal-grid">${Array.from({length:42},(_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
       }
       if (n.type === 'image') return `<img class="image-content" style="object-fit:${n.props.objectFit||'contain'};opacity:${n.props.opacity||1}" src="${n.props.src||''}" alt="image"/>`;
-      if (n.type === 'svg') return `<div class="svg-content" style="opacity:${n.props.opacity ?? 1};transform:rotate(${n.props.rotation || 0}deg);--svg-fill:${n.props.fill || '#1d4ed8'};--svg-stroke:${n.props.stroke || '#334155'};">${n.props.svgMarkup || ''}</div>`;
+      if (n.type === 'svg') return `<div class="svg-content" style="opacity:${n.props.opacity ?? 1};transform:rotate(${n.props.rotation || 0}deg);--svg-fill:${n.props.fill || doc.defaults.fillColor || '#1d4ed8'};--svg-stroke:${n.props.stroke || doc.defaults.strokeColor || '#334155'};">${n.props.svgMarkup || ''}</div>`;
       return '';
     }
 
@@ -912,14 +969,14 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insTextColor, isText, n?.props.color || doc.defaults.textColor || '#111827');
 
       const isShape = n && ["box","highlight","roundedrect","circle","svg"].includes(n.type);
-      enableControl(el.insFill, isShape, n?.props.fill || '#e2e8f0');
-      enableControl(el.insStroke, isShape, n?.props.stroke || '#94a3b8');
+      enableControl(el.insFill, isShape, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insStroke, isShape, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
       enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
       enableControl(el.insRadius, isShape && n.type !== 'circle', n?.props.radius || 0);
 
       const isLine = n && ["line","divider"].includes(n.type);
       enableControl(el.insThickness, isLine, n?.props.thickness || 2);
-      enableControl(el.insColor, isLine, n?.props.color || '#334155');
+      enableControl(el.insColor, isLine, n?.props.color || doc.defaults.strokeColor || '#334155');
 
       const isImage = n && n.type === 'image';
       enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
@@ -929,6 +986,26 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isList = n && ["checklist","bulletlist"].includes(n.type);
       enableControl(el.insLineHeight, isList || isText, n?.props.lineHeight || 1.4);
       enableControl(el.insListStyle, isList, n?.props.listStyle || (n?.type === 'checklist' ? 'checkbox' : 'bullet'));
+      const isTable = n && n.type === 'table';
+      enableControl(el.insTableRows, isTable, clamp(Number(n?.props.rows || 4), 2, 10));
+      enableControl(el.insTableCols, isTable, clamp(Number(n?.props.cols || 4), 2, 10));
+
+      const controlVisibility = {
+        geometry: has,
+        text: isText,
+        shape: isShape,
+        line: isLine,
+        image: isImage,
+        appearance: has,
+        svg: has && n?.type === 'svg',
+        textlist: isList || isText,
+        list: isList,
+        table: isTable,
+      };
+      el.inspectorFields.forEach((field) => {
+        const key = field.dataset.control;
+        field.hidden = !controlVisibility[key];
+      });
       el.note.textContent = has ? '' : 'Select an object to edit controls.';
     }
 
@@ -1028,8 +1105,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         checkbox: { name:'Checkbox', wMm:80, hMm:16, props:{ text:'Task', checked:false } },
         checklist: { name:'Checklist', wMm:80, hMm:42, props:{ items:['Item 1','Item 2'], listStyle:'checkbox', lineHeight:1.4 } },
         bulletlist: { name:'Bullet list', wMm:80, hMm:42, props:{ items:['Point 1','Point 2'], listStyle:'bullet', lineHeight:1.4 } },
-        divider: { name:'Divider', wMm:100, hMm:4, props:{ thickness:2, color:'#334155' } },
-        line: { name:'Line', wMm:80, hMm:4, props:{ thickness:2, color:'#334155' } },
+        divider: { name:'Divider', wMm:100, hMm:4, props:{ thickness:2, color:doc.defaults.strokeColor } },
+        line: { name:'Line', wMm:80, hMm:4, props:{ thickness:2, color:doc.defaults.strokeColor } },
         box: { name:'Box', wMm:80, hMm:45, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
         highlight: { name:'Highlight', wMm:80, hMm:28, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
         circle: { name:'Circle', wMm:32, hMm:32, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1 } },
@@ -1038,7 +1115,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         table: { name:'Table', wMm:92, hMm:58, props:{ rows:4, cols:4 } },
         calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
         image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
-        svg: { name:'SVG', wMm:30, hMm:30, props:{ svgMarkup:'', fill:'#1d4ed8', stroke:'#334155', opacity:1, rotation:0 } },
+        svg: { name:'SVG', wMm:30, hMm:30, props:{ svgMarkup:'', fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, opacity:1, rotation:0 } },
       };
       const preset = presets[type]; if (!preset) return;
       p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
@@ -1275,7 +1352,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (draggingAssetId) {
         const asset = ASSETS.find((item) => item.id === draggingAssetId);
         if (asset) {
-          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: '#1d4ed8', stroke: '#334155', opacity: 1, rotation: 0 } });
+          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: firstBrandColor(doc.defaults.fillColor), stroke: doc.defaults.strokeColor, opacity: 1, rotation: 0 } });
         }
       } else if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
       else createPreset(draggingBlock, pt.xMm, pt.yMm);
@@ -1348,6 +1425,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insRotation.onchange = () => applyInspector((n)=>n.props.rotation = Number(el.insRotation.value));
     el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
     el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
+    el.insTableRows.onchange = () => applyInspector((n)=>n.props.rows = clamp(Math.round(Number(el.insTableRows.value) || 2), 2, 10));
+    el.insTableCols.onchange = () => applyInspector((n)=>n.props.cols = clamp(Math.round(Number(el.insTableCols.value) || 2), 2, 10));
 
     function applyStylePreset(target = 'selection') {
       const preset = STYLE_PRESETS[doc.pendingStylePreset || 'minimal'];
@@ -1396,6 +1475,9 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
     el.themeWorkspaceColor.onchange = () => { doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
     el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
+    el.themeSubtabs.forEach((btn) => {
+      btn.onclick = () => switchThemeSubtab(btn.dataset.themeSubtab || 'page');
+    });
     el.brandSwatchAdd.onclick = () => {
       if (doc.brandSwatches.length >= 5) {
         showToast('Brand swatches limit reached (5)');
@@ -1404,6 +1486,21 @@ const base = import.meta.env.BASE_URL ?? "/";
       const color = el.brandSwatchInput.value;
       if (doc.brandSwatches.includes(color)) return;
       doc.brandSwatches.push(color);
+      commitChange();
+      render();
+    };
+    el.brandDefaultFill.onclick = () => {
+      doc.defaults.fillColor = el.brandSwatchInput.value;
+      commitChange();
+      render();
+    };
+    el.brandDefaultText.onclick = () => {
+      doc.defaults.textColor = el.brandSwatchInput.value;
+      commitChange();
+      render();
+    };
+    el.brandDefaultStroke.onclick = () => {
+      doc.defaults.strokeColor = el.brandSwatchInput.value;
       commitChange();
       render();
     };
@@ -1541,6 +1638,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     renderAssets();
+    switchThemeSubtab('page');
     renderRecentProjects();
     render();
     if (localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
