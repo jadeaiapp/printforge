@@ -93,48 +93,40 @@ const base = import.meta.env.BASE_URL ?? "/";
           <section id="panel-assets" class="tab-panel" role="tabpanel" aria-labelledby="tab-assets" hidden>
             <div class="asset-tools">
               <input id="asset-search" class="control" type="text" placeholder="Search assets..." />
-              <select id="asset-category" class="control">
-                <option value="all">All categories</option>
-                <option value="Icons">Icons</option>
-                <option value="Dividers">Dividers</option>
-                <option value="Badges">Badges</option>
-                <option value="Stickers">Stickers</option>
-              </select>
+              <div id="asset-category-tabs" class="asset-category-tabs" role="tablist" aria-label="Asset categories">
+                <button type="button" class="asset-category-tab is-active" data-asset-category="Icons" role="tab" aria-selected="true">Icons</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Dividers" role="tab" aria-selected="false">Dividers</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Badges" role="tab" aria-selected="false">Badges</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Stickers" role="tab" aria-selected="false">Stickers</button>
+              </div>
             </div>
             <div id="assets-list" class="assets-list"></div>
+            <div class="asset-pagination">
+              <button type="button" id="asset-load-more" class="btn">Load more</button>
+              <span id="asset-page-label">Page 1</span>
+            </div>
           </section>
 
           <section id="panel-theme" class="tab-panel" role="tabpanel" aria-labelledby="tab-theme" hidden>
             <div class="theme-panel">
               <div class="theme-subtabs" role="tablist" aria-label="Theme subtabs">
-                <button type="button" class="theme-subtab is-active" data-theme-subtab="page" role="tab" aria-selected="true">Page (PDF)</button>
-                <button type="button" class="theme-subtab" data-theme-subtab="brand" role="tab" aria-selected="false">Brand</button>
+                <button type="button" class="theme-subtab is-active" data-theme-subtab="page" role="tab" aria-selected="true">Page</button>
               </div>
 
               <section class="theme-subpanel active" data-theme-panel="page" role="tabpanel">
-                <p class="theme-note">Affects exported PDF output.</p>
                 <h3>Page background</h3>
-                <div id="theme-page-colors" class="theme-preset-list"></div>
+                <label class="field"><span>Background color</span><input id="theme-page-color" class="control" type="color" /></label>
 
                 <h3>Default node style</h3>
+                <label class="field"><span>Default text color</span><input id="theme-default-text" class="control" type="color" /></label>
+                <label class="field"><span>Default fill color</span><input id="theme-default-fill" class="control" type="color" /></label>
+                <label class="field"><span>Default stroke color</span><input id="theme-default-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Default radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
                 <div id="style-presets" class="theme-preset-list"></div>
-                <div class="brand-kit-row">
+                <div class="theme-actions">
                   <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
                   <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
                 </div>
-              </section>
-
-              <section class="theme-subpanel" data-theme-panel="brand" role="tabpanel" hidden>
-                <p class="theme-note">Brand swatches and quick defaults.</p>
-                <h3>Brand kit lite (5 max)</h3>
-                <div class="brand-kit-row">
-                  <input id="brand-swatch-input" class="control" type="color" />
-                  <button type="button" id="brand-swatch-add" class="btn">Add swatch</button>
-                  <button type="button" id="brand-default-fill" class="btn">Set fill default</button>
-                  <button type="button" id="brand-default-text" class="btn">Set text default</button>
-                  <button type="button" id="brand-default-stroke" class="btn">Set stroke default</button>
-                </div>
-                <div id="brand-swatches" class="swatch-row"></div>
               </section>
 
               <details class="theme-advanced">
@@ -203,10 +195,14 @@ const base = import.meta.env.BASE_URL ?? "/";
 
           <label class="field" data-control="textlist"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
           <label class="field" data-control="list"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
-          <label class="field" data-control="table"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
-          <label class="field" data-control="table"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
+          <div class="table-controls" data-control="table">
+            <strong>Table structure</strong>
+            <div class="table-controls-grid">
+              <label class="field"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
+              <label class="field"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
+            </div>
+          </div>
         </div>
-        <div id="ins-swatches" class="swatch-row"></div>
         <p id="ins-note" class="ins-note">Select an object to edit controls.</p>
       </aside>
     </main>
@@ -284,6 +280,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
 
     const DOC_STORAGE_KEY = 'printforge_doc_v2d';
+    const ASSETS_PAGE_SIZE = 24;
     const RECENT_PROJECTS_KEY = 'printforge_recent_projects_v1';
     const loadFromLocal = () => { try { const raw = localStorage.getItem(DOC_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
     const saveToLocal = (doc) => localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc));
@@ -298,14 +295,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       { id: 'slate', name: 'Slate', value: 'linear-gradient(135deg,#334155,#64748b)' },
       { id: 'minimal', name: 'Minimal', value: 'linear-gradient(145deg,#0f172a,#1e293b)' },
     ];
-    const PAGE_BACKGROUNDS = [
-      { id: 'white', name: 'White', value: '#ffffff' },
-      { id: 'cream', name: 'Cream', value: '#fff7e6' },
-      { id: 'light-gray', name: 'Light Gray', value: '#f3f4f6' },
-      { id: 'pastel-blue', name: 'Pastel Blue', value: '#eaf2ff' },
-      { id: 'pastel-pink', name: 'Pastel Pink', value: '#ffeef5' },
-    ];
-    const STYLE_PRESETS = {
+        const STYLE_PRESETS = {
       minimal: { id: 'minimal', name: 'Minimal', defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 4 } },
       classic: { id: 'classic', name: 'Classic', defaults: { fontFamily: 'Georgia,serif', textColor: '#1f2937', strokeColor: '#6b7280', fillColor: '#f5f5f4', radius: 8 } },
       bold: { id: 'bold', name: 'Bold', defaults: { fontFamily: 'Arial,sans-serif', textColor: '#0f172a', strokeColor: '#1d4ed8', fillColor: '#f59e0b', radius: 12 } },
@@ -323,7 +313,6 @@ const base = import.meta.env.BASE_URL ?? "/";
         workspaceGradientId: 'minimal',
         workspacePatternOn: false,
         pageBg: '#ffffff',
-        brandSwatches: ['#6366f1', '#14b8a6', '#f97316'],
         defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 6 },
         meta: { projectName: 'Untitled project' },
         pages: [page],
@@ -347,16 +336,15 @@ const base = import.meta.env.BASE_URL ?? "/";
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       saveIndicator: document.getElementById('save-indicator'),
       tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets'), theme: document.getElementById('panel-theme') },
-      assetSearch: document.getElementById('asset-search'), assetCategory: document.getElementById('asset-category'), assetsList: document.getElementById('assets-list'),
+      assetSearch: document.getElementById('asset-search'), assetsList: document.getElementById('assets-list'),
+      assetCategoryTabs: [...document.querySelectorAll('[data-asset-category]')], assetLoadMore: document.getElementById('asset-load-more'), assetPageLabel: document.getElementById('asset-page-label'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
       insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'), insTextColor: document.getElementById('ins-text-color'),
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insRotation: document.getElementById('ins-rotation'),
       insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
-      insSwatches: document.getElementById('ins-swatches'),
-      themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'), themePageColors: document.getElementById('theme-page-colors'),
-      brandSwatchInput: document.getElementById('brand-swatch-input'), brandSwatchAdd: document.getElementById('brand-swatch-add'), brandSwatches: document.getElementById('brand-swatches'),
-      brandDefaultFill: document.getElementById('brand-default-fill'), brandDefaultText: document.getElementById('brand-default-text'), brandDefaultStroke: document.getElementById('brand-default-stroke'),
+      themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
+      themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
       stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'),
       themeSubtabs: [...document.querySelectorAll('[data-theme-subtab]')], themePanels: [...document.querySelectorAll('[data-theme-panel]')],
       inspectorFields: [...document.querySelectorAll('.inspector-grid [data-control]')],
@@ -382,6 +370,9 @@ const base = import.meta.env.BASE_URL ?? "/";
     let copiedNode = null;
     let contextNodeId = null;
     let marqueeState = null;
+    let activeAssetCategory = 'Icons';
+    let visibleAssetCount = ASSETS_PAGE_SIZE;
+    let spacePanKeyDown = false;
 
 
     function normalizeDoc(sourceDoc) {
@@ -392,8 +383,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (!nextDoc.workspaceGradientId) nextDoc.workspaceGradientId = 'minimal';
       if (typeof nextDoc.workspacePatternOn !== 'boolean') nextDoc.workspacePatternOn = false;
       if (!nextDoc.pageBg) nextDoc.pageBg = '#ffffff';
-      if (!Array.isArray(nextDoc.brandSwatches)) nextDoc.brandSwatches = [];
-      nextDoc.brandSwatches = nextDoc.brandSwatches.slice(0, 5);
       if (!nextDoc.defaults) nextDoc.defaults = {};
       nextDoc.defaults = {
         fontFamily: nextDoc.defaults.fontFamily || 'Inter,system-ui',
@@ -458,18 +447,21 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     function renderAssets() {
-      const category = el.assetCategory.value;
       const query = (el.assetSearch.value || '').toLowerCase().trim();
       const filtered = ASSETS.filter((asset) => {
-        const categoryOk = category === 'all' || asset.category === category;
+        const categoryOk = asset.category === activeAssetCategory;
         const queryOk = !query || asset.name.toLowerCase().includes(query) || asset.category.toLowerCase().includes(query);
         return categoryOk && queryOk;
       });
-      el.assetsList.innerHTML = filtered.map((asset) => `<button type="button" class="asset-item" data-asset-id="${asset.id}" draggable="true"><span class="asset-preview">${asset.svgMarkup}</span><span class="asset-meta"><strong>${asset.name}</strong><span>${asset.category}</span></span></button>`).join('') || '<p class="template-empty">No assets found.</p>';
+      const page = Math.max(1, Math.ceil(visibleAssetCount / ASSETS_PAGE_SIZE));
+      const visible = filtered.slice(0, visibleAssetCount);
+      el.assetsList.innerHTML = visible.map((asset) => `<button type="button" class="asset-item" data-asset-id="${asset.id}" draggable="true"><span class="asset-preview">${asset.svgMarkup}</span><span class="asset-meta"><strong>${asset.name}</strong><span>${asset.category}</span></span></button>`).join('') || '<p class="template-empty">No assets found.</p>';
       el.assetsList.querySelectorAll('.asset-item').forEach((item) => {
         item.ondragstart = () => { draggingAssetId = item.dataset.assetId; };
         item.ondragend = () => { draggingAssetId = null; el.dropPreview.classList.remove('show'); };
       });
+      el.assetPageLabel.textContent = `Page ${page}`;
+      el.assetLoadMore.hidden = visible.length >= filtered.length || filtered.length === 0;
     }
 
     const categories = [...new Set(templates.map((t) => t.category))];
@@ -696,24 +688,11 @@ const base = import.meta.env.BASE_URL ?? "/";
         btn.onclick = () => { doc.workspaceGradientId = btn.dataset.gradientId; commitChange(); render(); };
       });
 
-      el.themePageColors.innerHTML = PAGE_BACKGROUNDS.map((item) => `<button type="button" class="page-bg-btn ${doc.pageBg === item.value ? 'is-active' : ''}" data-page-bg="${item.value}"><span style="background:${item.value}"></span>${item.name}</button>`).join('');
-      el.themePageColors.querySelectorAll('[data-page-bg]').forEach((btn) => {
-        btn.onclick = () => { doc.pageBg = btn.dataset.pageBg; commitChange(); render(); };
-      });
-
-      el.brandSwatches.innerHTML = doc.brandSwatches.map((swatch, idx) => `<button type="button" class="swatch" title="${swatch}" data-swatch="${swatch}" style="--sw:${swatch}"></button><button type="button" class="swatch-remove" data-remove-swatch="${idx}" aria-label="Remove swatch ${idx + 1}">✕</button>`).join('');
-      el.brandSwatches.querySelectorAll('[data-remove-swatch]').forEach((btn) => {
-        btn.onclick = () => {
-          doc.brandSwatches.splice(Number(btn.dataset.removeSwatch), 1);
-          commitChange();
-          render();
-        };
-      });
-      el.brandSwatches.querySelectorAll('[data-swatch]').forEach((btn) => {
-        btn.onclick = () => {
-          el.brandSwatchInput.value = btn.dataset.swatch;
-        };
-      });
+      el.themePageColor.value = doc.pageBg || '#ffffff';
+      el.themeDefaultText.value = doc.defaults.textColor || '#111827';
+      el.themeDefaultFill.value = doc.defaults.fillColor || '#e2e8f0';
+      el.themeDefaultStroke.value = doc.defaults.strokeColor || '#94a3b8';
+      el.themeDefaultRadius.value = String(doc.defaults.radius ?? 6);
 
       el.stylePresets.innerHTML = Object.values(STYLE_PRESETS).map((item) => `<button type="button" class="btn" data-style-preset="${item.id}">${item.name}</button>`).join('');
       el.stylePresets.querySelectorAll('[data-style-preset]').forEach((btn) => {
@@ -727,26 +706,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         const first = el.stylePresets.querySelector('[data-style-preset]');
         if (first) first.classList.add('is-active');
       }
-      renderInspectorSwatches();
     }
 
-    function firstBrandColor(fallback) {
-      return doc.brandSwatches[0] || fallback;
-    }
-
-    function renderInspectorSwatches() {
-      el.insSwatches.innerHTML = doc.brandSwatches.map((swatch) => `<button type="button" class="swatch" data-apply-swatch="${swatch}" style="--sw:${swatch}" title="Apply ${swatch}"></button>`).join('');
-      el.insSwatches.querySelectorAll('[data-apply-swatch]').forEach((btn) => {
-        btn.onclick = () => {
-          const color = btn.dataset.applySwatch;
-          const n = activeNode();
-          if (!n) return;
-          if (["text","heading","paragraph","datelabel"].includes(n.type)) applyInspector((node) => node.props.color = color);
-          else if (["line","divider"].includes(n.type)) applyInspector((node) => node.props.color = color);
-          else applyInspector((node) => { node.props.fill = color; node.props.stroke = color; });
-        };
-      });
-    }
 
     function renderPages() {
       el.pagesList.innerHTML = '';
@@ -952,7 +913,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       const n = activeNode();
       const selectedCount = selectedNodeIds.size;
       const has = !!n && selectedCount <= 1;
-      el.inspectorTitle.textContent = selectedCount > 1 ? `Selected: ${selectedCount} items` : (has ? `Selected: ${n.type}` : 'No selection');
+      el.inspectorTitle.textContent = selectedCount > 1 ? `Selected: ${selectedCount} items` : (has ? `Selected: ${n.type === 'table' ? 'table (rows/cols)' : n.type}` : 'No selection');
       el.delBtn.disabled = selectedCount === 0;
 
       enableControl(el.insX, has, n?.xMm?.toFixed?.(1));
@@ -968,9 +929,10 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insAlign, isText, n?.props.align || 'left');
       enableControl(el.insTextColor, isText, n?.props.color || doc.defaults.textColor || '#111827');
 
-      const isShape = n && ["box","highlight","roundedrect","circle","svg"].includes(n.type);
-      enableControl(el.insFill, isShape, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
-      enableControl(el.insStroke, isShape, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
+      const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
+      const isSvg = n && n.type === 'svg';
+      enableControl(el.insFill, isShape || isSvg, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insStroke, isShape || isSvg, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
       enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
       enableControl(el.insRadius, isShape && n.type !== 'circle', n?.props.radius || 0);
 
@@ -979,11 +941,11 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insColor, isLine, n?.props.color || doc.defaults.strokeColor || '#334155');
 
       const isImage = n && n.type === 'image';
-      enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
-      enableControl(el.insOpacity, has, n?.props.opacity ?? 1);
-      enableControl(el.insRotation, has && n?.type === 'svg', n?.props.rotation ?? 0);
-
       const isList = n && ["checklist","bulletlist"].includes(n.type);
+      enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
+      enableControl(el.insOpacity, has && (isSvg || isShape || isLine || isImage || isList || n?.type === 'table' || n?.type === 'calendar' || isText), n?.props.opacity ?? 1);
+      enableControl(el.insRotation, has && isSvg, n?.props.rotation ?? 0);
+
       enableControl(el.insLineHeight, isList || isText, n?.props.lineHeight || 1.4);
       enableControl(el.insListStyle, isList, n?.props.listStyle || (n?.type === 'checklist' ? 'checkbox' : 'bullet'));
       const isTable = n && n.type === 'table';
@@ -993,11 +955,11 @@ const base = import.meta.env.BASE_URL ?? "/";
       const controlVisibility = {
         geometry: has,
         text: isText,
-        shape: isShape,
+        shape: isShape || isSvg,
         line: isLine,
         image: isImage,
-        appearance: has,
-        svg: has && n?.type === 'svg',
+        appearance: has && isSvg,
+        svg: has && isSvg,
         textlist: isList || isText,
         list: isList,
         table: isTable,
@@ -1327,8 +1289,20 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
-    el.assetSearch.oninput = () => renderAssets();
-    el.assetCategory.onchange = () => renderAssets();
+    el.assetSearch.oninput = () => { visibleAssetCount = ASSETS_PAGE_SIZE; renderAssets(); };
+    el.assetCategoryTabs.forEach((btn) => {
+      btn.onclick = () => {
+        activeAssetCategory = btn.dataset.assetCategory || 'Icons';
+        visibleAssetCount = ASSETS_PAGE_SIZE;
+        el.assetCategoryTabs.forEach((item) => {
+          const active = item === btn;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        renderAssets();
+      };
+    });
+    el.assetLoadMore.onclick = () => { visibleAssetCount += ASSETS_PAGE_SIZE; renderAssets(); };
 
     el.blockList.querySelectorAll('.block-item').forEach((b) => {
       b.ondragstart = () => { draggingBlock = b.dataset.block; };
@@ -1352,7 +1326,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (draggingAssetId) {
         const asset = ASSETS.find((item) => item.id === draggingAssetId);
         if (asset) {
-          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: firstBrandColor(doc.defaults.fillColor), stroke: doc.defaults.strokeColor, opacity: 1, rotation: 0 } });
+          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: doc.defaults.fillColor, stroke: doc.defaults.strokeColor, opacity: 1, rotation: 0 } });
         }
       } else if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
       else createPreset(draggingBlock, pt.xMm, pt.yMm);
@@ -1361,7 +1335,37 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.dropPreview.classList.remove('show');
     };
 
+
+    el.workspace.addEventListener('wheel', (e) => {
+      if (!e.shiftKey) return;
+      e.preventDefault();
+      el.workspace.scrollLeft += e.deltaY + e.deltaX;
+    }, { passive: false });
+
+    el.stage.addEventListener('pointerdown', (e) => {
+      const canPan = spacePanKeyDown && e.button === 0;
+      if (!canPan) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startLeft = el.workspace.scrollLeft;
+      const startTop = el.workspace.scrollTop;
+      el.workspace.classList.add('is-panning');
+      const onMove = (ev) => {
+        el.workspace.scrollLeft = startLeft - (ev.clientX - startX);
+        el.workspace.scrollTop = startTop - (ev.clientY - startY);
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        el.workspace.classList.remove('is-panning');
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
     el.stage.onpointerdown = (e) => {
+      if (spacePanKeyDown) return;
       if (e.target === el.stage) {
         const active = document.activeElement;
         if (active?.isContentEditable) active.blur();
@@ -1475,35 +1479,14 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
     el.themeWorkspaceColor.onchange = () => { doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
     el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
+    el.themePageColor.onchange = () => { doc.pageBg = el.themePageColor.value; commitChange(); render(); };
+    el.themeDefaultText.onchange = () => { doc.defaults.textColor = el.themeDefaultText.value; commitChange(); render(); };
+    el.themeDefaultFill.onchange = () => { doc.defaults.fillColor = el.themeDefaultFill.value; commitChange(); render(); };
+    el.themeDefaultStroke.onchange = () => { doc.defaults.strokeColor = el.themeDefaultStroke.value; commitChange(); render(); };
+    el.themeDefaultRadius.onchange = () => { doc.defaults.radius = clamp(Number(el.themeDefaultRadius.value) || 0, 0, 80); commitChange(); render(); };
     el.themeSubtabs.forEach((btn) => {
       btn.onclick = () => switchThemeSubtab(btn.dataset.themeSubtab || 'page');
     });
-    el.brandSwatchAdd.onclick = () => {
-      if (doc.brandSwatches.length >= 5) {
-        showToast('Brand swatches limit reached (5)');
-        return;
-      }
-      const color = el.brandSwatchInput.value;
-      if (doc.brandSwatches.includes(color)) return;
-      doc.brandSwatches.push(color);
-      commitChange();
-      render();
-    };
-    el.brandDefaultFill.onclick = () => {
-      doc.defaults.fillColor = el.brandSwatchInput.value;
-      commitChange();
-      render();
-    };
-    el.brandDefaultText.onclick = () => {
-      doc.defaults.textColor = el.brandSwatchInput.value;
-      commitChange();
-      render();
-    };
-    el.brandDefaultStroke.onclick = () => {
-      doc.defaults.strokeColor = el.brandSwatchInput.value;
-      commitChange();
-      render();
-    };
     el.presetApplySelection.onclick = () => applyStylePreset('selection');
     el.presetApplyAll.onclick = () => applyStylePreset('all');
 
@@ -1623,11 +1606,19 @@ const base = import.meta.env.BASE_URL ?? "/";
         focusCanvas();
         return;
       }
+      if (!typing && e.code === 'Space') {
+        spacePanKeyDown = true;
+        e.preventDefault();
+      }
       if (typing) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIds.size) {
         e.preventDefault();
         deleteSelectedNodes();
       }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') spacePanKeyDown = false;
     });
 
     if (import.meta.env.DEV) {
