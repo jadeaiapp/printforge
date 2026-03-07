@@ -117,16 +117,19 @@ const base = import.meta.env.BASE_URL ?? "/";
                 <h3>Page background</h3>
                 <label class="field"><span>Background color</span><input id="theme-page-color" class="control" type="color" /></label>
 
-                <h3>Default node style</h3>
-                <label class="field"><span>Default text color</span><input id="theme-default-text" class="control" type="color" /></label>
-                <label class="field"><span>Default fill color</span><input id="theme-default-fill" class="control" type="color" /></label>
-                <label class="field"><span>Default stroke color</span><input id="theme-default-stroke" class="control" type="color" /></label>
-                <label class="field"><span>Default radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
-                <div id="style-presets" class="theme-preset-list"></div>
-                <div class="theme-actions">
-                  <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
-                  <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
-                </div>
+                <details class="theme-advanced">
+                  <summary>Advanced</summary>
+                  <h3>New elements defaults</h3>
+                  <label class="field"><span>New text color</span><input id="theme-default-text" class="control" type="color" /></label>
+                  <label class="field"><span>New shape fill</span><input id="theme-default-fill" class="control" type="color" /></label>
+                  <label class="field"><span>New stroke color</span><input id="theme-default-stroke" class="control" type="color" /></label>
+                  <label class="field"><span>New corner radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
+                  <div id="style-presets" class="theme-preset-list"></div>
+                  <div class="theme-actions">
+                    <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
+                    <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
+                  </div>
+                </details>
               </section>
 
               <details class="theme-advanced">
@@ -167,43 +170,82 @@ const base = import.meta.env.BASE_URL ?? "/";
         </div>
       </section>
 
-      <aside class="panel">
+      <aside class="panel right-panel">
         <h2 id="inspector-title">No selection</h2>
-        <div class="inspector-grid">
-          <label class="field" data-control="geometry"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
-          <label class="field" data-control="geometry"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
-          <label class="field" data-control="geometry"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
-          <label class="field" data-control="geometry"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
+        <div id="inspector-scroll" class="right-scroll">
+          <div id="inspector-empty" class="ins-note">Select an object to edit controls.</div>
+          <div id="inspector-content" hidden>
+            <section class="ins-group" data-for="common">
+              <div class="inspector-grid">
+                <label class="field"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
+              </div>
+            </section>
 
-          <label class="field" data-control="text"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter/system-ui</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option></select></label>
-          <label class="field" data-control="text"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
-          <label class="field" data-control="text"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
-          <label class="field toggle-field" data-control="text"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
-          <label class="field" data-control="text"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-          <label class="field" data-control="text"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
+            <section class="ins-group" data-for="text">
+              <div class="inspector-grid">
+                <label class="field"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter/system-ui</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option></select></label>
+                <label class="field"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
+                <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
+                <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
+                <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+                <label class="field"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
+                <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
+              </div>
+            </section>
 
-          <label class="field" data-control="shape"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
-          <label class="field" data-control="shape"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
-          <label class="field" data-control="shape"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
-          <label class="field" data-control="shape"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+            <section class="ins-group" data-for="shape">
+              <div class="inspector-grid">
+                <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
+                <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
+                <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+              </div>
+            </section>
 
-          <label class="field" data-control="line"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
-          <label class="field" data-control="line"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
-          <label class="field" data-control="image"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
-          <label class="field" data-control="appearance"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
-          <label class="field" data-control="svg"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
+            <section class="ins-group" data-for="line">
+              <div class="inspector-grid">
+                <label class="field"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
+                <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
+              </div>
+            </section>
 
-          <label class="field" data-control="textlist"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
-          <label class="field" data-control="list"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
-          <div class="table-controls" data-control="table">
-            <strong>Table structure</strong>
-            <div class="table-controls-grid">
-              <label class="field"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
-              <label class="field"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
-            </div>
+            <section class="ins-group" data-for="image">
+              <div class="inspector-grid">
+                <label class="field"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="svg">
+              <div class="inspector-grid">
+                <label class="field"><span>Fill</span><input id="ins-svg-fill" class="control" type="color" /></label>
+                <label class="field"><span>Stroke</span><input id="ins-svg-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="list">
+              <div class="inspector-grid">
+                <label class="field"><span>Line height</span><input id="ins-list-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
+                <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="table">
+              <div class="table-controls">
+                <strong>Table structure</strong>
+                <div class="table-controls-grid">
+                  <label class="field"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
+                  <label class="field"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
+                </div>
+              </div>
+            </section>
           </div>
+          <p id="ins-note" class="ins-note"></p>
         </div>
-        <p id="ins-note" class="ins-note">Select an object to edit controls.</p>
       </aside>
     </main>
 
@@ -334,20 +376,21 @@ const base = import.meta.env.BASE_URL ?? "/";
       dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), multiBox: document.getElementById('multi-box'), marquee: document.getElementById('marquee'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
       zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
+      inspectorEmpty: document.getElementById('inspector-empty'), inspectorContent: document.getElementById('inspector-content'),
       saveIndicator: document.getElementById('save-indicator'),
       tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets'), theme: document.getElementById('panel-theme') },
       assetSearch: document.getElementById('asset-search'), assetsList: document.getElementById('assets-list'),
       assetCategoryTabs: [...document.querySelectorAll('[data-asset-category]')], assetLoadMore: document.getElementById('asset-load-more'), assetPageLabel: document.getElementById('asset-page-label'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
       insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'), insTextColor: document.getElementById('ins-text-color'),
-      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'),
+      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'), insSvgFill: document.getElementById('ins-svg-fill'), insSvgStroke: document.getElementById('ins-svg-stroke'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insRotation: document.getElementById('ins-rotation'),
-      insLineHeight: document.getElementById('ins-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
+      insLineHeight: document.getElementById('ins-line-height'), insListLineHeight: document.getElementById('ins-list-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
       themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
       stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'),
       themeSubtabs: [...document.querySelectorAll('[data-theme-subtab]')], themePanels: [...document.querySelectorAll('[data-theme-panel]')],
-      inspectorFields: [...document.querySelectorAll('.inspector-grid [data-control]')],
+      inspectorGroups: [...document.querySelectorAll('.ins-group')],
       templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
@@ -913,8 +956,28 @@ const base = import.meta.env.BASE_URL ?? "/";
       const n = activeNode();
       const selectedCount = selectedNodeIds.size;
       const has = !!n && selectedCount <= 1;
+      const isMulti = selectedCount > 1;
       el.inspectorTitle.textContent = selectedCount > 1 ? `Selected: ${selectedCount} items` : (has ? `Selected: ${n.type === 'table' ? 'table (rows/cols)' : n.type}` : 'No selection');
       el.delBtn.disabled = selectedCount === 0;
+
+      const groupForType = {
+        text: 'text', heading: 'text', paragraph: 'text', datelabel: 'text',
+        checklist: 'list', bulletlist: 'list',
+        box: 'shape', highlight: 'shape', roundedrect: 'shape', circle: 'shape',
+        line: 'line', divider: 'line',
+        image: 'image', svg: 'svg', table: 'table',
+      };
+      const activeGroup = has ? (groupForType[n.type] || null) : null;
+      el.inspectorGroups.forEach((group) => {
+        const target = group.dataset.for;
+        const show = isMulti ? target === 'common' : (has ? (target === 'common' || target === activeGroup) : false);
+        group.style.display = show ? 'block' : 'none';
+      });
+      el.inspectorContent.hidden = !has && !isMulti;
+      el.inspectorEmpty.hidden = has || isMulti;
+      el.note.hidden = !isMulti;
+      el.note.textContent = isMulti ? 'Use Arrange actions for multi-select.' : '';
+      if (!has && !isMulti) return;
 
       enableControl(el.insX, has, n?.xMm?.toFixed?.(1));
       enableControl(el.insY, has, n?.yMm?.toFixed?.(1));
@@ -931,8 +994,10 @@ const base = import.meta.env.BASE_URL ?? "/";
 
       const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
       const isSvg = n && n.type === 'svg';
-      enableControl(el.insFill, isShape || isSvg, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
-      enableControl(el.insStroke, isShape || isSvg, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
+      enableControl(el.insFill, isShape, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insStroke, isShape, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
+      enableControl(el.insSvgFill, isSvg, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insSvgStroke, isSvg, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
       enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
       enableControl(el.insRadius, isShape && n.type !== 'circle', n?.props.radius || 0);
 
@@ -946,29 +1011,14 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insOpacity, has && (isSvg || isShape || isLine || isImage || isList || n?.type === 'table' || n?.type === 'calendar' || isText), n?.props.opacity ?? 1);
       enableControl(el.insRotation, has && isSvg, n?.props.rotation ?? 0);
 
-      enableControl(el.insLineHeight, isList || isText, n?.props.lineHeight || 1.4);
+      enableControl(el.insLineHeight, isText, n?.props.lineHeight || 1.4);
+      enableControl(el.insListLineHeight, isList, n?.props.lineHeight || 1.4);
       enableControl(el.insListStyle, isList, n?.props.listStyle || (n?.type === 'checklist' ? 'checkbox' : 'bullet'));
       const isTable = n && n.type === 'table';
       enableControl(el.insTableRows, isTable, clamp(Number(n?.props.rows || 4), 2, 10));
       enableControl(el.insTableCols, isTable, clamp(Number(n?.props.cols || 4), 2, 10));
 
-      const controlVisibility = {
-        geometry: has,
-        text: isText,
-        shape: isShape || isSvg,
-        line: isLine,
-        image: isImage,
-        appearance: has && isSvg,
-        svg: has && isSvg,
-        textlist: isList || isText,
-        list: isList,
-        table: isTable,
-      };
-      el.inspectorFields.forEach((field) => {
-        const key = field.dataset.control;
-        field.hidden = !controlVisibility[key];
-      });
-      el.note.textContent = has ? '' : 'Select an object to edit controls.';
+      el.note.textContent = '';
     }
 
     function renderSelectionOverlays() {
@@ -1334,14 +1384,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       draggingAssetId = null;
       el.dropPreview.classList.remove('show');
     };
-
-
-    el.workspace.addEventListener('wheel', (e) => {
-      if (!e.shiftKey) return;
-      e.preventDefault();
-      el.workspace.scrollLeft += e.deltaY + e.deltaX;
-    }, { passive: false });
-
     el.stage.addEventListener('pointerdown', (e) => {
       const canPan = spacePanKeyDown && e.button === 0;
       if (!canPan) return;
@@ -1420,6 +1462,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insTextColor.onchange = () => applyInspector((n)=>n.props.color = el.insTextColor.value);
     el.insFill.onchange = () => applyInspector((n)=>n.props.fill = el.insFill.value);
     el.insStroke.onchange = () => applyInspector((n)=>n.props.stroke = el.insStroke.value);
+    el.insSvgFill.onchange = () => applyInspector((n)=>n.props.fill = el.insSvgFill.value);
+    el.insSvgStroke.onchange = () => applyInspector((n)=>n.props.stroke = el.insSvgStroke.value);
     el.insStrokeWidth.onchange = () => applyInspector((n)=>n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
     el.insRadius.onchange = () => applyInspector((n)=>n.props.radius = Math.max(0, Number(el.insRadius.value) || 0));
     el.insThickness.onchange = () => applyInspector((n)=>n.props.thickness = Math.max(1, Number(el.insThickness.value) || 1));
@@ -1428,6 +1472,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insOpacity.onchange = () => applyInspector((n)=>n.props.opacity = Number(el.insOpacity.value));
     el.insRotation.onchange = () => applyInspector((n)=>n.props.rotation = Number(el.insRotation.value));
     el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
+    el.insListLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insListLineHeight.value));
     el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
     el.insTableRows.onchange = () => applyInspector((n)=>n.props.rows = clamp(Math.round(Number(el.insTableRows.value) || 2), 2, 10));
     el.insTableCols.onchange = () => applyInspector((n)=>n.props.cols = clamp(Math.round(Number(el.insTableCols.value) || 2), 2, 10));
