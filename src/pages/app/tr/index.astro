@@ -372,12 +372,16 @@ const base = import.meta.env.BASE_URL ?? "/";
     </div>
   </div>
 
-  <script define:vars={{ labels }}>
+  <script is:inline define:vars={{ labels }}>
+    window.__PRINTFORGE_LABELS = typeof labels !== "undefined" ? labels : {};
+  </script>
+  <script>
     import { createDocFromTemplate, listTemplates } from "../../../app/templates/index";
     import { validateTemplates } from "../../../app/templates/validate";
     import { ASSETS } from "../../../app/assets";
     import { exportDocToPDF } from "../../../app/pdfExport";
     import { exportPageToPng } from "../../../app/pageToPng";
+    const labels = window.__PRINTFORGE_LABELS || {};
     const mmToPx = (mm) => mm * 3.7795275591;
     const pxToMm = (px) => px / 3.7795275591;
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
