@@ -1,0 +1,17 @@
+---
+const { title, body, primary, secondary } = Astro.props;
+---
+<section>
+  <div class="container">
+    <div class="card" style="padding:22px; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div>
+        <div class="section-title" style="margin:0 0 6px;">{title}</div>
+        <div class="section-lead" style="margin:0;">{body}</div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <a class="btn primary" href={primary.href}>{primary.label}</a>
+        {secondary && <a class="btn" href={secondary.href}>{secondary.label}</a>}
+      </div>
+    </div>
+  </div>
+</section>

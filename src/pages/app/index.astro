@@ -1,0 +1,2049 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { withBase } from "../../utils/paths";
+import "../../styles/app.css";
+import labels from "../../app/locales/en";
+
+const base = import.meta.env.BASE_URL ?? "/";
+---
+<BaseLayout lang="en" title="PrintForge App — Sprint 2E" description="Interactive printable builder" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
+  <div class="app-shell" id="app-shell">
+    <header class="app-topbar">
+      <a class="brand" href={withBase("/en/", base)}>
+        <span class="brand-badge" aria-hidden="true">✦</span>
+        <span>PrintForge</span>
+      </a>
+      <a class="btn ghost lang-switcher" href={withBase("/app/tr/", base)}>{labels.langSwitch}</a>
+      <button type="button" class="btn ghost btn-icon" id="shortcuts-btn" title={labels.shortcutsTitle} aria-label={labels.shortcutsTitle}>⌘</button>
+      <button type="button" class="btn ghost btn-icon" id="tips-btn" title={labels.tipsTitle} aria-label={labels.tipsTitle}>?</button>
+      <div class="top-controls">
+        <label class="field inline project-name-field"><span>{labels.project}</span><input id="project-name" class="control" type="text" value={labels.untitledProject} maxlength="80" /></label>
+        <label class="field inline"><span>{labels.zoom}</span>
+          <select id="zoom-select" class="control"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="fit">Fit</option><option value="fitSelection">{labels.fitSelection}</option></select>
+        </label>
+        <div class="segment" role="group" aria-label="Page size"><button type="button" data-size="A4" class="is-active">A4</button><button type="button" data-size="A5">A5</button></div>
+        <div class="segment" role="group" aria-label="Page orientation"><button type="button" data-orientation="portrait" class="is-active">Portrait</button><button type="button" data-orientation="landscape">Landscape</button></div>
+
+        <label class="checkline"><input type="checkbox" id="grid-toggle" /> {labels.grid}</label>
+        <label class="checkline"><input type="checkbox" id="ruler-toggle" /> {labels.rulers}</label>
+        <label class="checkline"><input type="checkbox" id="safe-area-toggle" /> {labels.safeArea}</label>
+        <label class="field inline"><span>{labels.step}</span>
+          <select id="grid-step" class="control"><option value="2">2mm</option><option value="5" selected>5mm</option><option value="10">10mm</option></select>
+        </label>
+
+        <span id="save-indicator" class="save-indicator" aria-live="polite">{labels.saved}</span>
+
+        <button type="button" id="delete-btn" class="btn btn-danger" disabled>{labels.delete}</button>
+        <details class="file-menu" id="file-menu">
+          <summary class="btn btn-primary">{labels.file}</summary>
+          <div class="file-menu-list" role="menu" aria-label="File actions">
+            <button type="button" id="new-project-btn" class="file-menu-item" role="menuitem">{labels.newProject}</button>
+            <button type="button" id="duplicate-project-btn" class="file-menu-item" role="menuitem">{labels.duplicateProject}</button>
+            <button type="button" id="clear-project-btn" class="file-menu-item" role="menuitem">{labels.clearProject}</button>
+            <button type="button" id="save-btn" class="file-menu-item" role="menuitem">{labels.saveLocal}</button>
+            <button type="button" id="load-btn" class="file-menu-item" role="menuitem">{labels.loadLocal}</button>
+            <button type="button" id="export-pdf-btn" class="file-menu-item" role="menuitem">{labels.exportPdf}</button>
+            <button type="button" id="export-png-btn" class="file-menu-item" role="menuitem">{labels.exportPagePng}</button>
+            <button type="button" id="export-btn" class="file-menu-item" role="menuitem">{labels.exportJson}</button>
+            <button type="button" id="import-btn" class="file-menu-item" role="menuitem">{labels.importJson}</button>
+            <button type="button" id="print-preview-btn" class="file-menu-item" role="menuitem">{labels.printPreview}</button>
+            <button type="button" id="print-btn" class="file-menu-item" role="menuitem">{labels.print}</button>
+            <div class="file-menu-recent">
+              <strong>{labels.recentProjects}</strong>
+              <div id="recent-projects" class="recent-projects-empty">{labels.noSnapshots}</div>
+            </div>
+          </div>
+        </details>
+        <input id="import-input" type="file" accept="application/json" hidden />
+        <input id="image-input" type="file" accept="image/*" hidden />
+      </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="panel left-panel">
+        <div class="left-tabs" role="tablist" aria-label="Left panel tabs">
+          <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">{labels.blocks}</button>
+          <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">{labels.layers}</button>
+          <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">{labels.assets}</button>
+          <button type="button" class="left-tab" id="tab-theme" data-tab="theme" role="tab" aria-selected="false">{labels.theme}</button>
+        </div>
+
+        <div id="left-scroll" class="left-scroll">
+          <section id="panel-blocks" class="tab-panel active" role="tabpanel" aria-labelledby="tab-blocks">
+            <div id="block-list" class="block-list">
+              <button class="block-item" data-block="text" draggable="true">🅣 Text</button>
+              <button class="block-item" data-block="heading" draggable="true">Ⓗ Heading</button>
+              <button class="block-item" data-block="paragraph" draggable="true">¶ Paragraph</button>
+              <button class="block-item" data-block="checkbox" draggable="true">☑ Checkbox</button>
+              <button class="block-item" data-block="checklist" draggable="true">☰ Checklist</button>
+              <button class="block-item" data-block="bulletlist" draggable="true">• Bullet list</button>
+              <button class="block-item" data-block="divider" draggable="true">─ Divider</button>
+              <button class="block-item" data-block="highlight" draggable="true">▧ Highlight</button>
+              <button class="block-item" data-block="circle" draggable="true">◯ Circle</button>
+              <button class="block-item" data-block="roundedrect" draggable="true">▢ Rounded rect</button>
+              <button class="block-item" data-block="datelabel" draggable="true">🗓 Date</button>
+              <button class="block-item" data-block="table" draggable="true">▦ Table</button>
+              <button class="block-item" data-block="calendar" draggable="true">📅 Calendar</button>
+              <button class="block-item" data-block="image" draggable="true">🖼 Image</button>
+              <button class="block-item" data-block="box" draggable="true">⬚ Box</button>
+              <button class="block-item" data-block="line" draggable="true">⎯ Line</button>
+            </div>
+          </section>
+
+          <section id="panel-layers" class="tab-panel" role="tabpanel" aria-labelledby="tab-layers" hidden>
+            <div class="layer-actions">
+              <button type="button" id="z-front" class="btn">{labels.front}</button>
+              <button type="button" id="z-forward" class="btn">{labels.forward}</button>
+              <button type="button" id="z-backward" class="btn">{labels.backward}</button>
+              <button type="button" id="z-back" class="btn">{labels.back}</button>
+            </div>
+            <div id="layers-list" class="layers-list"></div>
+          </section>
+
+          <section id="panel-assets" class="tab-panel" role="tabpanel" aria-labelledby="tab-assets" hidden>
+            <div class="asset-tools">
+              <input id="asset-search" class="control" type="text" placeholder="Search assets..." />
+              <div id="asset-category-tabs" class="asset-category-tabs" role="tablist" aria-label="Asset categories">
+                <button type="button" class="asset-category-tab is-active" data-asset-category="Icons" role="tab" aria-selected="true">Icons</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Dividers" role="tab" aria-selected="false">Dividers</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Badges" role="tab" aria-selected="false">Badges</button>
+                <button type="button" class="asset-category-tab" data-asset-category="Stickers" role="tab" aria-selected="false">Stickers</button>
+              </div>
+            </div>
+            <div id="assets-list" class="assets-list"></div>
+            <div class="asset-pagination">
+              <button type="button" id="asset-load-more" class="btn">Load more</button>
+              <span id="asset-page-label">Page 1</span>
+            </div>
+          </section>
+
+          <section id="panel-theme" class="tab-panel" role="tabpanel" aria-labelledby="tab-theme" hidden>
+            <div class="theme-panel">
+              <div class="theme-subtabs" role="tablist" aria-label="Theme subtabs">
+                <button type="button" class="theme-subtab is-active" data-theme-subtab="page" role="tab" aria-selected="true">Page</button>
+              </div>
+
+              <section class="theme-subpanel active" data-theme-panel="page" role="tabpanel">
+                <h3>Page background</h3>
+                <label class="field"><span>Background color</span><input id="theme-page-color" class="control" type="color" /></label>
+
+                <div class="theme-brand-colors">
+                  <h3>{labels.brandColors}</h3>
+                  <div id="brand-swatches" class="brand-swatches" role="group" aria-label={labels.brandColors}></div>
+                </div>
+                <div class="theme-brand-colors">
+                  <h3>{labels.recentColors}</h3>
+                  <div id="recent-swatches" class="brand-swatches recent-swatches" role="group" aria-label={labels.recentColors}></div>
+                </div>
+
+                <details class="theme-advanced">
+                  <summary>Advanced</summary>
+                  <h3>New elements defaults</h3>
+                  <label class="field"><span>New text color</span><input id="theme-default-text" class="control" type="color" /></label>
+                  <label class="field"><span>New shape fill</span><input id="theme-default-fill" class="control" type="color" /></label>
+                  <label class="field"><span>New stroke color</span><input id="theme-default-stroke" class="control" type="color" /></label>
+                  <label class="field"><span>New corner radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
+                  <div id="style-presets" class="theme-preset-list"></div>
+                  <div class="theme-actions">
+                    <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
+                    <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
+                  </div>
+                </details>
+              </section>
+
+              <details class="theme-advanced">
+                <summary>Workspace (Advanced, editor only)</summary>
+                <p class="theme-note">Does not affect PDF export.</p>
+                <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
+                <div class="field"><span>Gradient presets</span>
+                  <div id="theme-gradients" class="theme-preset-list"></div>
+                </div>
+                <label class="checkline"><input id="theme-workspace-pattern" type="checkbox" />Subtle dots/grid background</label>
+              </details>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div id="arrange-toolbar" class="arrange-toolbar" hidden>
+          <span>{labels.arrange}</span>
+          <button type="button" data-arrange="align-left" class="btn">⟸</button>
+          <button type="button" data-arrange="align-center" class="btn">↔</button>
+          <button type="button" data-arrange="align-right" class="btn">⟹</button>
+          <button type="button" data-arrange="align-top" class="btn">⟰</button>
+          <button type="button" data-arrange="align-middle" class="btn">↕</button>
+          <button type="button" data-arrange="align-bottom" class="btn">⟱</button>
+          <button type="button" data-arrange="dist-h" class="btn">⇆</button>
+          <button type="button" data-arrange="dist-v" class="btn">⇅</button>
+          <span class="arrange-sep" aria-hidden="true">|</span>
+          <button type="button" id="copy-style-btn" class="btn" title={labels.copyStyle}>{labels.copyStyle}</button>
+          <button type="button" id="paste-style-btn" class="btn" title={labels.pasteStyle}>{labels.pasteStyle}</button>
+        </div>
+        <div id="canvas-scroll-wrapper" class="canvas-scroll-wrapper" tabindex="-1">
+          <div id="workspace" class="workspace">
+          <div id="canvas-inner" class="canvas-inner">
+          <div id="ruler-corner" class="ruler-corner" aria-hidden="true"></div>
+          <div id="ruler-top" class="ruler ruler-h" aria-hidden="true"></div>
+          <div id="ruler-left" class="ruler ruler-v" aria-hidden="true"></div>
+          <div id="page" class="page">
+            <div id="safe-area-overlay" class="safe-area-overlay" aria-hidden="true" hidden></div>
+            <div id="drop-preview" class="drop-preview" aria-hidden="true"></div>
+            <div id="guide-x" class="guide guide-x"></div>
+            <div id="guide-y" class="guide guide-y"></div>
+            <div id="multi-box" class="multi-box" hidden></div>
+            <div id="marquee" class="marquee" hidden></div>
+            <div id="stage" class="stage" tabindex="0" aria-label="Canvas"></div>
+          </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <aside class="panel right-panel">
+        <h2 id="inspector-title">{labels.noSelection}</h2>
+        <div id="inspector-scroll" class="right-scroll">
+          <div id="inspector-empty" class="ins-note">{labels.selectObject}</div>
+          <div id="inspector-content" hidden>
+            <section class="ins-group" data-for="common">
+              <div class="inspector-grid">
+                <label class="field"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>Y (mm)</span><input id="ins-y" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>W (mm)</span><input id="ins-w" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>H (mm)</span><input id="ins-h" class="control" type="number" step="0.5" /></label>
+                <label class="field"><span>Opacity</span><input id="ins-opacity" class="control" type="range" min="0.1" max="1" step="0.05" /></label>
+                <label class="field toggle-field"><span>{labels.shadow}</span><input id="ins-shadow" type="checkbox" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="text">
+              <div class="inspector-grid">
+                <label class="field"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option><option value="Verdana,sans-serif">Verdana</option><option value="Trebuchet MS,sans-serif">Trebuchet MS</option><option value="Segoe UI,sans-serif">Segoe UI</option></select></label>
+                <label class="field"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
+                <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
+                <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
+                <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+                <label class="field"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
+                <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="shape">
+              <div class="inspector-grid">
+                <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
+                <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
+                <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="line">
+              <div class="inspector-grid">
+                <label class="field"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
+                <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="image">
+              <div class="inspector-grid">
+                <label class="field"><span>Image fit</span><select id="ins-object-fit" class="control"><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="svg">
+              <div class="inspector-grid">
+                <label class="field"><span>Fill</span><input id="ins-svg-fill" class="control" type="color" /></label>
+                <label class="field"><span>Stroke</span><input id="ins-svg-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="list">
+              <div class="inspector-grid">
+                <label class="field"><span>Line height</span><input id="ins-list-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
+                <label class="field"><span>List style</span><select id="ins-list-style" class="control"><option value="checkbox">Checkbox</option><option value="bullet">Bullet</option></select></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="table">
+              <div class="table-controls">
+                <strong>Table structure</strong>
+                <div class="table-controls-grid">
+                  <label class="field"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
+                  <label class="field"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
+                </div>
+              </div>
+            </section>
+          </div>
+          <p id="ins-note" class="ins-note"></p>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page" class="btn">{labels.addPage}</button>
+        <button type="button" id="dup-page" class="btn">{labels.dupPage}</button>
+        <button type="button" id="del-page" class="btn">{labels.delPage}</button>
+      </div>
+      <div id="pages-list" class="pages-list"></div>
+    </footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="context-menu" class="context-menu" hidden>
+      <button type="button" data-context-action="duplicate">{labels.contextDuplicate}</button>
+      <button type="button" data-context-action="delete">{labels.contextDelete}</button>
+      <button type="button" data-context-action="front">{labels.contextFront}</button>
+      <button type="button" data-context-action="back">{labels.contextBack}</button>
+      <button type="button" data-context-action="lock">{labels.contextLock}</button>
+      <button type="button" data-context-action="visibility">{labels.contextVisibility}</button>
+      <button type="button" data-context-action="copy">{labels.contextCopy}</button>
+      <button type="button" data-context-action="paste">{labels.contextPaste}</button>
+    </div>
+
+    <div id="template-modal" class="template-modal" hidden>
+      <div class="template-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
+        <div class="template-modal-header">
+          <h2 id="template-modal-title">{labels.templateTitle}</h2>
+          <button type="button" id="template-close-btn" class="btn">{labels.close}</button>
+        </div>
+        <div class="template-modal-controls">
+          <input id="template-search" type="text" class="control" placeholder={labels.searchTemplates} />
+          <select id="template-category" class="control">
+            <option value="all">All categories</option>
+          </select>
+        </div>
+        <div class="template-section">
+          <h3>{labels.blankProject}</h3>
+          <button type="button" id="template-blank-btn" class="template-card blank">
+            <div class="template-thumb placeholder">Blank</div>
+            <div class="template-card-body">
+              <strong>{labels.blankProject}</strong>
+              <span>Start from scratch</span>
+            </div>
+          </button>
+        </div>
+        <div class="template-section">
+          <h3>Templates</h3>
+          <div id="template-list" class="template-grid"></div>
+        </div>
+        <div class="template-section">
+          <h3>Packs</h3>
+          <div id="pack-list" class="template-grid"></div>
+        </div>
+        <label class="checkline template-checkline">
+          <input type="checkbox" id="template-hide-toggle" />
+          Don’t show again
+        </label>
+      </div>
+    </div>
+
+    <div id="shortcuts-overlay" class="shortcuts-overlay" hidden>
+      <div class="shortcuts-dialog" role="dialog" aria-labelledby="shortcuts-title">
+        <div class="shortcuts-header">
+          <h2 id="shortcuts-title">{labels.shortcutsTitle}</h2>
+          <button type="button" id="shortcuts-close" class="btn">×</button>
+        </div>
+        <ul class="shortcuts-list">
+          <li><kbd>Ctrl</kbd><kbd>Z</kbd> {labels.shortcutsUndo}</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Z</kbd> {labels.shortcutsRedo}</li>
+          <li><kbd>Ctrl</kbd><kbd>D</kbd> {labels.shortcutsDuplicate}</li>
+          <li><kbd>Delete</kbd> / <kbd>Backspace</kbd> {labels.shortcutsDelete}</li>
+          <li><kbd>Ctrl</kbd><kbd>G</kbd> {labels.shortcutsGroup}</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>G</kbd> {labels.shortcutsUngroup}</li>
+          <li><kbd>Space</kbd> + drag {labels.shortcutsPan}</li>
+          <li><kbd>Escape</kbd> {labels.shortcutsDeselect}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="tips-overlay" class="shortcuts-overlay" hidden>
+      <div class="shortcuts-dialog" role="dialog" aria-labelledby="tips-title">
+        <div class="shortcuts-header">
+          <h2 id="tips-title">{labels.tipsTitle}</h2>
+          <button type="button" id="tips-close" class="btn">×</button>
+        </div>
+        <ul class="shortcuts-list tips-list">
+          <li>{labels.tipsDrag}</li>
+          <li>{labels.tipsEdit}</li>
+          <li>{labels.tipsArrange}</li>
+          <li>{labels.tipsShortcuts}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ labels }}>
+    import { createDocFromTemplate, listTemplates } from "../../app/templates/index";
+    import { validateTemplates } from "../../app/templates/validate";
+    import { ASSETS } from "../../app/assets";
+    import { exportDocToPDF } from "../../app/pdfExport";
+    import { exportPageToPng } from "../../app/pageToPng";
+    const mmToPx = (mm) => mm * 3.7795275591;
+    const pxToMm = (px) => px / 3.7795275591;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const createId = (prefix = 'id') => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const pageDimensionsMm = (size, orientation) => {
+      const base = size === 'A4' ? { wMm: 210, hMm: 297 } : { wMm: 148, hMm: 210 };
+      return orientation === 'portrait' ? base : { wMm: base.hMm, hMm: base.wMm };
+    };
+    const snapMm = (v, step, enabled) => enabled ? Math.round(v / step) * step : v;
+
+    const DOC_STORAGE_KEY = 'printforge_doc_v2d';
+    const ASSETS_PAGE_SIZE = 24;
+    const RECENT_PROJECTS_KEY = 'printforge_recent_projects_v1';
+    const loadFromLocal = () => { try { const raw = localStorage.getItem(DOC_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+    const saveToLocal = (doc) => localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc));
+    const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
+    const importJSON = async (file) => JSON.parse(await file.text());
+
+    const WORKSPACE_GRADIENTS = [
+      { id: 'light', name: 'Light', value: 'linear-gradient(180deg,#e5e7eb 0%,#d1d5db 100%)' },
+      { id: 'minimal', name: 'Minimal', value: 'linear-gradient(145deg,#0f172a,#1e293b)' },
+      { id: 'midnight', name: 'Midnight', value: 'linear-gradient(135deg,#0b1d3a,#1e3a8a)' },
+      { id: 'aurora', name: 'Aurora', value: 'linear-gradient(135deg,#0f766e,#0ea5e9)' },
+      { id: 'sunset', name: 'Sunset', value: 'linear-gradient(135deg,#fb923c,#ec4899)' },
+      { id: 'plum', name: 'Plum', value: 'linear-gradient(135deg,#581c87,#c026d3)' },
+      { id: 'slate', name: 'Slate', value: 'linear-gradient(135deg,#334155,#64748b)' },
+    ];
+        const STYLE_PRESETS = {
+      minimal: { id: 'minimal', name: 'Minimal', defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 4 } },
+      classic: { id: 'classic', name: 'Classic', defaults: { fontFamily: 'Georgia,serif', textColor: '#1f2937', strokeColor: '#6b7280', fillColor: '#f5f5f4', radius: 8 } },
+      bold: { id: 'bold', name: 'Bold', defaults: { fontFamily: 'Arial,sans-serif', textColor: '#0f172a', strokeColor: '#1d4ed8', fillColor: '#f59e0b', radius: 12 } },
+    };
+
+    const defaultDoc = () => {
+      const page = { id: createId('page'), name: 'Page 1', nodes: [] };
+      return {
+        version: 3,
+        pageSize: 'A4',
+        orientation: 'portrait',
+        zoom: 1,
+        grid: { enabled: false, stepMm: 5 },
+        rulerOn: false,
+        safeAreaOn: false,
+        workspaceBg: '#e5e7eb',
+        workspaceGradientId: 'light',
+        workspacePatternOn: false,
+        pageBg: '#ffffff',
+        brandSwatches: ['#6366f1', '#14b8a6', '#f97316'],
+        recentColors: [],
+        defaults: { fontFamily: 'Inter,system-ui', textColor: '#111827', strokeColor: '#94a3b8', fillColor: '#e2e8f0', radius: 6 },
+        meta: { projectName: labels.untitledProject },
+        pages: [page],
+        activePageId: page.id,
+      };
+    };
+
+    const TEMPLATE_HIDE_KEY = 'printforge_hide_template_starter_v1';
+    const templates = listTemplates();
+
+    const el = {
+      page: document.getElementById('page'), stage: document.getElementById('stage'), workspace: document.getElementById('workspace'), canvasScrollWrapper: document.getElementById('canvas-scroll-wrapper'),
+      blockList: document.getElementById('block-list'), layersList: document.getElementById('layers-list'), pagesList: document.getElementById('pages-list'),
+      gridToggle: document.getElementById('grid-toggle'), rulerToggle: document.getElementById('ruler-toggle'), safeAreaToggle: document.getElementById('safe-area-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
+      canvasInner: document.getElementById('canvas-inner'), rulerCorner: document.getElementById('ruler-corner'), rulerTop: document.getElementById('ruler-top'), rulerLeft: document.getElementById('ruler-left'), safeAreaOverlay: document.getElementById('safe-area-overlay'),
+      copyStyleBtn: document.getElementById('copy-style-btn'), pasteStyleBtn: document.getElementById('paste-style-btn'),
+      addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
+      fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), exportPdf: document.getElementById('export-pdf-btn'), exportPng: document.getElementById('export-png-btn'), printPreview: document.getElementById('print-preview-btn'), printBtn: document.getElementById('print-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      recentProjects: document.getElementById('recent-projects'), projectName: document.getElementById('project-name'),
+      importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
+      dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), multiBox: document.getElementById('multi-box'), marquee: document.getElementById('marquee'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
+      zFront: document.getElementById('z-front'), zForward: document.getElementById('z-forward'), zBackward: document.getElementById('z-backward'), zBack: document.getElementById('z-back'),
+      delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
+      inspectorEmpty: document.getElementById('inspector-empty'), inspectorContent: document.getElementById('inspector-content'),
+      saveIndicator: document.getElementById('save-indicator'),
+      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets'), theme: document.getElementById('panel-theme') },
+      assetSearch: document.getElementById('asset-search'), assetsList: document.getElementById('assets-list'),
+      assetCategoryTabs: [...document.querySelectorAll('[data-asset-category]')], assetLoadMore: document.getElementById('asset-load-more'), assetPageLabel: document.getElementById('asset-page-label'),
+      insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
+      insFontFamily: document.getElementById('ins-font-family'), insFontSize: document.getElementById('ins-font-size'), insFontWeight: document.getElementById('ins-font-weight'), insItalic: document.getElementById('ins-italic'), insAlign: document.getElementById('ins-align'), insTextColor: document.getElementById('ins-text-color'),
+      insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'), insSvgFill: document.getElementById('ins-svg-fill'), insSvgStroke: document.getElementById('ins-svg-stroke'),
+      insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insShadow: document.getElementById('ins-shadow'), insRotation: document.getElementById('ins-rotation'),
+      insLineHeight: document.getElementById('ins-line-height'), insListLineHeight: document.getElementById('ins-list-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
+      themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
+      themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
+      stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'), brandSwatchesContainer: document.getElementById('brand-swatches'), recentSwatchesContainer: document.getElementById('recent-swatches'),
+      themeSubtabs: [...document.querySelectorAll('[data-theme-subtab]')], themePanels: [...document.querySelectorAll('[data-theme-panel]')],
+      inspectorGroups: [...document.querySelectorAll('.ins-group')],
+      templateModal: document.getElementById('template-modal'), templateCloseBtn: document.getElementById('template-close-btn'), templateSearch: document.getElementById('template-search'),
+      templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
+      templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
+      arrangeToolbar: document.getElementById('arrange-toolbar'),
+    };
+
+    let doc = normalizeDoc(loadFromLocal() || defaultDoc());
+    if (!doc.activePageId) doc.activePageId = doc.pages[0].id;
+    let selectedNodeId = null;
+    let selectedNodeIds = new Set();
+    let draggingBlock = null;
+    let draggingAssetId = null;
+    let draggingLayerId = null;
+    let undoStack = [structuredClone(doc)];
+    let redoStack = [];
+    let dirty = false;
+    let autosaveTimer = null;
+    let listEditCommitTimers = new Map();
+    let activeLeftTab = 'blocks';
+    let copiedNode = null;
+    let copiedStyle = null;
+    let contextNodeId = null;
+    let marqueeState = null;
+    let activeAssetCategory = 'Icons';
+    let visibleAssetCount = ASSETS_PAGE_SIZE;
+    let spacePanKeyDown = false;
+
+
+    function normalizeDoc(sourceDoc) {
+      const nextDoc = structuredClone(sourceDoc || defaultDoc());
+      if (!nextDoc.meta) nextDoc.meta = {};
+      if (!nextDoc.meta.projectName) nextDoc.meta.projectName = labels.untitledProject;
+      if (!nextDoc.workspaceBg) nextDoc.workspaceBg = '#e5e7eb';
+      if (!nextDoc.workspaceGradientId) nextDoc.workspaceGradientId = 'light';
+      if (typeof nextDoc.workspacePatternOn !== 'boolean') nextDoc.workspacePatternOn = false;
+      if (!nextDoc.pageBg) nextDoc.pageBg = '#ffffff';
+      if (!Array.isArray(nextDoc.brandSwatches) || nextDoc.brandSwatches.length > 5) nextDoc.brandSwatches = ['#6366f1', '#14b8a6', '#f97316'];
+      if (!Array.isArray(nextDoc.recentColors) || nextDoc.recentColors.length > 8) nextDoc.recentColors = [];
+      if (!nextDoc.grid || typeof nextDoc.grid.enabled !== 'boolean') nextDoc.grid = { enabled: false, stepMm: 5 };
+      if (typeof nextDoc.grid.stepMm !== 'number' || ![2, 5, 10].includes(nextDoc.grid.stepMm)) nextDoc.grid.stepMm = 5;
+      if (typeof nextDoc.rulerOn !== 'boolean') nextDoc.rulerOn = false;
+      if (typeof nextDoc.safeAreaOn !== 'boolean') nextDoc.safeAreaOn = false;
+      if (!nextDoc.defaults) nextDoc.defaults = {};
+      nextDoc.defaults = {
+        fontFamily: nextDoc.defaults.fontFamily || 'Inter,system-ui',
+        textColor: nextDoc.defaults.textColor || '#111827',
+        strokeColor: nextDoc.defaults.strokeColor || '#94a3b8',
+        fillColor: nextDoc.defaults.fillColor || '#e2e8f0',
+        radius: Number.isFinite(nextDoc.defaults.radius) ? nextDoc.defaults.radius : 6,
+      };
+      nextDoc.pages?.forEach((page) => page.nodes?.forEach((node) => {
+        if (!Object.prototype.hasOwnProperty.call(node, 'groupId')) node.groupId = null;
+        if (!node.props) node.props = {};
+        if (node.type === 'table') {
+          node.props.rows = clamp(Math.round(Number(node.props.rows) || 4), 2, 10);
+          node.props.cols = clamp(Math.round(Number(node.props.cols) || 4), 2, 10);
+        }
+        if (["line", "divider"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.strokeColor;
+        if (["box", "highlight", "roundedrect", "circle", "svg"].includes(node.type)) {
+          if (!node.props.fill) node.props.fill = nextDoc.defaults.fillColor;
+          if (!node.props.stroke) node.props.stroke = nextDoc.defaults.strokeColor;
+        }
+        if (["text", "heading", "paragraph", "datelabel"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.textColor;
+      }));
+      return nextDoc;
+    }
+
+    const loadRecentProjects = () => { try { const raw = localStorage.getItem(RECENT_PROJECTS_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; } };
+    const saveRecentProjects = (items) => localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(items.slice(0, 8)));
+    const timestampText = (iso) => new Date(iso).toLocaleString();
+
+    function captureRecentSnapshot() {
+      const snapshots = loadRecentProjects();
+      snapshots.unshift({ id: createId('snap'), timestamp: new Date().toISOString(), projectName: doc.meta.projectName || labels.untitledProject, doc: structuredClone(doc) });
+      saveRecentProjects(snapshots);
+      renderRecentProjects();
+    }
+
+    function renderRecentProjects() {
+      const snapshots = loadRecentProjects();
+      if (!snapshots.length) {
+        el.recentProjects.className = 'recent-projects-empty';
+        el.recentProjects.textContent = labels.noSnapshots;
+        return;
+      }
+      el.recentProjects.className = 'recent-projects-list';
+      el.recentProjects.innerHTML = snapshots.map((snap) => `<button type="button" class="recent-project" data-snapshot-id="${snap.id}"><strong>${snap.projectName}</strong><span>${timestampText(snap.timestamp)}</span></button>`).join('');
+      el.recentProjects.querySelectorAll('[data-snapshot-id]').forEach((btn) => {
+        btn.onclick = () => {
+          const hit = snapshots.find((snap) => snap.id === btn.dataset.snapshotId);
+          if (!hit) return;
+          loadDoc(hit.doc);
+          showToast(labels.toastRecentLoaded);
+          closeTransientOverlays();
+        };
+      });
+    }
+
+    function ensureProjectName() {
+      if (!doc.meta) doc.meta = {};
+      if (!doc.meta.projectName) doc.meta.projectName = labels.untitledProject;
+      el.projectName.value = doc.meta.projectName;
+      document.title = `${doc.meta.projectName} — PrintForge App`;
+    }
+
+    function renderAssets() {
+      const query = (el.assetSearch.value || '').toLowerCase().trim();
+      const filtered = ASSETS.filter((asset) => {
+        const categoryOk = asset.category === activeAssetCategory;
+        const queryOk = !query || asset.name.toLowerCase().includes(query) || asset.category.toLowerCase().includes(query);
+        return categoryOk && queryOk;
+      });
+      const page = Math.max(1, Math.ceil(visibleAssetCount / ASSETS_PAGE_SIZE));
+      const visible = filtered.slice(0, visibleAssetCount);
+      el.assetsList.innerHTML = visible.map((asset) => `<button type="button" class="asset-item" data-asset-id="${asset.id}" draggable="true"><span class="asset-preview">${asset.svgMarkup}</span><span class="asset-meta"><strong>${asset.name}</strong><span>${asset.category}</span></span></button>`).join('') || '<p class="template-empty">No assets found.</p>';
+      el.assetsList.querySelectorAll('.asset-item').forEach((item) => {
+        item.ondragstart = () => { draggingAssetId = item.dataset.assetId; };
+        item.ondragend = () => { draggingAssetId = null; el.dropPreview.classList.remove('show'); };
+      });
+      el.assetPageLabel.textContent = `Page ${page}`;
+      el.assetLoadMore.hidden = visible.length >= filtered.length || filtered.length === 0;
+    }
+
+    const categories = [...new Set(templates.map((t) => t.category))];
+    categories.forEach((category) => { const option = document.createElement('option'); option.value = category; option.textContent = category; el.templateCategory.appendChild(option); });
+
+    const activePage = () => doc.pages.find((p) => p.id === doc.activePageId);
+    const activeNode = () => activePage()?.nodes.find((n) => n.id === selectedNodeId) || null;
+    const dims = () => pageDimensionsMm(doc.pageSize, doc.orientation);
+    const gridSnap = (v) => snapMm(v, doc.grid.stepMm, doc.grid.enabled);
+    const SNAP_THRESHOLD_MM = 2;
+
+    const selectedNodes = () => {
+      const page = activePage();
+      if (!page) return [];
+      const ids = [...selectedNodeIds];
+      return page.nodes.filter((n) => ids.includes(n.id));
+    };
+
+    function nodeBounds(node) {
+      return { left: node.xMm, top: node.yMm, right: node.xMm + node.wMm, bottom: node.yMm + node.hMm, centerX: node.xMm + (node.wMm / 2), centerY: node.yMm + (node.hMm / 2) };
+    }
+
+    function selectionBounds(nodes = selectedNodes()) {
+      if (!nodes.length) return null;
+      const left = Math.min(...nodes.map((n) => n.xMm));
+      const top = Math.min(...nodes.map((n) => n.yMm));
+      const right = Math.max(...nodes.map((n) => n.xMm + n.wMm));
+      const bottom = Math.max(...nodes.map((n) => n.yMm + n.hMm));
+      return { left, top, right, bottom, width: right - left, height: bottom - top, centerX: (left + right) / 2, centerY: (top + bottom) / 2 };
+    }
+
+    function setPrimarySelection(nodeId = null) {
+      if (!nodeId) {
+        selectedNodeId = null;
+        selectedNodeIds.clear();
+        return;
+      }
+      selectedNodeId = nodeId;
+      if (!selectedNodeIds.has(nodeId)) selectedNodeIds = new Set([nodeId]);
+    }
+
+    function setSelection(nodeIds = [], primary = null) {
+      const uniq = [...new Set(nodeIds)];
+      selectedNodeIds = new Set(uniq);
+      if (!uniq.length) {
+        selectedNodeId = null;
+      } else if (primary && selectedNodeIds.has(primary)) {
+        selectedNodeId = primary;
+      } else if (selectedNodeId && selectedNodeIds.has(selectedNodeId)) {
+        // keep current primary
+      } else {
+        selectedNodeId = uniq[uniq.length - 1];
+      }
+    }
+
+    function toggleNodeSelection(nodeId) {
+      const next = new Set(selectedNodeIds);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      setSelection([...next], nodeId);
+    }
+
+    function nodesFromSelectionOrGroup(nodeId) {
+      const page = activePage();
+      if (!page) return [];
+      const seed = page.nodes.find((n) => n.id === nodeId);
+      if (!seed) return [];
+      if (selectedNodeIds.has(nodeId) && selectedNodeIds.size > 1) {
+        return selectedNodes().filter((n) => !n.locked);
+      }
+      if (seed.groupId) return page.nodes.filter((n) => n.groupId === seed.groupId && !n.locked);
+      return seed.locked ? [] : [seed];
+    }
+
+    function clearGuides() {
+      el.guideX.style.display = 'none';
+      el.guideY.style.display = 'none';
+    }
+
+    const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
+    const closeTransientOverlays = () => {
+      el.fileMenu.open = false;
+      el.toast.classList.remove('show');
+      closeContextMenu();
+    };
+    const focusCanvas = () => requestAnimationFrame(() => el.stage.focus());
+    const setSaveIndicator = () => { el.saveIndicator.textContent = dirty ? labels.unsaved : labels.saved; el.saveIndicator.classList.toggle('dirty', dirty); };
+
+    const resetHistory = () => { undoStack = [structuredClone(doc)]; redoStack = []; dirty = false; setSaveIndicator(); };
+    const loadDoc = (nextDoc) => { doc = normalizeDoc(nextDoc); setPrimarySelection(null); ensureProjectName(); resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
+
+    function openTemplateModal() {
+      el.templateHideToggle.checked = localStorage.getItem(TEMPLATE_HIDE_KEY) === '1';
+      el.templateModal.hidden = false;
+      renderTemplateCards();
+      requestAnimationFrame(() => el.templateSearch.focus());
+    }
+
+    function closeTemplateModal() {
+      el.templateModal.hidden = true;
+    }
+
+    function applyTemplateSelection(templateId) {
+      const nextDoc = templateId ? createDocFromTemplate(templateId) : defaultDoc();
+      loadDoc(nextDoc);
+      closeTemplateModal();
+      showToast(templateId ? labels.toastTemplateLoaded : labels.blankProject);
+    }
+
+    function renderTemplateCards() {
+      const search = (el.templateSearch.value || '').toLowerCase().trim();
+      const category = el.templateCategory.value;
+      const filtered = templates.filter((template) => {
+        const categoryOk = category === 'all' || template.category === category;
+        const searchOk = !search || template.name.toLowerCase().includes(search);
+        return categoryOk && searchOk;
+      });
+
+      const renderCard = (template) => `<button type="button" class="template-card" data-template-id="${template.id}"><img src="${template.thumbnail}" alt="${template.name} preview" class="template-thumb"/><span class="template-card-body"><strong>${template.name}</strong><span><em>${template.category}</em> · ${template.pagesCount} page${template.pagesCount > 1 ? 's' : ''}</span></span></button>`;
+      el.templateList.innerHTML = filtered.filter((t) => !t.isPack).map(renderCard).join('') || '<p class="template-empty">No templates found.</p>';
+      el.packList.innerHTML = filtered.filter((t) => t.isPack).map(renderCard).join('') || '<p class="template-empty">No packs found.</p>';
+      [el.templateList, el.packList].forEach((container) => {
+        container.querySelectorAll('[data-template-id]').forEach((card) => {
+          card.addEventListener('click', () => applyTemplateSelection(card.dataset.templateId));
+        });
+      });
+    }
+
+    function autosaveSchedule() {
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        saveToLocal(doc);
+        dirty = false;
+        setSaveIndicator();
+      }, 800);
+    }
+
+    function commitChange() {
+      undoStack.push(structuredClone(doc));
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+      dirty = true;
+      setSaveIndicator();
+      autosaveSchedule();
+    }
+
+    function addRecentColor(hex) {
+      if (!hex || typeof hex !== 'string') return;
+      const norm = hex.trim();
+      if (!/^#[0-9A-Fa-f]{3,8}$/.test(norm)) return;
+      doc.recentColors = doc.recentColors || [];
+      doc.recentColors = [norm, ...doc.recentColors.filter((c) => c.toLowerCase() !== norm.toLowerCase())].slice(0, 6);
+    }
+
+    function markDirtyNow() {
+      dirty = true;
+      setSaveIndicator();
+      autosaveSchedule();
+    }
+
+    function listEditTimerKey(nodeId, idx) {
+      return `${nodeId}:${idx}`;
+    }
+
+    function clearListCommitTimer(nodeId, idx) {
+      const key = listEditTimerKey(nodeId, idx);
+      const timer = listEditCommitTimers.get(key);
+      if (timer) {
+        clearTimeout(timer);
+        listEditCommitTimers.delete(key);
+      }
+    }
+
+    function scheduleListCommit(nodeId, idx, delay = 300) {
+      clearListCommitTimer(nodeId, idx);
+      const key = listEditTimerKey(nodeId, idx);
+      listEditCommitTimers.set(key, setTimeout(() => {
+        listEditCommitTimers.delete(key);
+        commitChange();
+      }, delay));
+    }
+
+    function switchLeftTab(tab) {
+      activeLeftTab = tab;
+      el.tabButtons.forEach((b) => {
+        const active = b.dataset.tab === tab;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      Object.entries(el.tabPanels).forEach(([k, panel]) => {
+        const active = k === tab;
+        panel.hidden = !active;
+        panel.classList.toggle('active', active);
+      });
+    }
+
+    function switchThemeSubtab(tab) {
+      el.themeSubtabs.forEach((btn) => {
+        const active = btn.dataset.themeSubtab === tab;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      el.themePanels.forEach((panel) => {
+        const active = panel.dataset.themePanel === tab;
+        panel.hidden = !active;
+        panel.classList.toggle('active', active);
+      });
+    }
+
+    function renderFrame() {
+      const d = dims();
+      el.gridToggle.checked = !!doc.grid.enabled;
+      el.rulerToggle.checked = !!doc.rulerOn;
+      el.safeAreaToggle.checked = !!doc.safeAreaOn;
+      const safeOn = !!doc.safeAreaOn;
+      el.safeAreaOverlay.hidden = !safeOn;
+      if (safeOn) {
+        const marginMm = 5;
+        el.safeAreaOverlay.style.left = `${mmToPx(marginMm)}px`;
+        el.safeAreaOverlay.style.top = `${mmToPx(marginMm)}px`;
+        el.safeAreaOverlay.style.width = `${mmToPx(d.wMm - marginMm * 2)}px`;
+        el.safeAreaOverlay.style.height = `${mmToPx(d.hMm - marginMm * 2)}px`;
+      }
+      const gradient = WORKSPACE_GRADIENTS.find((item) => item.id === doc.workspaceGradientId) || WORKSPACE_GRADIENTS[0];
+      el.workspace.style.setProperty('--workspace-solid', doc.workspaceBg || '#e5e7eb');
+      el.workspace.style.setProperty('--workspace-gradient', gradient.value);
+      el.workspace.classList.toggle('with-pattern', !!doc.workspacePatternOn);
+      el.page.style.setProperty('--page-bg', doc.pageBg || '#ffffff');
+      el.page.style.width = `${mmToPx(d.wMm)}px`;
+      el.page.style.height = `${mmToPx(d.hMm)}px`;
+      const rulerOn = !!doc.rulerOn;
+      el.rulerCorner.hidden = !rulerOn;
+      el.rulerTop.hidden = !rulerOn;
+      el.rulerLeft.hidden = !rulerOn;
+      if (rulerOn) {
+        const pw = mmToPx(d.wMm);
+        const ph = mmToPx(d.hMm);
+        el.canvasInner.style.display = 'grid';
+        el.canvasInner.style.gridTemplateColumns = `22px ${pw}px`;
+        el.canvasInner.style.gridTemplateRows = `22px ${ph}px`;
+        el.canvasInner.style.width = `${22 + pw}px`;
+        el.canvasInner.style.height = `${22 + ph}px`;
+        el.canvasInner.style.transform = `scale(${doc.zoom})`;
+        el.canvasInner.style.transformOrigin = '0 0';
+        el.page.style.transform = '';
+        el.rulerCorner.style.gridColumn = '1';
+        el.rulerCorner.style.gridRow = '1';
+        el.rulerTop.style.gridColumn = '2';
+        el.rulerTop.style.gridRow = '1';
+        el.rulerLeft.style.gridColumn = '1';
+        el.rulerLeft.style.gridRow = '2';
+        el.page.style.gridColumn = '2';
+        el.page.style.gridRow = '2';
+        el.rulerTop.style.width = `${pw}px`;
+        el.rulerTop.style.height = '22px';
+        el.rulerLeft.style.width = '22px';
+        el.rulerLeft.style.height = `${ph}px`;
+        const step = 10;
+        let ticksH = '';
+        for (let i = 0; i <= d.wMm; i += step) ticksH += `<span class="ruler-tick" style="left:${mmToPx(i)}px">${i}</span>`;
+        let ticksV = '';
+        for (let i = 0; i <= d.hMm; i += step) ticksV += `<span class="ruler-tick" style="top:${mmToPx(i)}px">${i}</span>`;
+        el.rulerTop.innerHTML = ticksH;
+        el.rulerLeft.innerHTML = ticksV;
+      } else {
+        el.canvasInner.style.display = 'block';
+        el.canvasInner.style.transform = '';
+        el.canvasInner.style.width = '';
+        el.canvasInner.style.height = '';
+        el.canvasInner.style.gridTemplateColumns = '';
+        el.canvasInner.style.gridTemplateRows = '';
+        el.page.style.transform = `scale(${doc.zoom})`;
+        el.page.style.gridColumn = '';
+        el.page.style.gridRow = '';
+      }
+      el.page.classList.toggle('grid', doc.grid.enabled);
+      el.page.style.setProperty('--grid-step-px', `${mmToPx(doc.grid.stepMm)}px`);
+      el.page.style.setProperty('--grid-major-px', `${mmToPx(doc.grid.stepMm * 5)}px`);
+      el.stage.style.width = `${mmToPx(d.wMm)}px`;
+      el.stage.style.height = `${mmToPx(d.hMm)}px`;
+    }
+
+    function renderThemePanel() {
+      el.themeWorkspaceColor.value = doc.workspaceBg || '#e5e7eb';
+      el.themeWorkspacePattern.checked = !!doc.workspacePatternOn;
+      el.themeGradients.innerHTML = WORKSPACE_GRADIENTS.map((item) => `<button type="button" class="btn ${doc.workspaceGradientId === item.id ? 'is-active' : ''}" data-gradient-id="${item.id}">${item.name}</button>`).join('');
+      el.themeGradients.querySelectorAll('[data-gradient-id]').forEach((btn) => {
+        btn.onclick = () => { doc.workspaceGradientId = btn.dataset.gradientId; commitChange(); render(); };
+      });
+
+      el.themePageColor.value = doc.pageBg || '#ffffff';
+      el.themeDefaultText.value = doc.defaults.textColor || '#111827';
+      el.themeDefaultFill.value = doc.defaults.fillColor || '#e2e8f0';
+      el.themeDefaultStroke.value = doc.defaults.strokeColor || '#94a3b8';
+      el.themeDefaultRadius.value = String(doc.defaults.radius ?? 6);
+
+      el.stylePresets.innerHTML = Object.values(STYLE_PRESETS).map((item) => `<button type="button" class="btn" data-style-preset="${item.id}">${item.name}</button>`).join('');
+      el.stylePresets.querySelectorAll('[data-style-preset]').forEach((btn) => {
+        btn.onclick = () => {
+          doc.pendingStylePreset = btn.dataset.stylePreset;
+          el.stylePresets.querySelectorAll('[data-style-preset]').forEach((item) => item.classList.toggle('is-active', item === btn));
+        };
+      });
+      if (!doc.pendingStylePreset) {
+        doc.pendingStylePreset = 'minimal';
+        const first = el.stylePresets.querySelector('[data-style-preset]');
+        if (first) first.classList.add('is-active');
+      }
+
+      const swatches = doc.brandSwatches || [];
+      el.brandSwatchesContainer.innerHTML = swatches.map((hex, idx) => `<button type="button" class="brand-swatch" data-brand-color="${hex}" title="${hex}" style="background:${hex}" aria-label="Apply ${hex}"></button>`).join('');
+      el.brandSwatchesContainer.querySelectorAll('.brand-swatch').forEach((btn) => {
+        btn.onclick = () => {
+          const color = btn.dataset.brandColor;
+          if (!color || !selectedNodeIds.size) return;
+          addRecentColor(color);
+          selectedNodes().forEach((n) => {
+            if (n.locked) return;
+            if (['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) n.props.color = color;
+            else if (['box', 'highlight', 'roundedrect', 'circle', 'svg'].includes(n.type)) n.props.fill = color;
+            else if (['line', 'divider'].includes(n.type)) n.props.color = color;
+          });
+          commitChange();
+          render();
+        };
+      });
+
+      const recent = doc.recentColors || [];
+      el.recentSwatchesContainer.innerHTML = recent.length ? recent.map((hex) => `<button type="button" class="brand-swatch" data-recent-color="${hex}" title="${hex}" style="background:${hex}" aria-label="Apply ${hex}"></button>`).join('') : '';
+      el.recentSwatchesContainer.querySelectorAll('[data-recent-color]').forEach((btn) => {
+        btn.onclick = () => {
+          const color = btn.dataset.recentColor;
+          if (!color) return;
+          addRecentColor(color);
+          if (!selectedNodeIds.size) return;
+          selectedNodes().forEach((n) => {
+            if (n.locked) return;
+            if (['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) n.props.color = color;
+            else if (['box', 'highlight', 'roundedrect', 'circle', 'svg'].includes(n.type)) n.props.fill = color;
+            else if (['line', 'divider'].includes(n.type)) n.props.color = color;
+          });
+          commitChange();
+          render();
+        };
+      });
+    }
+
+    function renderPages() {
+      el.pagesList.innerHTML = '';
+      doc.pages.forEach((page, i) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `page-thumb ${page.id === doc.activePageId ? 'active' : ''}`;
+        chip.textContent = page.name || `Page ${i + 1}`;
+        chip.draggable = true;
+        chip.dataset.pageId = page.id;
+        chip.onclick = (e) => { if (!e.defaultPrevented) { setPrimarySelection(null); doc.activePageId = page.id; render(); } };
+        chip.ondragstart = (e) => { e.dataTransfer.setData('text/plain', page.id); e.dataTransfer.effectAllowed = 'move'; chip.classList.add('page-thumb-dragging'); };
+        chip.ondragend = () => chip.classList.remove('page-thumb-dragging');
+        chip.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; chip.classList.add('page-thumb-drop-target'); };
+        chip.ondragleave = () => chip.classList.remove('page-thumb-drop-target');
+        chip.ondrop = (e) => {
+          e.preventDefault();
+          chip.classList.remove('page-thumb-drop-target');
+          const srcId = e.dataTransfer.getData('text/plain');
+          if (!srcId || srcId === page.id) return;
+          const srcIdx = doc.pages.findIndex((p) => p.id === srcId);
+          const tgtIdx = doc.pages.findIndex((p) => p.id === page.id);
+          if (srcIdx === -1 || tgtIdx === -1) return;
+          const [moved] = doc.pages.splice(srcIdx, 1);
+          doc.pages.splice(tgtIdx, 0, moved);
+          commitChange();
+          render();
+        };
+        el.pagesList.appendChild(chip);
+      });
+      el.delPage.disabled = doc.pages.length <= 1;
+    }
+
+    function renderLayers() {
+      const p = activePage();
+      el.layersList.innerHTML = '';
+      if (!p) return;
+      const sorted = [...p.nodes].sort((a,b)=>b.z-a.z);
+      sorted.forEach((n, idx) => {
+        const row = document.createElement('div');
+        row.className = `layer-row ${selectedNodeIds.has(n.id) ? 'active' : ''}`;
+        row.draggable = true;
+        row.dataset.id = n.id;
+        row.innerHTML = `<span class="layer-icon">${n.type[0].toUpperCase()}</span><span class="layer-name">${n.name || `${n.type} ${idx+1}`}</span><button type="button" class="icon-btn layer-eye" title="Toggle visibility">${n.visible ? '👁' : '🚫'}</button><button type="button" class="icon-btn layer-lock" title="Toggle lock">${n.locked ? '🔒' : '🔓'}</button><button type="button" class="icon-btn layer-trash" title="Delete layer">🗑</button>`;
+        row.onclick = (e) => {
+          if (e.target.classList.contains('layer-eye')) { n.visible = !n.visible; commitChange(); render(); return; }
+          if (e.target.classList.contains('layer-lock')) { n.locked = !n.locked; commitChange(); render(); return; }
+          if (e.target.classList.contains('layer-trash')) { deleteNodeById(n.id, true); return; }
+          if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id); render();
+        };
+        row.ondragstart = () => { draggingLayerId = n.id; };
+        row.ondragover = (e) => e.preventDefault();
+        row.ondrop = (e) => {
+          e.preventDefault();
+          if (!draggingLayerId || draggingLayerId === n.id) return;
+          const list = [...p.nodes].sort((a,b)=>b.z-a.z);
+          const from = list.findIndex((x)=>x.id===draggingLayerId);
+          const to = list.findIndex((x)=>x.id===n.id);
+          const [item] = list.splice(from,1); list.splice(to,0,item);
+          list.forEach((node, i) => node.z = list.length - i);
+          commitChange();
+          render();
+        };
+        el.layersList.appendChild(row);
+      });
+    }
+
+    function listRowsHtml(n) {
+      const items = (n.props.items && n.props.items.length ? n.props.items : ['Item 1']).map((item, idx) => {
+        const marker = n.props.listStyle === 'checkbox' ? '☐' : '•';
+        return `<div class="list-row"><span class="list-marker">${marker}</span><span class="list-item" contenteditable="true" data-list-item="${idx}">${item}</span></div>`;
+      }).join('');
+      return `<div class="meta-content list-content" style="line-height:${n.props.lineHeight||1.4};opacity:${n.props.opacity||1}">${items}<button type="button" class="list-add" data-add-item="true">+ item</button></div>`;
+    }
+
+    function nodeHtml(n) {
+      if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+        const style = `font-size:${n.props.fontSize||14}px;font-family:${n.props.fontFamily||doc.defaults.fontFamily||'Inter,system-ui'};font-weight:${n.props.fontWeight||400};font-style:${n.props.italic?'italic':'normal'};text-align:${n.props.align||'left'};line-height:${n.props.lineHeight||1.3};opacity:${n.props.opacity||1};color:${n.props.color||doc.defaults.textColor||'#111827'};`;
+        return `<div class="text-content" style="${style}" contenteditable="true">${n.props.text || ''}</div>`;
+      }
+      if (["box","highlight","roundedrect","circle"].includes(n.type)) {
+        const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
+        return `<div class="box-content" style="background:${n.props.fill||doc.defaults.fillColor||'#e2e8f0'};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||doc.defaults.strokeColor||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};"></div>`;
+      }
+      if (["line","divider"].includes(n.type)) return `<div class="line-content" style="height:${n.props.thickness||2}px;background:${n.props.color||'#334155'};opacity:${n.props.opacity||1}"></div>`;
+      if (n.type === 'checkbox') return `<div class="meta-content">${n.props.checked?'☑':'☐'} ${n.props.text||'Checkbox item'}</div>`;
+      if (n.type === 'checklist' || n.type === 'bulletlist') return listRowsHtml(n);
+      if (n.type === 'table') {
+        const rows=n.props.rows||3, cols=n.props.cols||3;
+        return `<div class="table-content" style="grid-template-columns:repeat(${cols},1fr);opacity:${n.props.opacity||1}">${Array.from({length:rows*cols},()=>'<div></div>').join('')}</div>`;
+      }
+      if (n.type === 'calendar') {
+        const month = new Date(n.props.year||2026,(n.props.month||1)-1,1).toLocaleString('en',{month:'long',year:'numeric'});
+        return `<div class="calendar-content" style="opacity:${n.props.opacity||1}"><div class="cal-title">${month}</div><div class="cal-grid">${Array.from({length:42},(_,i)=>`<span>${i<31?i+1:''}</span>`).join('')}</div></div>`;
+      }
+      if (n.type === 'image') return `<img class="image-content" style="object-fit:${n.props.objectFit||'contain'};opacity:${n.props.opacity||1}" src="${n.props.src||''}" alt="image"/>`;
+      if (n.type === 'svg') return `<div class="svg-content" style="opacity:${n.props.opacity ?? 1};transform:rotate(${n.props.rotation || 0}deg);--svg-fill:${n.props.fill || doc.defaults.fillColor || '#1d4ed8'};--svg-stroke:${n.props.stroke || doc.defaults.strokeColor || '#334155'};">${n.props.svgMarkup || ''}</div>`;
+      return '';
+    }
+
+    function attachListHandlers(nodeEl, n) {
+      const items = [...nodeEl.querySelectorAll('[data-list-item]')];
+      const syncFromDom = () => {
+        n.props.items = items.map((item) => item.textContent ?? '');
+      };
+      const focusItem = (itemIdx) => {
+        requestAnimationFrame(() => {
+          const target = el.stage.querySelector(`[data-id="${n.id}"] [data-list-item="${itemIdx}"]`);
+          target?.focus();
+        });
+      };
+      items.forEach((item, idx) => {
+        item.onfocus = () => {
+          if (selectedNodeId !== n.id) {
+            setSelection([n.id], n.id);
+            render();
+            focusItem(idx);
+            return;
+          }
+        };
+        item.oninput = () => {
+          syncFromDom();
+          markDirtyNow();
+          scheduleListCommit(n.id, idx);
+        };
+        item.onkeydown = (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            ev.stopPropagation();
+            syncFromDom();
+            const next = [...(n.props.items || [])];
+            next.splice(idx + 1, 0, '');
+            n.props.items = next;
+            commitChange();
+            renderNodes();
+            focusItem(idx + 1);
+          }
+          if (ev.key === 'Backspace' && item.textContent.trim() === '' && (n.props.items || []).length > 1) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            syncFromDom();
+            const next = [...(n.props.items || [])];
+            next.splice(idx, 1);
+            n.props.items = next;
+            commitChange();
+            renderNodes();
+            focusItem(Math.max(0, idx - 1));
+          }
+        };
+        item.onblur = () => {
+          clearListCommitTimer(n.id, idx);
+          syncFromDom();
+          commitChange();
+        };
+      });
+      const addBtn = nodeEl.querySelector('[data-add-item]');
+      if (addBtn) {
+        addBtn.onpointerdown = (ev) => {
+          ev.stopPropagation();
+        };
+        addBtn.onclick = (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          n.props.items = [...(n.props.items || []), ''];
+          commitChange();
+          renderNodes();
+          focusItem((n.props.items || []).length - 1);
+        };
+      }
+    }
+
+    function renderNodes() {
+      const p = activePage();
+      el.stage.innerHTML = '';
+      if (!p) return;
+      [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const d = document.createElement('div');
+        d.className = `node node-${n.type} ${selectedNodeIds.has(n.id) ? 'selected' : ''}`;
+        d.dataset.id = n.id;
+        d.style.left = `${mmToPx(n.xMm)}px`;
+        d.style.top = `${mmToPx(n.yMm)}px`;
+        d.style.width = `${mmToPx(n.wMm)}px`;
+        d.style.height = `${mmToPx(n.hMm)}px`;
+        d.style.zIndex = String(n.z);
+        if (n.props.boxShadow) d.style.boxShadow = n.props.boxShadow;
+        d.innerHTML = nodeHtml(n);
+
+        const editable = d.querySelector('.text-content[contenteditable="true"]');
+        if (editable) {
+          editable.oninput = () => { n.props.text = editable.innerText; dirty = true; setSaveIndicator(); autosaveSchedule(); };
+          editable.onblur = () => commitChange();
+        }
+        if (n.type === 'checklist' || n.type === 'bulletlist') attachListHandlers(d, n);
+        d.oncontextmenu = (event) => {
+          event.preventDefault();
+          setSelection([n.id], n.id);
+          openContextMenu(event.clientX, event.clientY, n.id);
+          render();
+        };
+
+        if (n.id === selectedNodeId && selectedNodeIds.size <= 1 && !n.locked) {
+          ["nw","ne","sw","se"].forEach((h) => {
+            const hEl = document.createElement('button');
+            hEl.type='button'; hEl.className=`handle ${h}`; hEl.dataset.handle=h;
+            d.appendChild(hEl);
+          });
+        }
+
+        el.stage.appendChild(d);
+      });
+      syncInspector();
+    }
+
+    function enableControl(ctrl, enabled, value, isCheckbox=false) {
+      ctrl.disabled = !enabled;
+      if (value !== undefined) {
+        if (isCheckbox) ctrl.checked = !!value;
+        else ctrl.value = String(value);
+      }
+    }
+
+    function syncInspector() {
+      const n = activeNode();
+      const selectedCount = selectedNodeIds.size;
+      const has = !!n && selectedCount <= 1;
+      const isMulti = selectedCount > 1;
+      el.inspectorTitle.textContent = selectedCount > 1 ? `Selected: ${selectedCount} items` : (has ? `Selected: ${n.type === 'table' ? 'table (rows/cols)' : n.type}` : 'No selection');
+      el.delBtn.disabled = selectedCount === 0;
+
+      const groupForType = {
+        text: 'text', heading: 'text', paragraph: 'text', datelabel: 'text',
+        checklist: 'list', bulletlist: 'list',
+        box: 'shape', highlight: 'shape', roundedrect: 'shape', circle: 'shape',
+        line: 'line', divider: 'line',
+        image: 'image', svg: 'svg', table: 'table',
+      };
+      const activeGroup = has ? (groupForType[n.type] || null) : null;
+      el.inspectorGroups.forEach((group) => {
+        const target = group.dataset.for;
+        const show = isMulti ? target === 'common' : (has ? (target === 'common' || target === activeGroup) : false);
+        group.style.display = show ? 'block' : 'none';
+      });
+      el.inspectorContent.hidden = !has && !isMulti;
+      el.inspectorEmpty.hidden = has || isMulti;
+      el.note.hidden = !isMulti;
+      el.note.textContent = isMulti ? 'Use Arrange actions for multi-select.' : '';
+      if (!has && !isMulti) return;
+
+      enableControl(el.insX, has, n?.xMm?.toFixed?.(1));
+      enableControl(el.insY, has, n?.yMm?.toFixed?.(1));
+      enableControl(el.insW, has, n?.wMm?.toFixed?.(1));
+      enableControl(el.insH, has, n?.hMm?.toFixed?.(1));
+
+      const isText = n && ["text","heading","paragraph","datelabel"].includes(n.type);
+      enableControl(el.insFontFamily, isText, n?.props.fontFamily || 'Inter,system-ui');
+      enableControl(el.insFontSize, isText, n?.props.fontSize || 14);
+      enableControl(el.insFontWeight, isText, n?.props.fontWeight || 400);
+      enableControl(el.insItalic, isText, n?.props.italic || false, true);
+      enableControl(el.insAlign, isText, n?.props.align || 'left');
+      enableControl(el.insTextColor, isText, n?.props.color || doc.defaults.textColor || '#111827');
+
+      const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
+      const isSvg = n && n.type === 'svg';
+      enableControl(el.insFill, isShape, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insStroke, isShape, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
+      enableControl(el.insSvgFill, isSvg, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      enableControl(el.insSvgStroke, isSvg, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
+      enableControl(el.insStrokeWidth, isShape, n?.props.strokeWidth || 1);
+      enableControl(el.insRadius, isShape && n.type !== 'circle', n?.props.radius || 0);
+
+      const isLine = n && ["line","divider"].includes(n.type);
+      enableControl(el.insThickness, isLine, n?.props.thickness || 2);
+      enableControl(el.insColor, isLine, n?.props.color || doc.defaults.strokeColor || '#334155');
+
+      const isImage = n && n.type === 'image';
+      const isList = n && ["checklist","bulletlist"].includes(n.type);
+      enableControl(el.insObjectFit, isImage, n?.props.objectFit || 'contain');
+      enableControl(el.insOpacity, has && (isSvg || isShape || isLine || isImage || isList || n?.type === 'table' || n?.type === 'calendar' || isText), n?.props.opacity ?? 1);
+      enableControl(el.insShadow, has, !!n?.props.boxShadow, true);
+      enableControl(el.insRotation, has && isSvg, n?.props.rotation ?? 0);
+
+      enableControl(el.insLineHeight, isText, n?.props.lineHeight || 1.4);
+      enableControl(el.insListLineHeight, isList, n?.props.lineHeight || 1.4);
+      enableControl(el.insListStyle, isList, n?.props.listStyle || (n?.type === 'checklist' ? 'checkbox' : 'bullet'));
+      const isTable = n && n.type === 'table';
+      enableControl(el.insTableRows, isTable, clamp(Number(n?.props.rows || 4), 2, 10));
+      enableControl(el.insTableCols, isTable, clamp(Number(n?.props.cols || 4), 2, 10));
+
+      el.note.textContent = '';
+    }
+
+    function renderSelectionOverlays() {
+      const box = selectionBounds();
+      if (box && selectedNodeIds.size > 1) {
+        el.multiBox.hidden = false;
+        el.multiBox.style.left = `${mmToPx(box.left)}px`;
+        el.multiBox.style.top = `${mmToPx(box.top)}px`;
+        el.multiBox.style.width = `${mmToPx(box.width)}px`;
+        el.multiBox.style.height = `${mmToPx(box.height)}px`;
+      } else {
+        el.multiBox.hidden = true;
+      }
+      el.arrangeToolbar.hidden = selectedNodeIds.size < 1;
+      el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => { btn.disabled = selectedNodeIds.size < 2; });
+      el.copyStyleBtn.disabled = selectedNodeIds.size !== 1;
+      el.pasteStyleBtn.disabled = !selectedNodeIds.size || !copiedStyle || Object.keys(copiedStyle).length === 0;
+    }
+
+    function selectionIntersects(rect, node) {
+      const b = nodeBounds(node);
+      return !(b.left > rect.right || b.right < rect.left || b.top > rect.bottom || b.bottom < rect.top);
+    }
+
+    function applyArrange(action) {
+      const nodes = selectedNodes().filter((n) => !n.locked);
+      if (nodes.length < 2) return;
+      const bounds = selectionBounds(nodes);
+      if (!bounds) return;
+      if (action === 'align-left') nodes.forEach((n) => n.xMm = bounds.left);
+      if (action === 'align-center') nodes.forEach((n) => n.xMm = bounds.centerX - (n.wMm / 2));
+      if (action === 'align-right') nodes.forEach((n) => n.xMm = bounds.right - n.wMm);
+      if (action === 'align-top') nodes.forEach((n) => n.yMm = bounds.top);
+      if (action === 'align-middle') nodes.forEach((n) => n.yMm = bounds.centerY - (n.hMm / 2));
+      if (action === 'align-bottom') nodes.forEach((n) => n.yMm = bounds.bottom - n.hMm);
+      if (action === 'dist-h') {
+        const ordered = [...nodes].sort((a, b) => a.xMm - b.xMm);
+        if (ordered.length > 2) {
+          const totalW = ordered.reduce((sum, n) => sum + n.wMm, 0);
+          const gap = Math.max(0, (bounds.width - totalW) / (ordered.length - 1));
+          let x = bounds.left;
+          ordered.forEach((n) => { n.xMm = x; x += n.wMm + gap; });
+        }
+      }
+      if (action === 'dist-v') {
+        const ordered = [...nodes].sort((a, b) => a.yMm - b.yMm);
+        if (ordered.length > 2) {
+          const totalH = ordered.reduce((sum, n) => sum + n.hMm, 0);
+          const gap = Math.max(0, (bounds.height - totalH) / (ordered.length - 1));
+          let y = bounds.top;
+          ordered.forEach((n) => { n.yMm = y; y += n.hMm + gap; });
+        }
+      }
+      commitChange();
+      render();
+    }
+
+    function groupSelection() {
+      const nodes = selectedNodes().filter((n) => !n.locked);
+      if (nodes.length < 2) return;
+      const gid = createId('group');
+      nodes.forEach((n) => n.groupId = gid);
+      commitChange();
+      render();
+    }
+
+    function ungroupSelection() {
+      const p = activePage();
+      if (!p) return;
+      const groupIds = [...new Set(selectedNodes().map((n) => n.groupId).filter(Boolean))];
+      if (!groupIds.length) return;
+      p.nodes.forEach((n) => { if (groupIds.includes(n.groupId)) n.groupId = null; });
+      commitChange();
+      render();
+    }
+
+    const STYLE_KEYS = ['color', 'fill', 'stroke', 'strokeWidth', 'radius', 'fontSize', 'fontFamily', 'fontWeight', 'italic', 'align', 'thickness', 'boxShadow'];
+    function copyStyle() {
+      const n = activeNode();
+      if (!n || selectedNodeIds.size !== 1) return;
+      copiedStyle = {};
+      STYLE_KEYS.forEach((k) => { if (n.props[k] !== undefined) copiedStyle[k] = n.props[k]; });
+    }
+    function pasteStyle() {
+      if (!copiedStyle || Object.keys(copiedStyle).length === 0 || !selectedNodeIds.size) return;
+      const textTypes = ['text', 'heading', 'paragraph', 'datelabel'];
+      const shapeTypes = ['box', 'highlight', 'roundedrect', 'circle', 'svg'];
+      const lineTypes = ['line', 'divider'];
+      selectedNodes().forEach((n) => {
+        if (n.locked) return;
+        if (copiedStyle.color !== undefined && (textTypes.includes(n.type) || lineTypes.includes(n.type))) n.props.color = copiedStyle.color;
+        if (copiedStyle.fill !== undefined && shapeTypes.includes(n.type)) n.props.fill = copiedStyle.fill;
+        if (copiedStyle.stroke !== undefined && shapeTypes.includes(n.type)) n.props.stroke = copiedStyle.stroke;
+        if (copiedStyle.strokeWidth !== undefined && shapeTypes.includes(n.type)) n.props.strokeWidth = copiedStyle.strokeWidth;
+        if (copiedStyle.radius !== undefined && shapeTypes.includes(n.type) && n.type !== 'circle') n.props.radius = copiedStyle.radius;
+        if (textTypes.includes(n.type)) {
+          if (copiedStyle.fontSize !== undefined) n.props.fontSize = copiedStyle.fontSize;
+          if (copiedStyle.fontFamily !== undefined) n.props.fontFamily = copiedStyle.fontFamily;
+          if (copiedStyle.fontWeight !== undefined) n.props.fontWeight = copiedStyle.fontWeight;
+          if (copiedStyle.italic !== undefined) n.props.italic = copiedStyle.italic;
+          if (copiedStyle.align !== undefined) n.props.align = copiedStyle.align;
+        }
+        if (copiedStyle.thickness !== undefined && lineTypes.includes(n.type)) n.props.thickness = copiedStyle.thickness;
+        if (copiedStyle.boxShadow !== undefined) n.props.boxShadow = copiedStyle.boxShadow;
+      });
+      commitChange();
+      render();
+    }
+
+    function render() {
+      renderFrame();
+      renderPages();
+      renderLayers();
+      renderNodes();
+      renderSelectionOverlays();
+      renderThemePanel();
+      switchLeftTab(activeLeftTab);
+      ensureProjectName();
+      document.querySelectorAll('[data-size]').forEach((b)=>b.classList.toggle('is-active', b.dataset.size===doc.pageSize));
+      document.querySelectorAll('[data-orientation]').forEach((b)=>b.classList.toggle('is-active', b.dataset.orientation===doc.orientation));
+      setSaveIndicator();
+    }
+
+    function createPreset(type, xMm, yMm, extra = {}) {
+      const p = activePage(); if (!p) return;
+      const now = new Date();
+      const base = { id:createId('node'), type, name:type, xMm, yMm, wMm:80, hMm:24, z:(p.nodes.reduce((m,n)=>Math.max(m,n.z),0)+1), visible:true, locked:false, groupId:null, props:{} };
+      const presets = {
+        text: { name:'Text', wMm:80, hMm:22, props:{ text:'Text', fontSize:14, fontFamily:doc.defaults.fontFamily, fontWeight:400, align:'left', color: doc.defaults.textColor } },
+        heading: { name:'Heading', wMm:92, hMm:24, props:{ text:'Heading', fontSize:24, fontFamily:doc.defaults.fontFamily, fontWeight:700, align:'left', color: doc.defaults.textColor } },
+        paragraph: { name:'Paragraph', wMm:100, hMm:40, props:{ text:'Paragraph text', fontSize:14, fontFamily:doc.defaults.fontFamily, fontWeight:400, align:'left', lineHeight:1.45, color: doc.defaults.textColor } },
+        checkbox: { name:'Checkbox', wMm:80, hMm:16, props:{ text:'Task', checked:false } },
+        checklist: { name:'Checklist', wMm:80, hMm:42, props:{ items:['Item 1','Item 2'], listStyle:'checkbox', lineHeight:1.4 } },
+        bulletlist: { name:'Bullet list', wMm:80, hMm:42, props:{ items:['Point 1','Point 2'], listStyle:'bullet', lineHeight:1.4 } },
+        divider: { name:'Divider', wMm:100, hMm:4, props:{ thickness:2, color:doc.defaults.strokeColor } },
+        line: { name:'Line', wMm:80, hMm:4, props:{ thickness:2, color:doc.defaults.strokeColor } },
+        box: { name:'Box', wMm:80, hMm:45, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        highlight: { name:'Highlight', wMm:80, hMm:28, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        circle: { name:'Circle', wMm:32, hMm:32, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1 } },
+        roundedrect: { name:'Rounded rect', wMm:80, hMm:42, props:{ fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, strokeWidth:1, radius:doc.defaults.radius } },
+        datelabel: { name:'Date', wMm:78, hMm:16, props:{ text:now.toISOString().slice(0,10), fontSize:13, fontFamily:doc.defaults.fontFamily, fontWeight:600, align:'left', color: doc.defaults.textColor } },
+        table: { name:'Table', wMm:92, hMm:58, props:{ rows:4, cols:4 } },
+        calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
+        image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
+        svg: { name:'SVG', wMm:30, hMm:30, props:{ svgMarkup:'', fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, opacity:1, rotation:0 } },
+      };
+      const preset = presets[type]; if (!preset) return;
+      p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
+      setSelection([p.nodes[p.nodes.length - 1].id], p.nodes[p.nodes.length - 1].id);
+      commitChange();
+      render();
+      focusCanvas();
+    }
+
+    async function addImageAt(xMm, yMm) {
+      el.imageInput.click();
+      const file = await new Promise((resolve) => { el.imageInput.onchange = () => resolve(el.imageInput.files?.[0] || null); });
+      el.imageInput.value = '';
+      if (!file) return;
+      const src = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file); });
+      createPreset('image', xMm, yMm, { props: { src } });
+    }
+
+    function pagePointFromEvent(e) {
+      const rect = el.page.getBoundingClientRect();
+      const xPx = (e.clientX - rect.left) / doc.zoom;
+      const yPx = (e.clientY - rect.top) / doc.zoom;
+      const d = dims();
+      return {
+        xMm: clamp(gridSnap(pxToMm(xPx)), 0, d.wMm),
+        yMm: clamp(gridSnap(pxToMm(yPx)), 0, d.hMm),
+      };
+    }
+
+    function deleteSelectedNodes() {
+      const p = activePage();
+      if (!p) return;
+      const ids = new Set(selectedNodes().map((n) => n.id));
+      if (!ids.size) return;
+      p.nodes = p.nodes.filter((n) => !ids.has(n.id));
+      setPrimarySelection(null);
+      commitChange();
+      render();
+    }
+
+    function deleteNodeById(nodeId, fromLayer = false) {
+      const p = activePage(); if (!p) return;
+      const n = p.nodes.find((x)=>x.id===nodeId); if (!n) return;
+      if (n.locked && !fromLayer) { showToast('Locked node cannot be deleted from canvas keys'); return; }
+      if (n.locked && fromLayer) {
+        const ok = window.confirm(labels.confirmDeleteLocked);
+        if (!ok) return;
+      }
+      p.nodes = p.nodes.filter((x)=>x.id!==nodeId);
+      if (selectedNodeIds.has(nodeId)) { const next = [...selectedNodeIds].filter((id) => id !== nodeId); setSelection(next, next[0] || null); }
+      commitChange();
+      render();
+    }
+
+
+    function duplicateNode(nodeId) {
+      const p = activePage();
+      const source = p?.nodes.find((item) => item.id === nodeId);
+      if (!p || !source) return;
+      const clone = structuredClone(source);
+      clone.id = createId('node');
+      clone.name = `${source.name} copy`;
+      clone.xMm = clamp(source.xMm + 6, 0, dims().wMm - source.wMm);
+      clone.yMm = clamp(source.yMm + 6, 0, dims().hMm - source.hMm);
+      clone.z = (p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1);
+      clone.groupId = null;
+      p.nodes.push(clone);
+      setSelection([clone.id], clone.id);
+      commitChange();
+      render();
+    }
+
+    function copyNode(nodeId) {
+      const node = activePage()?.nodes.find((item) => item.id === nodeId);
+      if (!node) return;
+      copiedNode = structuredClone(node);
+      showToast('Node copied');
+    }
+
+    function pasteNode(targetNodeId = null) {
+      if (!copiedNode) return;
+      const p = activePage();
+      if (!p) return;
+      const source = structuredClone(copiedNode);
+      source.id = createId('node');
+      const target = targetNodeId ? p.nodes.find((item) => item.id === targetNodeId) : null;
+      source.xMm = clamp((target?.xMm ?? source.xMm) + 8, 0, dims().wMm - source.wMm);
+      source.yMm = clamp((target?.yMm ?? source.yMm) + 8, 0, dims().hMm - source.hMm);
+      source.z = p.nodes.reduce((m, n) => Math.max(m, n.z), 0) + 1;
+      source.groupId = null;
+      p.nodes.push(source);
+      setSelection([source.id], source.id);
+      commitChange();
+      render();
+    }
+
+    function openContextMenu(clientX, clientY, nodeId) {
+      contextNodeId = nodeId;
+      el.contextMenu.hidden = false;
+      const menuWidth = 190;
+      const menuHeight = 290;
+      el.contextMenu.style.left = `${Math.min(clientX, window.innerWidth - menuWidth)}px`;
+      el.contextMenu.style.top = `${Math.min(clientY, window.innerHeight - menuHeight)}px`;
+    }
+
+    function closeContextMenu() {
+      contextNodeId = null;
+      el.contextMenu.hidden = true;
+    }
+
+    function smartSnapSelection(movingNodes, targetBounds) {
+      if (doc.grid.enabled) {
+        clearGuides();
+        return { dx: 0, dy: 0 };
+      }
+      const p = activePage();
+      if (!p) return { dx: 0, dy: 0 };
+      const movingIds = new Set(movingNodes.map((n) => n.id));
+      const others = p.nodes.filter((n) => n.visible && !movingIds.has(n.id));
+      const axesX = [targetBounds.left, targetBounds.centerX, targetBounds.right];
+      const axesY = [targetBounds.top, targetBounds.centerY, targetBounds.bottom];
+      let bestX = null;
+      let bestY = null;
+      others.forEach((node) => {
+        const b = nodeBounds(node);
+        [b.left, b.centerX, b.right].forEach((candidate) => {
+          axesX.forEach((axis) => {
+            const delta = candidate - axis;
+            if (Math.abs(delta) <= SNAP_THRESHOLD_MM && (!bestX || Math.abs(delta) < Math.abs(bestX.delta))) bestX = { delta, line: candidate };
+          });
+        });
+        [b.top, b.centerY, b.bottom].forEach((candidate) => {
+          axesY.forEach((axis) => {
+            const delta = candidate - axis;
+            if (Math.abs(delta) <= SNAP_THRESHOLD_MM && (!bestY || Math.abs(delta) < Math.abs(bestY.delta))) bestY = { delta, line: candidate };
+          });
+        });
+      });
+      if (bestX) {
+        el.guideX.style.display = 'block';
+        el.guideX.style.left = `${mmToPx(bestX.line)}px`;
+      } else el.guideX.style.display = 'none';
+      if (bestY) {
+        el.guideY.style.display = 'block';
+        el.guideY.style.top = `${mmToPx(bestY.line)}px`;
+      } else el.guideY.style.display = 'none';
+      return { dx: bestX?.delta || 0, dy: bestY?.delta || 0 };
+    }
+
+    const DRAG_THRESHOLD_PX = 6;
+    function startPointer(e) {
+      const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
+      const n = activePage()?.nodes.find((x)=>x.id===nodeEl.dataset.id); if (!n) return;
+      if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id);
+      if (n.locked) { render(); return; }
+      const handle = e.target.dataset.handle || null;
+      const isContentEditable = e.target.closest('[contenteditable="true"]');
+      let dragStarted = !!handle || !isContentEditable;
+      const d = dims();
+      const movingNodes = handle ? [n] : nodesFromSelectionOrGroup(n.id);
+      const start = movingNodes.map((node) => ({ id: node.id, xMm: node.xMm, yMm: node.yMm, wMm: node.wMm, hMm: node.hMm }));
+      const startBounds = selectionBounds(start);
+      const s = { x:e.clientX, y:e.clientY, xMm:n.xMm, yMm:n.yMm, wMm:n.wMm, hMm:n.hMm };
+
+      const move = (ev) => {
+        if (!dragStarted) {
+          const dist = Math.hypot(ev.clientX - s.x, ev.clientY - s.y);
+          if (dist < DRAG_THRESHOLD_PX) return;
+          dragStarted = true;
+          nodeEl.querySelector('[contenteditable="true"]')?.blur();
+        }
+        const dx = pxToMm((ev.clientX - s.x) / doc.zoom);
+        const dy = pxToMm((ev.clientY - s.y) / doc.zoom);
+        if (!handle) {
+          let nx = s.xMm + dx;
+          let ny = s.yMm + dy;
+          if (doc.grid.enabled) {
+            nx = gridSnap(nx);
+            ny = gridSnap(ny);
+          }
+          const rawBounds = { ...startBounds, left: startBounds.left + (nx - s.xMm), right: startBounds.right + (nx - s.xMm), centerX: startBounds.centerX + (nx - s.xMm), top: startBounds.top + (ny - s.yMm), bottom: startBounds.bottom + (ny - s.yMm), centerY: startBounds.centerY + (ny - s.yMm) };
+          const snap = smartSnapSelection(movingNodes, rawBounds);
+          const finalDx = (nx - s.xMm) + snap.dx;
+          const finalDy = (ny - s.yMm) + snap.dy;
+          movingNodes.forEach((node) => {
+            const origin = start.find((item) => item.id === node.id);
+            node.xMm = clamp(origin.xMm + finalDx, 0, d.wMm - node.wMm);
+            node.yMm = clamp(origin.yMm + finalDy, 0, d.hMm - node.hMm);
+          });
+        } else {
+          clearGuides();
+          const ratio = s.wMm / s.hMm;
+          const lockAspect = ev.shiftKey;
+          if (handle.includes('e')) {
+            n.wMm = clamp(gridSnap(s.wMm + dx), 8, d.wMm - n.xMm);
+            if (lockAspect) n.hMm = clamp(gridSnap(n.wMm / ratio), 8, d.hMm - n.yMm);
+          }
+          if (handle.includes('s')) {
+            n.hMm = clamp(gridSnap(s.hMm + dy), 8, d.hMm - n.yMm);
+            if (lockAspect) n.wMm = clamp(gridSnap(n.hMm * ratio), 8, d.wMm - n.xMm);
+          }
+          if (handle.includes('w')) {
+            const nx = clamp(gridSnap(s.xMm + dx), 0, s.xMm + s.wMm - 8);
+            n.wMm = clamp(gridSnap(s.wMm - (nx - s.xMm)), 8, d.wMm);
+            n.xMm = nx;
+            if (lockAspect) {
+              n.hMm = clamp(gridSnap(n.wMm / ratio), 8, d.hMm);
+              n.yMm = clamp(s.yMm + s.hMm - n.hMm, 0, d.hMm - n.hMm);
+            }
+          }
+          if (handle.includes('n')) {
+            const ny = clamp(gridSnap(s.yMm + dy), 0, s.yMm + s.hMm - 8);
+            n.hMm = clamp(gridSnap(s.hMm - (ny - s.yMm)), 8, d.hMm);
+            n.yMm = ny;
+            if (lockAspect) {
+              n.wMm = clamp(gridSnap(n.hMm * ratio), 8, d.wMm - n.xMm);
+            }
+          }
+        }
+        renderNodes();
+        renderSelectionOverlays();
+      };
+
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        clearGuides();
+        if (dragStarted) commitChange();
+        render();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
+    el.assetSearch.oninput = () => { visibleAssetCount = ASSETS_PAGE_SIZE; renderAssets(); };
+    el.assetCategoryTabs.forEach((btn) => {
+      btn.onclick = () => {
+        activeAssetCategory = btn.dataset.assetCategory || 'Icons';
+        visibleAssetCount = ASSETS_PAGE_SIZE;
+        el.assetCategoryTabs.forEach((item) => {
+          const active = item === btn;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        renderAssets();
+      };
+    });
+    el.assetLoadMore.onclick = () => { visibleAssetCount += ASSETS_PAGE_SIZE; renderAssets(); };
+
+    el.blockList.querySelectorAll('.block-item').forEach((b) => {
+      b.ondragstart = () => { draggingBlock = b.dataset.block; };
+      b.ondragend = () => { draggingBlock = null; el.dropPreview.classList.remove('show'); };
+      b.onclick = () => showToast('Drag block onto page');
+    });
+
+    el.page.ondragover = (e) => {
+      e.preventDefault();
+      if (!draggingBlock && !draggingAssetId) return;
+      const pt = pagePointFromEvent(e);
+      el.dropPreview.style.left = `${mmToPx(pt.xMm)}px`;
+      el.dropPreview.style.top = `${mmToPx(pt.yMm)}px`;
+      el.dropPreview.classList.add('show');
+    };
+    el.page.ondragleave = () => el.dropPreview.classList.remove('show');
+    el.page.ondrop = async (e) => {
+      e.preventDefault();
+      if (!draggingBlock && !draggingAssetId) return;
+      const pt = pagePointFromEvent(e);
+      if (draggingAssetId) {
+        const asset = ASSETS.find((item) => item.id === draggingAssetId);
+        if (asset) {
+          createPreset('svg', pt.xMm, pt.yMm, { name: asset.name, wMm: asset.widthMm, hMm: asset.heightMm, props: { svgMarkup: asset.svgMarkup, fill: doc.defaults.fillColor, stroke: doc.defaults.strokeColor, opacity: 1, rotation: 0 } });
+        }
+      } else if (draggingBlock === 'image') await addImageAt(pt.xMm, pt.yMm);
+      else createPreset(draggingBlock, pt.xMm, pt.yMm);
+      draggingBlock = null;
+      draggingAssetId = null;
+      el.dropPreview.classList.remove('show');
+    };
+    el.stage.addEventListener('pointerdown', (e) => {
+      const canPan = spacePanKeyDown && e.button === 0;
+      if (!canPan) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const wrapper = el.canvasScrollWrapper;
+      const startLeft = wrapper.scrollLeft;
+      const startTop = wrapper.scrollTop;
+      wrapper.classList.add('is-panning');
+      const onMove = (ev) => {
+        wrapper.scrollLeft = startLeft - (ev.clientX - startX);
+        wrapper.scrollTop = startTop - (ev.clientY - startY);
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        wrapper.classList.remove('is-panning');
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    el.stage.onpointerdown = (e) => {
+      if (spacePanKeyDown) return;
+      if (e.target === el.stage) {
+        const active = document.activeElement;
+        if (active?.isContentEditable) active.blur();
+        const start = pagePointFromEvent(e);
+        marqueeState = { x0: start.xMm, y0: start.yMm, x1: start.xMm, y1: start.yMm, additive: e.shiftKey };
+        el.marquee.hidden = false;
+        const drawMarquee = () => {
+          const x = Math.min(marqueeState.x0, marqueeState.x1);
+          const y = Math.min(marqueeState.y0, marqueeState.y1);
+          const w = Math.abs(marqueeState.x1 - marqueeState.x0);
+          const h = Math.abs(marqueeState.y1 - marqueeState.y0);
+          el.marquee.style.left = `${mmToPx(x)}px`;
+          el.marquee.style.top = `${mmToPx(y)}px`;
+          el.marquee.style.width = `${mmToPx(w)}px`;
+          el.marquee.style.height = `${mmToPx(h)}px`;
+        };
+        drawMarquee();
+        const onMove = (ev) => { const pt = pagePointFromEvent(ev); marqueeState.x1 = pt.xMm; marqueeState.y1 = pt.yMm; drawMarquee(); };
+        const onUp = () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          const rect = { left: Math.min(marqueeState.x0, marqueeState.x1), top: Math.min(marqueeState.y0, marqueeState.y1), right: Math.max(marqueeState.x0, marqueeState.x1), bottom: Math.max(marqueeState.y0, marqueeState.y1) };
+          const hits = activePage()?.nodes.filter((n) => selectionIntersects(rect, n)) || [];
+          const next = marqueeState.additive ? [...new Set([...selectedNodeIds, ...hits.map((n) => n.id)])] : hits.map((n) => n.id);
+          setSelection(next, hits[hits.length - 1]?.id || null);
+          el.marquee.hidden = true;
+          marqueeState = null;
+          render();
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        return;
+      }
+      if (e.target.closest('[data-add-item]')) return;
+      startPointer(e);
+    };
+
+    el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => {
+      btn.onclick = () => applyArrange(btn.dataset.arrange);
+    });
+    el.copyStyleBtn.onclick = () => copyStyle();
+    el.pasteStyleBtn.onclick = () => pasteStyle();
+
+    const applyInspector = (fn) => { const n = activeNode(); if (!n || n.locked || selectedNodeIds.size > 1) return; fn(n); commitChange(); render(); };
+    el.insX.onchange = () => applyInspector((n)=>n.xMm = gridSnap(Number(el.insX.value) || 0));
+    el.insY.onchange = () => applyInspector((n)=>n.yMm = gridSnap(Number(el.insY.value) || 0));
+    el.insW.onchange = () => applyInspector((n)=>n.wMm = Math.max(8, Number(el.insW.value) || 8));
+    el.insH.onchange = () => applyInspector((n)=>n.hMm = Math.max(8, Number(el.insH.value) || 8));
+    el.insFontFamily.onchange = () => applyInspector((n)=>n.props.fontFamily = el.insFontFamily.value);
+    el.insFontSize.onchange = () => applyInspector((n)=>n.props.fontSize = Math.max(8, Number(el.insFontSize.value) || 14));
+    el.insFontWeight.onchange = () => applyInspector((n)=>n.props.fontWeight = Number(el.insFontWeight.value));
+    el.insItalic.onchange = () => applyInspector((n)=>n.props.italic = el.insItalic.checked);
+    el.insAlign.onchange = () => applyInspector((n)=>n.props.align = el.insAlign.value);
+    el.insTextColor.onchange = () => { addRecentColor(el.insTextColor.value); applyInspector((n)=>n.props.color = el.insTextColor.value); };
+    el.insFill.onchange = () => { addRecentColor(el.insFill.value); applyInspector((n)=>n.props.fill = el.insFill.value); };
+    el.insStroke.onchange = () => { addRecentColor(el.insStroke.value); applyInspector((n)=>n.props.stroke = el.insStroke.value); };
+    el.insSvgFill.onchange = () => { addRecentColor(el.insSvgFill.value); applyInspector((n)=>n.props.fill = el.insSvgFill.value); };
+    el.insSvgStroke.onchange = () => { addRecentColor(el.insSvgStroke.value); applyInspector((n)=>n.props.stroke = el.insSvgStroke.value); };
+    el.insStrokeWidth.onchange = () => applyInspector((n)=>n.props.strokeWidth = Math.max(0.5, Number(el.insStrokeWidth.value) || 1));
+    el.insRadius.onchange = () => applyInspector((n)=>n.props.radius = Math.max(0, Number(el.insRadius.value) || 0));
+    el.insThickness.onchange = () => applyInspector((n)=>n.props.thickness = Math.max(1, Number(el.insThickness.value) || 1));
+    el.insColor.onchange = () => { addRecentColor(el.insColor.value); applyInspector((n)=>n.props.color = el.insColor.value); };
+    el.insObjectFit.onchange = () => applyInspector((n)=>n.props.objectFit = el.insObjectFit.value);
+    el.insOpacity.onchange = () => applyInspector((n)=>n.props.opacity = Number(el.insOpacity.value));
+    el.insShadow.onchange = () => applyInspector((n)=>n.props.boxShadow = el.insShadow.checked ? '0 2px 8px rgba(0,0,0,0.15)' : '');
+    el.insRotation.onchange = () => applyInspector((n)=>n.props.rotation = Number(el.insRotation.value));
+    el.insLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insLineHeight.value));
+    el.insListLineHeight.onchange = () => applyInspector((n)=>n.props.lineHeight = Number(el.insListLineHeight.value));
+    el.insListStyle.onchange = () => applyInspector((n)=>n.props.listStyle = el.insListStyle.value);
+    el.insTableRows.onchange = () => applyInspector((n)=>n.props.rows = clamp(Math.round(Number(el.insTableRows.value) || 2), 2, 10));
+    el.insTableCols.onchange = () => applyInspector((n)=>n.props.cols = clamp(Math.round(Number(el.insTableCols.value) || 2), 2, 10));
+
+    function applyStylePreset(target = 'selection') {
+      const preset = STYLE_PRESETS[doc.pendingStylePreset || 'minimal'];
+      const targetNodes = target === 'all'
+        ? activePage()?.nodes || []
+        : selectedNodes();
+      if (!targetNodes.length) return;
+      doc.defaults = { ...preset.defaults };
+      targetNodes.forEach((n) => {
+        if (["text","heading","paragraph","datelabel"].includes(n.type)) {
+          n.props.fontFamily = preset.defaults.fontFamily;
+          n.props.color = preset.defaults.textColor;
+        }
+        if (["box","highlight","roundedrect","circle","svg"].includes(n.type)) {
+          n.props.fill = preset.defaults.fillColor;
+          n.props.stroke = preset.defaults.strokeColor;
+          if (n.type !== 'circle') n.props.radius = preset.defaults.radius;
+        }
+        if (["line","divider"].includes(n.type)) n.props.color = preset.defaults.strokeColor;
+      });
+      commitChange();
+      render();
+      showToast(`${preset.name} preset applied`);
+    }
+
+    function zMove(mode) {
+      const p = activePage(); const n = activeNode(); if (!p || !n) return;
+      const arr = [...p.nodes].sort((a,b)=>a.z-b.z);
+      const i = arr.findIndex((x)=>x.id===n.id);
+      if (mode === 'front') { arr.splice(i,1); arr.push(n); }
+      if (mode === 'back') { arr.splice(i,1); arr.unshift(n); }
+      if (mode === 'forward' && i < arr.length - 1) [arr[i], arr[i+1]] = [arr[i+1], arr[i]];
+      if (mode === 'backward' && i > 0) [arr[i], arr[i-1]] = [arr[i-1], arr[i]];
+      arr.forEach((node, idx)=>node.z = idx + 1);
+      commitChange(); render();
+    }
+    el.zFront.onclick = () => zMove('front');
+    el.zBack.onclick = () => zMove('back');
+    el.zForward.onclick = () => zMove('forward');
+    el.zBackward.onclick = () => zMove('backward');
+
+    document.querySelectorAll('[data-size]').forEach((b)=>b.onclick = () => { doc.pageSize = b.dataset.size; commitChange(); render(); });
+    document.querySelectorAll('[data-orientation]').forEach((b)=>b.onclick = () => { doc.orientation = b.dataset.orientation; commitChange(); render(); });
+    el.zoom.onchange = () => {
+      const val = el.zoom.value;
+      if (val === 'fit') {
+        doc.zoom = clamp((el.canvasScrollWrapper.clientWidth - 40) / mmToPx(dims().wMm), 0.25, 1.5);
+      } else if (val === 'fitSelection') {
+        const box = selectionBounds();
+        if (box && selectedNodeIds.size > 0) {
+          const pad = 15;
+          const cw = el.canvasScrollWrapper.clientWidth;
+          const ch = el.canvasScrollWrapper.clientHeight;
+          const zoomW = (cw - 40) / (mmToPx(box.width + pad * 2));
+          const zoomH = (ch - 40) / (mmToPx(box.height + pad * 2));
+          doc.zoom = clamp(Math.min(zoomW, zoomH), 0.25, 2);
+          const contentW = mmToPx(dims().wMm) * doc.zoom;
+          const contentH = mmToPx(dims().hMm) * doc.zoom;
+          el.canvasScrollWrapper.scrollLeft = Math.max(0, Math.min(contentW - cw, mmToPx(box.centerX) * doc.zoom - cw / 2));
+          el.canvasScrollWrapper.scrollTop = Math.max(0, Math.min(contentH - ch, mmToPx(box.centerY) * doc.zoom - ch / 2));
+        }
+        el.zoom.value = String(doc.zoom);
+      } else {
+        doc.zoom = Number(val);
+      }
+      commitChange();
+      render();
+    };
+    el.gridToggle.onchange = () => { doc.grid.enabled = el.gridToggle.checked; commitChange(); render(); };
+    el.rulerToggle.onchange = () => { doc.rulerOn = el.rulerToggle.checked; commitChange(); render(); };
+    el.safeAreaToggle.onchange = () => { doc.safeAreaOn = el.safeAreaToggle.checked; commitChange(); render(); };
+    el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
+    el.themeWorkspaceColor.onchange = () => { addRecentColor(el.themeWorkspaceColor.value); doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
+    el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
+    el.themePageColor.onchange = () => { addRecentColor(el.themePageColor.value); doc.pageBg = el.themePageColor.value; commitChange(); render(); };
+    el.themeDefaultText.onchange = () => { addRecentColor(el.themeDefaultText.value); doc.defaults.textColor = el.themeDefaultText.value; commitChange(); render(); };
+    el.themeDefaultFill.onchange = () => { addRecentColor(el.themeDefaultFill.value); doc.defaults.fillColor = el.themeDefaultFill.value; commitChange(); render(); };
+    el.themeDefaultStroke.onchange = () => { addRecentColor(el.themeDefaultStroke.value); doc.defaults.strokeColor = el.themeDefaultStroke.value; commitChange(); render(); };
+    el.themeDefaultRadius.onchange = () => { doc.defaults.radius = clamp(Number(el.themeDefaultRadius.value) || 0, 0, 80); commitChange(); render(); };
+    el.themeSubtabs.forEach((btn) => {
+      btn.onclick = () => switchThemeSubtab(btn.dataset.themeSubtab || 'page');
+    });
+    el.presetApplySelection.onclick = () => applyStylePreset('selection');
+    el.presetApplyAll.onclick = () => applyStylePreset('all');
+
+    el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; setPrimarySelection(null); commitChange(); render(); };
+    el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; setPrimarySelection(null); commitChange(); render(); };
+    el.delPage.onclick = () => { if(doc.pages.length<=1) return; doc.pages=doc.pages.filter((p)=>p.id!==doc.activePageId); doc.activePageId=doc.pages[0].id; setPrimarySelection(null); commitChange(); render(); };
+
+    el.save.onclick = () => { saveToLocal(doc); captureRecentSnapshot(); dirty = false; setSaveIndicator(); showToast(labels.toastSaved); closeTransientOverlays(); };
+    el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; loadDoc(loaded); showToast(labels.toastLoaded); closeTransientOverlays(); };
+    el.exportPdf.onclick = async () => { try { closeTransientOverlays(); showToast(labels.toastPdfGenerating); const blob = await exportDocToPDF(doc); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${(doc.meta?.projectName || 'export').replace(/[^a-z0-9-_]/gi, '-')}-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPdfDone); } catch (err) { showToast(labels.toastPdfFailed); console.error(err); } };
+    el.exportPng.onclick = async () => { try { closeTransientOverlays(); const pageId = doc.activePageId || doc.pages[0]?.id; if (!pageId) return; const blob = await exportPageToPng(doc, pageId); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-page-${Date.now()}.png`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPngDone); } catch (err) { showToast(labels.toastPngFailed); console.error(err); } };
+    el.ex.onclick = () => { exportJSON(doc); closeTransientOverlays(); };
+    el.im.onclick = () => { el.importInput.click(); closeTransientOverlays(); };
+
+    function buildPrintHTML(d) {
+      const dims = pageDimensionsMm(d.pageSize, d.orientation);
+      const pxPerMm = 3.7795275591;
+      const def = d.defaults || {};
+      const pageStyle = `width:${dims.wMm}mm;height:${dims.hMm}mm;background:${d.pageBg||'#fff'};position:relative;page-break-after:always;margin:0 auto 12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;`;
+      let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Print</title><style>body{margin:0;padding:12px;background:#666;} .page{${pageStyle}} .node{position:absolute;font-family:Inter,sans-serif;} .p-text{white-space:pre-wrap;word-break:break-word;} .p-box{box-sizing:border-box;} .p-table{display:grid;border:1px solid #94a3b8;} .p-table>div{border:1px solid #94a3b8;} @media print{body{background:#fff;padding:0;} .page{page-break-after:always;box-shadow:none;margin:0;} .page:last-child{page-break-after:auto;}}</style></head><body>`;
+      d.pages.forEach((pg) => {
+        html += `<div class="page" style="${pageStyle}">`;
+        [...pg.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+          if (!n.visible) return;
+          const left = n.xMm; const top = n.yMm; const w = n.wMm; const h = n.hMm;
+          const pos = `left:${left}mm;top:${top}mm;width:${w}mm;height:${h}mm;`;
+          let inner = '';
+          if (['text','heading','paragraph','datelabel'].includes(n.type)) {
+            const fs = n.props.fontSize||14; const c = n.props.color||def.textColor||'#111'; const align = n.props.align||'left';
+            inner = `<div class="p-text" style="font-size:${fs}px;color:${c};text-align:${align};line-height:${(n.props.lineHeight||1.3)};margin:0;">${(n.props.text||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
+          } else if (['box','highlight','roundedrect'].includes(n.type)) {
+            const fill = n.props.fill||def.fillColor||'#e2e8f0'; const stroke = n.props.stroke||def.strokeColor||'#94a3b8'; const r = n.props.radius||0;
+            inner = `<div class="p-box" style="width:100%;height:100%;background:${fill};border:1px solid ${stroke};border-radius:${r}px;"></div>`;
+          } else if (n.type === 'circle') {
+            const fill = n.props.fill||def.fillColor; const stroke = n.props.stroke||def.strokeColor;
+            inner = `<div class="p-box" style="width:100%;height:100%;background:${fill};border:1px solid ${stroke};border-radius:50%;"></div>`;
+          } else if (['line','divider'].includes(n.type)) {
+            const th = n.props.thickness||2; const col = n.props.color||def.strokeColor||'#334155';
+            inner = `<div style="position:absolute;left:0;top:50%;margin-top:-${th/2}px;height:${th}px;width:100%;background:${col};"></div>`;
+          } else if (n.type === 'checkbox') {
+            inner = `<span style="font-size:12px;">${n.props.checked?'☑':'☐'} ${(n.props.text||'Task').replace(/</g,'&lt;')}</span>`;
+          } else if (n.type === 'checklist' || n.type === 'bulletlist') {
+            const items = (n.props.items||['Item']).map((it)=>`<div>${(n.props.listStyle==='checkbox'?'☐ ':'• ')}${(it||'').replace(/</g,'&lt;')}</div>`).join('');
+            inner = `<div style="font-size:12px;line-height:1.4;">${items}</div>`;
+          } else if (n.type === 'table') {
+            const rows = n.props.rows||3; const cols = n.props.cols||3;
+            inner = `<div class="p-table" style="width:100%;height:100%;grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);">${Array(rows*cols).fill('<div></div>').join('')}</div>`;
+          } else if (n.type === 'image' && n.props.src) {
+            inner = `<img src="${n.props.src}" alt="" style="width:100%;height:100%;object-fit:${n.props.objectFit||'contain'};display:block;">`;
+          } else { inner = '<div style="width:100%;height:100%;background:#f1f5f9;"></div>'; }
+          html += `<div class="node" style="${pos}">${inner}</div>`;
+        });
+        html += '</div>';
+      });
+      html += '</body></html>';
+      return html;
+    }
+    el.printPreview.onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(buildPrintHTML(doc)); w.document.close(); closeTransientOverlays(); };
+    el.printBtn.onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(buildPrintHTML(doc)); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300); closeTransientOverlays(); };
+    el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ const imported = await importJSON(f); loadDoc(imported); dirty = true; setSaveIndicator(); autosaveSchedule(); showToast(labels.toastImported); } catch { showToast(labels.toastInvalidJson); } el.importInput.value=''; };
+    el.delBtn.onclick = () => { if (selectedNodeIds.size > 1) deleteSelectedNodes(); else if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
+
+    el.newProjectBtn.onclick = () => { captureRecentSnapshot(); openTemplateModal(); closeTransientOverlays(); };
+    el.templateCloseBtn.onclick = () => closeTemplateModal();
+    el.templateBlankBtn.onclick = () => applyTemplateSelection(null);
+    el.templateSearch.oninput = () => renderTemplateCards();
+    el.templateCategory.onchange = () => renderTemplateCards();
+    el.templateHideToggle.onchange = () => localStorage.setItem(TEMPLATE_HIDE_KEY, el.templateHideToggle.checked ? '1' : '0');
+    el.templateModal.addEventListener('click', (event) => {
+      if (event.target === el.templateModal) closeTemplateModal();
+    });
+
+    const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+    const shortcutsClose = document.getElementById('shortcuts-close');
+    document.getElementById('shortcuts-btn').onclick = () => { if (shortcutsOverlay) shortcutsOverlay.hidden = false; };
+    if (shortcutsClose) shortcutsClose.onclick = () => { if (shortcutsOverlay) shortcutsOverlay.hidden = true; };
+    if (shortcutsOverlay) shortcutsOverlay.onclick = (ev) => { if (ev.target === shortcutsOverlay) shortcutsOverlay.hidden = true; };
+    const tipsOverlay = document.getElementById('tips-overlay');
+    const tipsClose = document.getElementById('tips-close');
+    document.getElementById('tips-btn').onclick = () => { if (tipsOverlay) tipsOverlay.hidden = false; };
+    if (tipsClose) tipsClose.onclick = () => { if (tipsOverlay) tipsOverlay.hidden = true; };
+    if (tipsOverlay) tipsOverlay.onclick = (ev) => { if (ev.target === tipsOverlay) tipsOverlay.hidden = true; };
+
+    el.duplicateProjectBtn.onclick = () => {
+      const duplicate = structuredClone(doc);
+      duplicate.meta.projectName = `${doc.meta.projectName || labels.untitledProject} copy`;
+      loadDoc(duplicate);
+      commitChange();
+      showToast(labels.toastProjectDuplicated);
+      closeTransientOverlays();
+    };
+    el.clearProjectBtn.onclick = () => {
+      const ok = window.confirm(labels.confirmClearProject);
+      if (!ok) return;
+      captureRecentSnapshot();
+      loadDoc(defaultDoc());
+      showToast(labels.toastProjectCleared);
+      closeTransientOverlays();
+    };
+    el.projectName.onchange = () => {
+      doc.meta.projectName = (el.projectName.value || labels.untitledProject).trim() || labels.untitledProject;
+      commitChange();
+      render();
+    };
+
+
+    el.contextMenu.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-context-action]')?.dataset.contextAction;
+      if (!action || !contextNodeId) return;
+      if (action === 'duplicate') duplicateNode(contextNodeId);
+      if (action === 'delete') deleteNodeById(contextNodeId, true);
+      if (action === 'front') { setSelection([contextNodeId], contextNodeId); zMove('front'); }
+      if (action === 'back') { setSelection([contextNodeId], contextNodeId); zMove('back'); }
+      if (action === 'lock') {
+        const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
+        if (node) { node.locked = !node.locked; commitChange(); render(); }
+      }
+      if (action === 'visibility') {
+        const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
+        if (node) { node.visible = !node.visible; commitChange(); render(); }
+      }
+      if (action === 'copy') copyNode(contextNodeId);
+      if (action === 'paste') pasteNode(contextNodeId);
+      closeContextMenu();
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (el.contextMenu.hidden) return;
+      if (!event.target.closest('#context-menu')) closeContextMenu();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const active = document.activeElement;
+      const typing = active && (active.matches('input,textarea,select') || active.isContentEditable);
+      const mod = e.ctrlKey || e.metaKey;
+
+      if (typing && mod && e.key.toLowerCase() === 'z') return;
+
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (!redoStack.length) return;
+          const next = redoStack.pop();
+          undoStack.push(structuredClone(next));
+          doc = structuredClone(next);
+        } else {
+          if (undoStack.length <= 1) return;
+          const current = undoStack.pop();
+          redoStack.push(structuredClone(current));
+          doc = structuredClone(undoStack[undoStack.length - 1]);
+        }
+        setPrimarySelection(null);
+        dirty = true;
+        setSaveIndicator();
+        autosaveSchedule();
+        render();
+        return;
+      }
+
+      if (mod && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) ungroupSelection();
+        else groupSelection();
+        return;
+      }
+
+      if (mod && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        if (selectedNodeIds.size) {
+          const ids = [...selectedNodeIds];
+          ids.forEach((id) => duplicateNode(id));
+          if (ids.length === 1) showToast(labels.contextDuplicate);
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        const shortcutsEl = document.getElementById('shortcuts-overlay');
+        if (shortcutsEl && !shortcutsEl.hidden) { shortcutsEl.hidden = true; focusCanvas(); return; }
+        const tipsEl = document.getElementById('tips-overlay');
+        if (tipsEl && !tipsEl.hidden) { tipsEl.hidden = true; focusCanvas(); return; }
+        if (!el.templateModal.hidden) { closeTemplateModal(); focusCanvas(); return; }
+        if (!el.contextMenu.hidden) { closeContextMenu(); focusCanvas(); return; }
+        const hadOverlay = el.fileMenu.open || el.toast.classList.contains('show');
+        closeTransientOverlays();
+        if (!hadOverlay) {
+          setPrimarySelection(null);
+          render();
+        }
+        focusCanvas();
+        return;
+      }
+      if (!typing && e.code === 'Space') {
+        spacePanKeyDown = true;
+        e.preventDefault();
+      }
+      if (typing) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIds.size) {
+        e.preventDefault();
+        deleteSelectedNodes();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') spacePanKeyDown = false;
+    });
+
+    if (import.meta.env.DEV) {
+      const validationResults = validateTemplates();
+      const failed = validationResults.filter((item) => !item.ok);
+      console.info('[templates] validation summary', { total: validationResults.length, failed: failed.length });
+      if (failed.length) console.warn('[templates] validation failures', failed);
+    }
+
+    renderAssets();
+    switchThemeSubtab('page');
+    renderRecentProjects();
+    render();
+    if (localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
+    focusCanvas();
+  </script>
+</BaseLayout>
