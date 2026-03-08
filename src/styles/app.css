@@ -1,17 +1,18 @@
-/* Canva-style light theme */
+/* Canva-style light theme - clearer section contrast */
 :root {
   --canva-accent: #7c3aed;
   --canva-accent-hover: #6d28d9;
   --canva-accent-muted: rgba(124, 58, 237, 0.12);
   --ctrl-bg: #ffffff;
-  --ctrl-br: #e5e7eb;
+  --ctrl-br: #d1d5db;
   --ctrl-text: #1f2937;
   --ctrl-muted: #6b7280;
   --ring: #7c3aed;
   --workspace-bg: #e5e7eb;
   --page-bg: #ffffff;
-  --panel-bg: #ffffff;
-  --panel-border: #e5e7eb;
+  --panel-bg: #f8f9fa;
+  --panel-border: #d1d5db;
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 html, body { height: 100%; margin: 0; }
@@ -28,7 +29,8 @@ html, body { height: 100%; margin: 0; }
 
 .app-topbar {
   background: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 2px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
   z-index: 30;
   padding: 0 16px;
   display: flex;
@@ -112,7 +114,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   border-radius: 8px;
   padding: 2px;
   gap: 2px;
-  background: #f9fafb;
+  background: #f0f2f5;
 }
 .segment button {
   min-width: 68px;
@@ -192,13 +194,18 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 
 .panel {
   background: var(--panel-bg);
-  border-right: 1px solid var(--panel-border);
+  border-right: 2px solid var(--panel-border);
   padding: 12px;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+  box-shadow: var(--panel-shadow);
 }
-.canvas-panel { border-right: none; border-left: 1px solid var(--panel-border); }
+.canvas-panel {
+  border-right: none;
+  border-left: 2px solid var(--panel-border);
+  background: #f0f2f5;
+}
 
 .left-panel {
   display: grid;
@@ -212,17 +219,19 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 6px;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--panel-border);
 }
 .left-tab {
   border: 1px solid var(--ctrl-br);
-  background: #f9fafb;
+  background: #f5f5f5;
   color: var(--ctrl-text);
   border-radius: 8px;
   padding: 8px 6px;
   font-size: 11px;
   font-weight: 500;
 }
-.left-tab:hover { background: #f3f4f6; border-color: #e5e7eb; }
+.left-tab:hover { background: #eeeeee; border-color: var(--ctrl-br); }
 .left-tab.is-active {
   background: var(--panel-bg);
   border-color: var(--canva-accent);
@@ -230,7 +239,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   box-shadow: 0 0 0 1px var(--canva-accent);
 }
 .left-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; padding-right: 4px; }
-.tab-panel { display: none; }
+.tab-panel { display: none; border-top: 1px solid var(--panel-border); padding-top: 8px; }
 .tab-panel.active { display: block; min-height: 0; }
 #panel-assets.tab-panel.active { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; gap: 8px; }
 
@@ -315,9 +324,9 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .page {
   margin: 0 auto;
   background: var(--page-bg);
-  border: 1px solid #e5e7eb;
+  border: 2px solid var(--panel-border);
   border-radius: 4px;
-  box-shadow: 0 4px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  box-shadow: 0 4px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.06);
   transform-origin: top center;
   transition: transform 0.15s ease, width 0.15s ease, height 0.15s ease;
   position: relative;
@@ -332,6 +341,19 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 }
 
 .stage { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.empty-canvas-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--ctrl-muted);
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
 
 .drop-preview {
   position: absolute;
@@ -423,11 +445,15 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .handle.se { right: -4px; bottom: -4px; cursor: nwse-resize; }
 
 /* Right panel - Inspector */
-.right-panel { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-left: 1px solid var(--panel-border); }
-.right-panel h2 { font-size: 14px; font-weight: 600; color: var(--ctrl-text); margin: 0 0 10px; }
+.right-panel { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-left: 2px solid var(--panel-border); }
+.right-panel h2 {
+  font-size: 14px; font-weight: 600; color: var(--ctrl-text); margin: 0 0 10px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--panel-border);
+}
 .right-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 10px; padding-right: 4px; }
 .inspector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.ins-group { display: none; }
+.ins-group { display: none; border-top: 1px solid var(--panel-border); margin-top: 8px; padding-top: 8px; }
+.ins-group:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
 .ins-group .inspector-grid { margin: 0; }
 .table-controls {
   grid-column: 1 / -1;
@@ -464,7 +490,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   margin: 0;
   padding: 10px 16px;
   background: var(--panel-bg);
-  border-top: 1px solid var(--panel-border);
+  border-top: 2px solid var(--panel-border);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.06);
 }
 .pages-actions { display: inline-flex; gap: 8px; }
 .pages-list { margin-top: 8px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
@@ -500,8 +527,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   box-shadow: 0 10px 40px rgba(0,0,0,.15);
   font-size: 13px;
   z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-.toast.show { opacity: 1; transform: translateY(0); }
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast .toast-retry { flex-shrink: 0; padding: 4px 10px; font-size: 12px; }
 
 @media (max-width: 1180px) { .app-main { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) {
@@ -694,6 +726,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .shortcuts-list li:last-child { border-bottom: none; }
 .shortcuts-list kbd { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-family: inherit; }
 .tips-list li { list-style: disc; margin-left: 1em; }
+.tips-footer { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--ctrl-br); font-size: 12px; color: var(--ctrl-muted); }
 
 .theme-brand-colors { margin-top: 14px; }
 .theme-brand-colors h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--ctrl-text); }

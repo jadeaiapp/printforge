@@ -86,4 +86,7 @@ export default {
   pasteStyle: "Stili yapıştır",
   safeArea: "Yazdırma alanı",
   shadow: "Gölge",
+  retry: "Tekrar dene",
+  dataStoredLocally: "Verileriniz yalnızca cihazınızda saklanır.",
+  emptyCanvasHint: "Sol panelden blokları tuvalin üzerine sürükleyin.",
 } as const;

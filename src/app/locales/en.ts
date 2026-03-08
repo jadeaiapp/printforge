@@ -86,4 +86,7 @@ export default {
   pasteStyle: "Paste style",
   safeArea: "Safe area",
   shadow: "Shadow",
+  retry: "Retry",
+  dataStoredLocally: "Your data is stored only on your device.",
+  emptyCanvasHint: "Drag blocks from the left onto the canvas.",
 } as const;

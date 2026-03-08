@@ -368,6 +368,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           <li>{labels.tipsArrange}</li>
           <li>{labels.tipsShortcuts}</li>
         </ul>
+        <p class="tips-footer">{labels.dataStoredLocally}</p>
       </div>
     </div>
   </div>
@@ -668,7 +669,28 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.guideY.style.display = 'none';
     }
 
-    const showToast = (msg) => { el.toast.textContent = msg; el.toast.classList.add('show'); setTimeout(() => el.toast.classList.remove('show'), 1000); };
+    const TOAST_DURATION_MS = 2500;
+    const TOAST_ERROR_DURATION_MS = 6000;
+    let toastTimeoutId = 0;
+    const showToast = (msg, retryFn) => {
+      clearTimeout(toastTimeoutId);
+      if (retryFn && typeof retryFn === 'function') {
+        el.toast.innerHTML = '';
+        el.toast.appendChild(document.createTextNode(msg + ' '));
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn toast-retry';
+        btn.textContent = labels.retry || 'Tekrar dene';
+        btn.onclick = () => { el.toast.classList.remove('show'); retryFn(); };
+        el.toast.appendChild(btn);
+        el.toast.classList.add('show');
+        toastTimeoutId = window.setTimeout(() => { el.toast.classList.remove('show'); toastTimeoutId = 0; }, TOAST_ERROR_DURATION_MS);
+      } else {
+        el.toast.textContent = msg;
+        el.toast.classList.add('show');
+        toastTimeoutId = window.setTimeout(() => { el.toast.classList.remove('show'); toastTimeoutId = 0; }, TOAST_DURATION_MS);
+      }
+    };
     const closeTransientOverlays = () => {
       el.fileMenu.open = false;
       el.toast.classList.remove('show');
@@ -1110,6 +1132,15 @@ const base = import.meta.env.BASE_URL ?? "/";
       const p = activePage();
       el.stage.innerHTML = '';
       if (!p) return;
+      if (p.nodes.length === 0) {
+        const hint = document.createElement('div');
+        hint.className = 'empty-canvas-hint';
+        hint.setAttribute('aria-live', 'polite');
+        hint.textContent = labels.emptyCanvasHint || 'Sol panelden blokları tuvalin üzerine sürükleyin.';
+        el.stage.appendChild(hint);
+        syncInspector();
+        return;
+      }
       [...p.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
         if (!n.visible) return;
         const d = document.createElement('div');
@@ -1540,6 +1571,8 @@ const base = import.meta.env.BASE_URL ?? "/";
           if (dist < DRAG_THRESHOLD_PX) return;
           dragStarted = true;
           nodeEl.querySelector('[contenteditable="true"]')?.blur();
+          ev.preventDefault();
+          try { el.stage.setPointerCapture(ev.pointerId); } catch (_) {}
         }
         const dx = pxToMm((ev.clientX - s.x) / doc.zoom);
         const dy = pxToMm((ev.clientY - s.y) / doc.zoom);
@@ -1837,8 +1870,10 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     el.save.onclick = () => { saveToLocal(doc); captureRecentSnapshot(); dirty = false; setSaveIndicator(); showToast(labels.toastSaved); closeTransientOverlays(); };
     el.load.onclick = () => { const loaded = loadFromLocal(); if(!loaded) return; loadDoc(loaded); showToast(labels.toastLoaded); closeTransientOverlays(); };
-    el.exportPdf.onclick = async () => { try { closeTransientOverlays(); showToast(labels.toastPdfGenerating); const blob = await exportDocToPDF(doc); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${(doc.meta?.projectName || 'export').replace(/[^a-z0-9-_]/gi, '-')}-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPdfDone); } catch (err) { showToast(labels.toastPdfFailed); console.error(err); } };
-    el.exportPng.onclick = async () => { try { closeTransientOverlays(); const pageId = doc.activePageId || doc.pages[0]?.id; if (!pageId) return; const blob = await exportPageToPng(doc, pageId); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-page-${Date.now()}.png`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPngDone); } catch (err) { showToast(labels.toastPngFailed); console.error(err); } };
+    const doExportPdf = async () => { try { closeTransientOverlays(); showToast(labels.toastPdfGenerating); const blob = await exportDocToPDF(doc); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${(doc.meta?.projectName || 'export').replace(/[^a-z0-9-_]/gi, '-')}-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPdfDone); } catch (err) { showToast(labels.toastPdfFailed, doExportPdf); console.error(err); } };
+    const doExportPng = async () => { try { closeTransientOverlays(); const pageId = doc.activePageId || doc.pages[0]?.id; if (!pageId) return; const blob = await exportPageToPng(doc, pageId); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-page-${Date.now()}.png`; a.click(); URL.revokeObjectURL(url); showToast(labels.toastPngDone); } catch (err) { showToast(labels.toastPngFailed, doExportPng); console.error(err); } };
+    el.exportPdf.onclick = () => doExportPdf();
+    el.exportPng.onclick = () => doExportPng();
     el.ex.onclick = () => { exportJSON(doc); closeTransientOverlays(); };
     el.im.onclick = () => { el.importInput.click(); closeTransientOverlays(); };
 
@@ -1887,7 +1922,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
     el.printPreview.onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(buildPrintHTML(doc)); w.document.close(); closeTransientOverlays(); };
     el.printBtn.onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(buildPrintHTML(doc)); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300); closeTransientOverlays(); };
-    el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ const imported = await importJSON(f); loadDoc(imported); dirty = true; setSaveIndicator(); autosaveSchedule(); showToast(labels.toastImported); } catch { showToast(labels.toastInvalidJson); } el.importInput.value=''; };
+    el.importInput.onchange = async () => { const f=el.importInput.files?.[0]; if(!f) return; try{ const imported = await importJSON(f); loadDoc(imported); dirty = true; setSaveIndicator(); autosaveSchedule(); showToast(labels.toastImported); } catch { showToast(labels.toastInvalidJson, () => el.importInput.click()); } el.importInput.value=''; };
     el.delBtn.onclick = () => { if (selectedNodeIds.size > 1) deleteSelectedNodes(); else if (selectedNodeId) deleteNodeById(selectedNodeId, false); };
 
     el.newProjectBtn.onclick = () => { captureRecentSnapshot(); openTemplateModal(); closeTransientOverlays(); };
