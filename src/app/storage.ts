@@ -5,6 +5,8 @@ const STORAGE_KEY = "printforge_doc_v2d";
 const NODE_TYPES = new Set<NodeType>([
   "text", "heading", "paragraph", "box", "line", "checkbox", "checklist", "bulletlist",
   "divider", "highlight", "circle", "roundedrect", "datelabel", "table", "calendar", "image", "svg",
+  "qrcode", "progressbar", "star", "stickynote", "ruler",
+  "rating", "signature", "barcode", "chart", "timeline", "countdown",
 ]);
 
 function isObj(v: unknown): v is Record<string, unknown> {

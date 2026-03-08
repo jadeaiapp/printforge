@@ -53,6 +53,8 @@ const base = import.meta.env.BASE_URL ?? "/";
             <button type="button" id="print-btn" class="file-menu-item" role="menuitem">{labels.print}</button>
             <button type="button" id="presentation-btn" class="file-menu-item" role="menuitem">{labels.presentationMode}</button>
             <button type="button" id="share-btn" class="file-menu-item" role="menuitem">{labels.shareReadOnly}</button>
+            <button type="button" id="export-html-btn" class="file-menu-item" role="menuitem">{labels.exportHtml}</button>
+            <button type="button" id="batch-export-btn" class="file-menu-item" role="menuitem">{labels.batchExport}</button>
             <div class="file-menu-recent">
               <strong>{labels.recentProjects}</strong>
               <div id="recent-projects" class="recent-projects-empty">{labels.noSnapshots}</div>
@@ -97,6 +99,12 @@ const base = import.meta.env.BASE_URL ?? "/";
               <button class="block-item" data-block="star" draggable="true">★ {labels.star}</button>
               <button class="block-item" data-block="stickynote" draggable="true">📌 {labels.stickyNote}</button>
               <button class="block-item" data-block="ruler" draggable="true">📏 {labels.ruler}</button>
+              <button class="block-item" data-block="rating" draggable="true">⭐ {labels.rating}</button>
+              <button class="block-item" data-block="signature" draggable="true">✍ {labels.signature}</button>
+              <button class="block-item" data-block="barcode" draggable="true">▐ {labels.barcode}</button>
+              <button class="block-item" data-block="chart" draggable="true">📊 {labels.chart}</button>
+              <button class="block-item" data-block="timeline" draggable="true">⏳ {labels.timeline}</button>
+              <button class="block-item" data-block="countdown" draggable="true">⏱ {labels.countdown}</button>
             </div>
           </section>
 
@@ -353,6 +361,50 @@ const base = import.meta.env.BASE_URL ?? "/";
                 <label class="field"><span>Font size</span><input id="ins-sticky-font-size" class="control" type="number" min="8" max="36" /></label>
               </div>
             </section>
+
+            <section class="ins-group" data-for="rating">
+              <div class="inspector-grid">
+                <label class="field"><span>{labels.ratingValue}</span><input id="ins-rating-value" class="control" type="number" min="0" max="10" step="0.5" /></label>
+                <label class="field"><span>{labels.ratingMax}</span><input id="ins-rating-max" class="control" type="number" min="1" max="10" step="1" /></label>
+                <label class="field"><span>{labels.ratingIcon}</span><select id="ins-rating-icon" class="control"><option value="star">★ Star</option><option value="heart">♥ Heart</option><option value="circle">● Circle</option></select></label>
+                <label class="field"><span>{labels.ratingColor}</span><div class="color-with-hex"><input id="ins-rating-color" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="signature">
+              <div class="inspector-grid">
+                <label class="field" style="grid-column:1/-1"><span>{labels.signatureLabel}</span><input id="ins-signature-label" class="control" type="text" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="barcode">
+              <div class="inspector-grid">
+                <label class="field" style="grid-column:1/-1"><span>{labels.barcodeText}</span><input id="ins-barcode-text" class="control" type="text" placeholder="123456789" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="chart">
+              <div class="inspector-grid">
+                <label class="field" style="grid-column:1/-1"><span>{labels.chartData}</span><input id="ins-chart-data" class="control" type="text" placeholder="10,30,20,50,40" /></label>
+                <label class="field"><span>{labels.chartType}</span><select id="ins-chart-type" class="control"><option value="bar">Bar</option><option value="line">Line</option><option value="pie">Pie</option></select></label>
+                <label class="field"><span>{labels.chartColors}</span><div class="color-with-hex"><input id="ins-chart-color" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="timeline">
+              <div class="inspector-grid">
+                <label class="field" style="grid-column:1/-1"><span>{labels.timelineItems}</span><textarea id="ins-timeline-items" class="control" rows="3" placeholder='[{"date":"2026","title":"Olay"}]'></textarea></label>
+                <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-timeline-color" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="countdown">
+              <div class="inspector-grid">
+                <label class="field"><span>{labels.countdownTarget}</span><input id="ins-countdown-target" class="control" type="date" /></label>
+                <label class="field"><span>{labels.countdownLabel}</span><input id="ins-countdown-label" class="control" type="text" /></label>
+                <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-countdown-color" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              </div>
+            </section>
           </div>
           <p id="ins-note" class="ins-note"></p>
         </div>
@@ -466,6 +518,37 @@ const base = import.meta.env.BASE_URL ?? "/";
       </div>
     </div>
 
+    <!-- Command palette -->
+    <div id="cmd-palette-overlay" class="cmd-palette-overlay" hidden>
+      <div class="cmd-palette-dialog" role="dialog" aria-modal="true">
+        <input id="cmd-palette-input" class="cmd-palette-input" type="text" placeholder={labels.cmdPalette} autocomplete="off" />
+        <div id="cmd-palette-list" class="cmd-palette-list"></div>
+      </div>
+    </div>
+
+    <!-- Batch export modal -->
+    <div id="batch-modal" class="template-modal" hidden>
+      <div class="template-modal-dialog" role="dialog" aria-modal="true" style="max-width:520px">
+        <div class="template-modal-header">
+          <h2>{labels.batchExport}</h2>
+          <button type="button" id="batch-close-btn" class="btn">{labels.close}</button>
+        </div>
+        <p style="margin:8px 0;font-size:13px;color:var(--c-text-secondary,#64748b)">{labels.batchPlaceholder}</p>
+        <input id="batch-csv-input" type="file" accept=".csv,text/csv" style="margin:8px 0" />
+        <div id="batch-preview" style="max-height:140px;overflow:auto;font-size:12px;margin:8px 0"></div>
+        <button type="button" id="batch-generate-btn" class="btn btn-primary" style="margin-top:8px">{labels.batchGenerate}</button>
+      </div>
+    </div>
+
+    <!-- History timeline -->
+    <div id="history-panel" class="history-panel" hidden>
+      <div class="history-header">
+        <span>{labels.historyTimeline}</span>
+        <button type="button" id="history-close" class="btn">×</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </div>
+
     <div id="presentation-overlay" class="presentation-overlay" hidden>
       <div class="presentation-bar">
         <button type="button" id="presentation-prev">{labels.presentationPrev}</button>
@@ -574,6 +657,16 @@ const base = import.meta.env.BASE_URL ?? "/";
       insQrText: document.getElementById('ins-qr-text'), insProgressValue: document.getElementById('ins-progress-value'), insProgressTrack: document.getElementById('ins-progress-track'), insProgressBar: document.getElementById('ins-progress-bar'),
       insStarPoints: document.getElementById('ins-star-points'), insStarInner: document.getElementById('ins-star-inner'), insStarFill: document.getElementById('ins-star-fill'), insStarStroke: document.getElementById('ins-star-stroke'),
       insNoteBg: document.getElementById('ins-note-bg'), insStickyFontSize: document.getElementById('ins-sticky-font-size'),
+      insRatingValue: document.getElementById('ins-rating-value'), insRatingMax: document.getElementById('ins-rating-max'), insRatingIcon: document.getElementById('ins-rating-icon'), insRatingColor: document.getElementById('ins-rating-color'),
+      insSignatureLabel: document.getElementById('ins-signature-label'),
+      insBarcodeText: document.getElementById('ins-barcode-text'),
+      insChartData: document.getElementById('ins-chart-data'), insChartType: document.getElementById('ins-chart-type'), insChartColor: document.getElementById('ins-chart-color'),
+      insTimelineItems: document.getElementById('ins-timeline-items'), insTimelineColor: document.getElementById('ins-timeline-color'),
+      insCountdownTarget: document.getElementById('ins-countdown-target'), insCountdownLabel: document.getElementById('ins-countdown-label'), insCountdownColor: document.getElementById('ins-countdown-color'),
+      cmdPaletteOverlay: document.getElementById('cmd-palette-overlay'), cmdPaletteInput: document.getElementById('cmd-palette-input'), cmdPaletteList: document.getElementById('cmd-palette-list'),
+      exportHtmlBtn: document.getElementById('export-html-btn'), batchExportBtn: document.getElementById('batch-export-btn'),
+      batchModal: document.getElementById('batch-modal'), batchCloseBtn: document.getElementById('batch-close-btn'), batchCsvInput: document.getElementById('batch-csv-input'), batchPreview: document.getElementById('batch-preview'), batchGenerateBtn: document.getElementById('batch-generate-btn'),
+      historyPanel: document.getElementById('history-panel'), historyClose: document.getElementById('history-close'), historyList: document.getElementById('history-list'),
       watermarkOverlay: document.getElementById('watermark-overlay'), watermarkToggle: document.getElementById('watermark-toggle'), watermarkFields: document.getElementById('watermark-fields'), watermarkText: document.getElementById('watermark-text'), watermarkSize: document.getElementById('watermark-size'), watermarkColor: document.getElementById('watermark-color'), watermarkOpacity: document.getElementById('watermark-opacity'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
       themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
@@ -687,7 +780,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function ensureProjectName() {
       if (!doc.meta) doc.meta = {};
       if (!doc.meta.projectName) doc.meta.projectName = labels.untitledProject;
-      el.projectName.value = doc.meta.projectName;
+      if (el.projectName) el.projectName.value = doc.meta.projectName;
       document.title = `${doc.meta.projectName} — PrintForge App`;
     }
 
@@ -1303,6 +1396,70 @@ const base = import.meta.env.BASE_URL ?? "/";
         const len = n.wMm.toFixed(1);
         return `<div class="ruler-line-content"><div class="ruler-line-bar"></div><span class="ruler-line-label">${len} mm</span></div>`;
       }
+      if (n.type === 'rating') {
+        const val = n.props.ratingValue ?? 3;
+        const max = n.props.ratingMax ?? 5;
+        const icon = n.props.ratingIcon || 'star';
+        const color = n.props.ratingColor || '#f59e0b';
+        const empty = '#d1d5db';
+        const icons = { star: ['★','☆'], heart: ['♥','♡'], circle: ['●','○'] };
+        const [filled, unfilled] = icons[icon] || icons.star;
+        let html = '';
+        for (let i = 1; i <= max; i++) html += `<span style="color:${i <= val ? color : empty};font-size:${Math.min(n.hMm * 2.8, 32)}px;line-height:1">${i <= val ? filled : unfilled}</span>`;
+        return `<div class="rating-content" style="display:flex;align-items:center;gap:2px;opacity:${n.props.opacity||1}">${html}</div>`;
+      }
+      if (n.type === 'signature') {
+        const lbl = n.props.signatureLabel || 'Signature';
+        return `<div class="signature-content" style="opacity:${n.props.opacity||1}"><div class="signature-line"></div><span class="signature-label">${lbl}</span></div>`;
+      }
+      if (n.type === 'barcode') {
+        const text = n.props.barcodeText || '123456789';
+        return `<div class="barcode-content" data-barcode-node="${n.id}" style="opacity:${n.props.opacity||1}"><svg class="barcode-svg"></svg><span class="barcode-text">${text}</span></div>`;
+      }
+      if (n.type === 'chart') {
+        const data = (n.props.chartData || '10,30,20,50,40').split(',').map(Number);
+        const type = n.props.chartType || 'bar';
+        const color = n.props.chartColors || '#6366f1';
+        const max = Math.max(...data, 1);
+        if (type === 'bar') {
+          const bars = data.map((v, i) => {
+            const h = (v / max) * 100;
+            const w = 100 / data.length;
+            return `<rect x="${i * w + w * 0.1}%" y="${100 - h}%" width="${w * 0.8}%" height="${h}%" fill="${color}" rx="2"/>`;
+          }).join('');
+          return `<svg class="chart-content" viewBox="0 0 100 100" preserveAspectRatio="none" style="opacity:${n.props.opacity||1}">${bars}</svg>`;
+        }
+        if (type === 'line') {
+          const pts = data.map((v, i) => `${(i / (data.length - 1)) * 100},${100 - (v / max) * 100}`).join(' ');
+          return `<svg class="chart-content" viewBox="0 0 100 100" preserveAspectRatio="none" style="opacity:${n.props.opacity||1}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>`;
+        }
+        const total = data.reduce((s, v) => s + v, 0) || 1;
+        const colors = ['#6366f1','#14b8a6','#f97316','#ec4899','#8b5cf6','#ef4444','#22c55e','#eab308'];
+        let angle = 0;
+        const slices = data.map((v, i) => {
+          const sweep = (v / total) * 360;
+          const start = angle; angle += sweep;
+          const s = start * Math.PI / 180; const e = (start + sweep) * Math.PI / 180;
+          const large = sweep > 180 ? 1 : 0;
+          return `<path d="M50,50 L${50 + 45 * Math.cos(s)},${50 + 45 * Math.sin(s)} A45,45 0 ${large},1 ${50 + 45 * Math.cos(e)},${50 + 45 * Math.sin(e)} Z" fill="${colors[i % colors.length]}"/>`;
+        }).join('');
+        return `<svg class="chart-content" viewBox="0 0 100 100" style="opacity:${n.props.opacity||1}">${slices}</svg>`;
+      }
+      if (n.type === 'timeline') {
+        let items = [];
+        try { items = JSON.parse(n.props.timelineItems || '[]'); } catch {}
+        if (!items.length) items = [{ date: '2026', title: 'Olay 1' }, { date: '2027', title: 'Olay 2' }];
+        const color = n.props.fill || '#6366f1';
+        const html = items.map((it, i) => `<div class="tl-item"><div class="tl-dot" style="background:${color}"></div><div class="tl-body"><strong class="tl-date">${it.date || ''}</strong><span class="tl-title">${it.title || ''}</span></div></div>`).join('');
+        return `<div class="timeline-content" style="opacity:${n.props.opacity||1};--tl-color:${color}">${html}</div>`;
+      }
+      if (n.type === 'countdown') {
+        const target = n.props.countdownTarget || new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10);
+        const label = n.props.countdownLabel || 'Kalan gün';
+        const color = n.props.fill || '#6366f1';
+        const diff = Math.max(0, Math.ceil((new Date(target).getTime() - Date.now()) / 86400000));
+        return `<div class="countdown-content" style="opacity:${n.props.opacity||1}"><div class="countdown-number" style="color:${color}">${diff}</div><div class="countdown-label">${label}</div></div>`;
+      }
       return '';
     }
 
@@ -1441,6 +1598,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     function enableControl(ctrl, enabled, value, isCheckbox=false) {
+      if (!ctrl) return;
       ctrl.disabled = !enabled;
       if (value !== undefined) {
         if (isCheckbox) ctrl.checked = !!value;
@@ -1464,6 +1622,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         image: 'image', svg: 'svg', table: 'table',
         qrcode: 'qrcode', progressbar: 'progressbar',
         star: 'star', stickynote: 'stickynote', ruler: 'line',
+        rating: 'rating', signature: 'signature', barcode: 'barcode',
+        chart: 'chart', timeline: 'timeline', countdown: 'countdown',
       };
       const activeGroup = has ? (groupForType[n.type] || null) : null;
       el.inspectorGroups.forEach((group) => {
@@ -1545,6 +1705,32 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isSticky = n && n.type === 'stickynote';
       enableControl(el.insNoteBg, isSticky, n?.props.noteBg || '#fef08a');
       enableControl(el.insStickyFontSize, isSticky, n?.props.fontSize || 14);
+
+      const isRating = n && n.type === 'rating';
+      enableControl(el.insRatingValue, isRating, n?.props.ratingValue ?? 3);
+      enableControl(el.insRatingMax, isRating, n?.props.ratingMax ?? 5);
+      enableControl(el.insRatingIcon, isRating, n?.props.ratingIcon || 'star');
+      enableControl(el.insRatingColor, isRating, n?.props.ratingColor || '#f59e0b');
+
+      const isSig = n && n.type === 'signature';
+      enableControl(el.insSignatureLabel, isSig, n?.props.signatureLabel || 'İmza');
+
+      const isBarcode = n && n.type === 'barcode';
+      enableControl(el.insBarcodeText, isBarcode, n?.props.barcodeText || '123456789');
+
+      const isChart = n && n.type === 'chart';
+      enableControl(el.insChartData, isChart, n?.props.chartData || '10,30,20,50,40');
+      enableControl(el.insChartType, isChart, n?.props.chartType || 'bar');
+      enableControl(el.insChartColor, isChart, n?.props.chartColors || '#6366f1');
+
+      const isTimeline = n && n.type === 'timeline';
+      enableControl(el.insTimelineItems, isTimeline, n?.props.timelineItems || '[]');
+      enableControl(el.insTimelineColor, isTimeline, n?.props.fill || '#6366f1');
+
+      const isCountdown = n && n.type === 'countdown';
+      enableControl(el.insCountdownTarget, isCountdown, n?.props.countdownTarget || '');
+      enableControl(el.insCountdownLabel, isCountdown, n?.props.countdownLabel || 'Kalan gün');
+      enableControl(el.insCountdownColor, isCountdown, n?.props.fill || '#6366f1');
 
       el.note.textContent = '';
       updateAllHexDisplays();
@@ -1660,6 +1846,7 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function renderWatermark() {
       const wm = doc.watermark;
+      if (!el.watermarkOverlay || !el.watermarkToggle) return;
       const show = wm && el.watermarkToggle.checked;
       el.watermarkOverlay.hidden = !show;
       if (!show) return;
@@ -1709,6 +1896,12 @@ const base = import.meta.env.BASE_URL ?? "/";
         star: { name:'Star', wMm:32, hMm:32, props:{ points:5, innerRadius:0.45, fill:'#fbbf24', stroke:'#d97706', strokeWidth:2, opacity:1 } },
         stickynote: { name:'Sticky note', wMm:60, hMm:60, props:{ noteBg:'#fef08a', text:'Note...', fontSize:14, opacity:1 } },
         ruler: { name:'Ruler', wMm:80, hMm:8, props:{ color:'#6366f1', thickness:2 } },
+        rating: { name:'Rating', wMm:60, hMm:10, props:{ ratingValue:3, ratingMax:5, ratingIcon:'star', ratingColor:'#f59e0b', opacity:1 } },
+        signature: { name:'Signature', wMm:80, hMm:20, props:{ signatureLabel:'İmza', opacity:1 } },
+        barcode: { name:'Barcode', wMm:60, hMm:24, props:{ barcodeText:'123456789', opacity:1 } },
+        chart: { name:'Chart', wMm:60, hMm:50, props:{ chartData:'10,30,20,50,40', chartType:'bar', chartColors:'#6366f1', opacity:1 } },
+        timeline: { name:'Timeline', wMm:60, hMm:80, props:{ timelineItems:'[{"date":"2026","title":"Başlangıç"},{"date":"2027","title":"Lansman"}]', fill:'#6366f1', opacity:1 } },
+        countdown: { name:'Countdown', wMm:50, hMm:40, props:{ countdownTarget:new Date(Date.now()+86400000*30).toISOString().slice(0,10), countdownLabel:'Kalan gün', fill:'#6366f1', opacity:1 } },
       };
       const preset = presets[type]; if (!preset) return;
       p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
@@ -2170,6 +2363,21 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insNoteBg.onchange = () => applyInspector((n) => { n.props.noteBg = el.insNoteBg.value; });
     el.insStickyFontSize.onchange = () => applyInspector((n) => { n.props.fontSize = clamp(Number(el.insStickyFontSize.value) || 14, 8, 36); });
 
+    if (el.insRatingValue) el.insRatingValue.onchange = () => applyInspector((n) => { n.props.ratingValue = clamp(Number(el.insRatingValue.value) || 0, 0, Number(n.props.ratingMax || 5)); });
+    if (el.insRatingMax) el.insRatingMax.onchange = () => applyInspector((n) => { n.props.ratingMax = clamp(Math.round(Number(el.insRatingMax.value) || 5), 1, 10); });
+    if (el.insRatingIcon) el.insRatingIcon.onchange = () => applyInspector((n) => { n.props.ratingIcon = el.insRatingIcon.value; });
+    if (el.insRatingColor) el.insRatingColor.onchange = () => applyInspector((n) => { n.props.ratingColor = el.insRatingColor.value; });
+    if (el.insSignatureLabel) el.insSignatureLabel.onchange = () => applyInspector((n) => { n.props.signatureLabel = el.insSignatureLabel.value; });
+    if (el.insBarcodeText) el.insBarcodeText.onchange = () => applyInspector((n) => { n.props.barcodeText = el.insBarcodeText.value; });
+    if (el.insChartData) el.insChartData.onchange = () => applyInspector((n) => { n.props.chartData = el.insChartData.value; });
+    if (el.insChartType) el.insChartType.onchange = () => applyInspector((n) => { n.props.chartType = el.insChartType.value; });
+    if (el.insChartColor) el.insChartColor.onchange = () => applyInspector((n) => { n.props.chartColors = el.insChartColor.value; });
+    if (el.insTimelineItems) el.insTimelineItems.onchange = () => applyInspector((n) => { n.props.timelineItems = el.insTimelineItems.value; });
+    if (el.insTimelineColor) el.insTimelineColor.onchange = () => applyInspector((n) => { n.props.fill = el.insTimelineColor.value; });
+    if (el.insCountdownTarget) el.insCountdownTarget.onchange = () => applyInspector((n) => { n.props.countdownTarget = el.insCountdownTarget.value; });
+    if (el.insCountdownLabel) el.insCountdownLabel.onchange = () => applyInspector((n) => { n.props.countdownLabel = el.insCountdownLabel.value; });
+    if (el.insCountdownColor) el.insCountdownColor.onchange = () => applyInspector((n) => { n.props.fill = el.insCountdownColor.value; });
+
     function applyStylePreset(target = 'selection') {
       const preset = STYLE_PRESETS[doc.pendingStylePreset || 'minimal'];
       const targetNodes = target === 'all'
@@ -2198,17 +2406,17 @@ const base = import.meta.env.BASE_URL ?? "/";
     function syncWatermarkUI() {
       const wm = doc.watermark;
       const on = !!wm;
-      el.watermarkToggle.checked = on;
-      el.watermarkFields.hidden = !on;
-      if (on) {
+      if (el.watermarkToggle) el.watermarkToggle.checked = on;
+      if (el.watermarkFields) el.watermarkFields.hidden = !on;
+      if (on && el.watermarkText && el.watermarkSize && el.watermarkColor && el.watermarkOpacity) {
         el.watermarkText.value = wm.text || 'DRAFT';
         el.watermarkSize.value = String(wm.fontSize || 60);
         el.watermarkColor.value = wm.color || '#000000';
         el.watermarkOpacity.value = String(wm.opacity || 0.08);
       }
     }
-    el.watermarkToggle.onchange = () => {
-      if (el.watermarkToggle.checked) {
+    if (el.watermarkToggle) el.watermarkToggle.onchange = () => {
+      if (el.watermarkToggle.checked && el.watermarkText && el.watermarkSize && el.watermarkColor && el.watermarkOpacity) {
         doc.watermark = { text: el.watermarkText.value || 'DRAFT', fontSize: Number(el.watermarkSize.value) || 60, color: el.watermarkColor.value || '#000000', opacity: parseFloat(el.watermarkOpacity.value) || 0.08 };
       } else {
         doc.watermark = undefined;
@@ -2217,17 +2425,19 @@ const base = import.meta.env.BASE_URL ?? "/";
       commitChange();
       renderWatermark();
     };
-    [el.watermarkText, el.watermarkSize, el.watermarkColor, el.watermarkOpacity].forEach((input) => {
-      input.oninput = () => {
-        if (!doc.watermark) return;
-        doc.watermark.text = el.watermarkText.value;
-        doc.watermark.fontSize = Number(el.watermarkSize.value) || 60;
-        doc.watermark.color = el.watermarkColor.value;
-        doc.watermark.opacity = parseFloat(el.watermarkOpacity.value) || 0.08;
-        commitChange();
-        renderWatermark();
-      };
-    });
+    const wmChange = () => {
+      if (!doc.watermark || !el.watermarkText || !el.watermarkSize || !el.watermarkColor || !el.watermarkOpacity) return;
+      doc.watermark.text = el.watermarkText.value || 'DRAFT';
+      doc.watermark.fontSize = clamp(Number(el.watermarkSize.value) || 60, 20, 200);
+      doc.watermark.color = el.watermarkColor.value || '#000000';
+      doc.watermark.opacity = parseFloat(el.watermarkOpacity.value) || 0.08;
+      commitChange();
+      renderWatermark();
+    };
+    if (el.watermarkText) el.watermarkText.oninput = wmChange;
+    if (el.watermarkSize) el.watermarkSize.oninput = wmChange;
+    if (el.watermarkColor) el.watermarkColor.oninput = wmChange;
+    if (el.watermarkOpacity) el.watermarkOpacity.oninput = wmChange;
 
     function zMove(mode) {
       const p = activePage(); const n = activeNode(); if (!p || !n) return;
@@ -2378,6 +2588,31 @@ const base = import.meta.env.BASE_URL ?? "/";
           } else if (n.type === 'ruler') {
             const col = '#dc2626';
             inner = `<div style="width:100%;height:100%;position:relative;display:flex;align-items:center;"><div style="width:100%;height:2px;background:${col};"></div><span style="position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:${col};white-space:nowrap;">${n.wMm.toFixed(1)} mm</span></div>`;
+          } else if (n.type === 'rating') {
+            const val = n.props.ratingValue ?? 3; const max = n.props.ratingMax ?? 5; const color = n.props.ratingColor || '#f59e0b';
+            const icons = { star: ['★','☆'], heart: ['♥','♡'], circle: ['●','○'] };
+            const [filled, unfilled] = icons[n.props.ratingIcon || 'star'] || icons.star;
+            let stars = ''; for (let i = 1; i <= max; i++) stars += `<span style="color:${i <= val ? color : '#d1d5db'};font-size:18px">${i <= val ? filled : unfilled}</span>`;
+            inner = `<div style="display:flex;align-items:center;gap:2px">${stars}</div>`;
+          } else if (n.type === 'signature') {
+            inner = `<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:4px 8px"><div style="border-bottom:2px solid #374151;margin-bottom:4px"></div><span style="font-size:10px;color:#6b7280">${(n.props.signatureLabel||'İmza').replace(/</g,'&lt;')}</span></div>`;
+          } else if (n.type === 'barcode') {
+            inner = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;padding:4px"><div style="display:flex;gap:1px;height:60%;align-items:flex-end">${(n.props.barcodeText||'123456789').split('').map((_,i)=>`<div style="width:${2+i%3}px;height:${60+i*2%20}%;background:#000"></div>`).join('')}</div><span style="font-size:10px;margin-top:4px;font-family:monospace">${(n.props.barcodeText||'123456789').replace(/</g,'&lt;')}</span></div>`;
+          } else if (n.type === 'chart') {
+            const data = (n.props.chartData||'10,30,20,50,40').split(',').map(Number); const max = Math.max(...data,1); const color = n.props.chartColors||'#6366f1';
+            const bars = data.map((v,i)=>`<div style="width:${100/data.length}%;height:${(v/max)*100}%;background:${color};border-radius:2px 2px 0 0"></div>`).join('');
+            inner = `<div style="width:100%;height:100%;display:flex;align-items:flex-end;gap:2px;padding:4px">${bars}</div>`;
+          } else if (n.type === 'timeline') {
+            let items = []; try { items = JSON.parse(n.props.timelineItems||'[]'); } catch{}
+            if(!items.length) items = [{date:'2026',title:'Olay'}];
+            const color = n.props.fill||'#6366f1';
+            const html2 = items.map(it=>`<div style="display:flex;gap:8px;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:${color};margin-top:4px;flex-shrink:0"></div><div><strong style="font-size:11px">${it.date||''}</strong><br><span style="font-size:10px;color:#64748b">${it.title||''}</span></div></div>`).join('');
+            inner = `<div style="padding:4px">${html2}</div>`;
+          } else if (n.type === 'countdown') {
+            const target = n.props.countdownTarget || new Date(Date.now()+86400000*30).toISOString().slice(0,10);
+            const diff = Math.max(0, Math.ceil((new Date(target).getTime()-Date.now())/86400000));
+            const color = n.props.fill||'#6366f1';
+            inner = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:28px;font-weight:700;color:${color}">${diff}</span><span style="font-size:11px;color:#64748b">${(n.props.countdownLabel||'Kalan gün').replace(/</g,'&lt;')}</span></div>`;
           } else { inner = '<div style="width:100%;height:100%;background:#f1f5f9;"></div>'; }
           html += `<div class="node" style="${pos}">${inner}</div>`;
         });
@@ -2489,6 +2724,40 @@ const base = import.meta.env.BASE_URL ?? "/";
         } else if (n.type === 'ruler') {
           svgContent += `<line x1="${x}mm" y1="${y + h/2}mm" x2="${x+w}mm" y2="${y + h/2}mm" stroke="#dc2626" stroke-width="2"/>`;
           svgContent += `<text x="${x + w/2}mm" y="${y + h/2 - 2}mm" text-anchor="middle" font-size="8" fill="#dc2626" font-weight="600">${w.toFixed(1)} mm</text>`;
+        } else if (n.type === 'rating') {
+          const val = n.props.ratingValue ?? 3; const max = n.props.ratingMax ?? 5; const color = n.props.ratingColor || '#f59e0b';
+          for (let i = 0; i < max; i++) {
+            svgContent += `<text x="${x + i * (w/max)}mm" y="${y + h * 0.75}mm" font-size="${Math.min(h * 2, 20)}" fill="${i < val ? color : '#d1d5db'}">★</text>`;
+          }
+        } else if (n.type === 'signature') {
+          svgContent += `<line x1="${x + 2}mm" y1="${y + h * 0.7}mm" x2="${x + w - 2}mm" y2="${y + h * 0.7}mm" stroke="#374151" stroke-width="1.5"/>`;
+          svgContent += `<text x="${x + 2}mm" y="${y + h - 1}mm" font-size="8" fill="#6b7280">${(n.props.signatureLabel || 'İmza').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>`;
+        } else if (n.type === 'barcode') {
+          svgContent += `<rect x="${x}mm" y="${y}mm" width="${w}mm" height="${h}mm" fill="#fff" stroke="#e5e7eb"/>`;
+          svgContent += `<text x="${x + w/2}mm" y="${y + h - 2}mm" text-anchor="middle" font-size="8" fill="#000" font-family="monospace">${(n.props.barcodeText || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>`;
+        } else if (n.type === 'chart') {
+          const data = (n.props.chartData||'10,30,20,50,40').split(',').map(Number); const max = Math.max(...data,1); const color = n.props.chartColors||'#6366f1';
+          data.forEach((v,i) => {
+            const bw = w / data.length * 0.8; const bx = x + i * (w / data.length) + (w / data.length * 0.1);
+            const bh = (v / max) * h; const by = y + h - bh;
+            svgContent += `<rect x="${bx}mm" y="${by}mm" width="${bw}mm" height="${bh}mm" fill="${color}" rx="1"/>`;
+          });
+        } else if (n.type === 'timeline') {
+          let items = []; try { items = JSON.parse(n.props.timelineItems||'[]'); } catch{}
+          if(!items.length) items = [{date:'2026',title:'Olay'}];
+          const color = n.props.fill||'#6366f1';
+          items.forEach((it, i) => {
+            const iy = y + i * (h / items.length) + 8;
+            svgContent += `<circle cx="${x + 4}mm" cy="${iy}mm" r="3" fill="${color}"/>`;
+            svgContent += `<text x="${x + 10}mm" y="${iy + 1}mm" font-size="9" fill="#111" font-weight="600">${(it.date||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>`;
+            svgContent += `<text x="${x + 10}mm" y="${iy + 5}mm" font-size="8" fill="#64748b">${(it.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>`;
+          });
+        } else if (n.type === 'countdown') {
+          const target = n.props.countdownTarget || new Date(Date.now()+86400000*30).toISOString().slice(0,10);
+          const diff = Math.max(0, Math.ceil((new Date(target).getTime()-Date.now())/86400000));
+          const color = n.props.fill||'#6366f1';
+          svgContent += `<text x="${x + w/2}mm" y="${y + h * 0.55}mm" text-anchor="middle" font-size="22" fill="${color}" font-weight="700">${diff}</text>`;
+          svgContent += `<text x="${x + w/2}mm" y="${y + h * 0.8}mm" text-anchor="middle" font-size="9" fill="#64748b">${(n.props.countdownLabel||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>`;
         }
       });
       return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${dims.wMm}mm" height="${dims.hMm}mm" viewBox="0 0 ${dims.wMm} ${dims.hMm}">${defs ? `<defs>${defs}</defs>` : ''}${svgContent}</svg>`;
@@ -2802,6 +3071,156 @@ const base = import.meta.env.BASE_URL ?? "/";
       console.info('[templates] validation summary', { total: validationResults.length, failed: failed.length });
       if (failed.length) console.warn('[templates] validation failures', failed);
     }
+
+    /* ── Command Palette (Ctrl+K) ── */
+    const cmdCommands = [
+      { id: 'add-text', label: labels.cmdAddText, icon: '🅣', action: () => createPreset('text', 30, 30) },
+      { id: 'add-heading', label: 'Başlık ekle', icon: 'Ⓗ', action: () => createPreset('heading', 30, 30) },
+      { id: 'add-image', label: labels.cmdAddImage, icon: '🖼', action: () => addImageAt(30, 30) },
+      { id: 'add-box', label: 'Kutu ekle', icon: '⬚', action: () => createPreset('box', 30, 30) },
+      { id: 'add-chart', label: labels.chart, icon: '📊', action: () => createPreset('chart', 30, 30) },
+      { id: 'add-rating', label: labels.rating, icon: '⭐', action: () => createPreset('rating', 30, 30) },
+      { id: 'add-timeline', label: labels.timeline, icon: '⏳', action: () => createPreset('timeline', 30, 30) },
+      { id: 'add-countdown', label: labels.countdown, icon: '⏱', action: () => createPreset('countdown', 30, 30) },
+      { id: 'export-pdf', label: labels.cmdExportPdf, icon: '📄', action: () => el.exportPdf.click() },
+      { id: 'export-png', label: labels.cmdExportPng, icon: '🖼', action: () => el.exportPng.click() },
+      { id: 'export-html', label: labels.exportHtml, icon: '🌐', action: () => el.exportHtmlBtn.click() },
+      { id: 'save', label: labels.cmdSave, icon: '💾', action: () => el.save.click() },
+      { id: 'dark-mode', label: labels.cmdDarkMode, icon: '🌙', action: () => { el.darkModeToggle.checked = !el.darkModeToggle.checked; el.darkModeToggle.onchange(); } },
+      { id: 'new-page', label: labels.cmdNewPage, icon: '+', action: () => el.addPage.click() },
+      { id: 'undo', label: labels.cmdUndo, icon: '↩', action: () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true })); } },
+      { id: 'redo', label: labels.cmdRedo, icon: '↪', action: () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, shiftKey: true })); } },
+      { id: 'presentation', label: labels.presentationMode, icon: '🖥', action: () => el.presentationBtn.click() },
+      { id: 'history', label: labels.historyTimeline, icon: '🕐', action: () => openHistory() },
+    ];
+    function openCmdPalette() {
+      if (!el.cmdPaletteOverlay) return;
+      el.cmdPaletteOverlay.hidden = false;
+      el.cmdPaletteInput.value = '';
+      renderCmdList('');
+      setTimeout(() => el.cmdPaletteInput.focus(), 50);
+    }
+    function closeCmdPalette() { if (el.cmdPaletteOverlay) el.cmdPaletteOverlay.hidden = true; }
+    function renderCmdList(query) {
+      const q = query.toLowerCase().trim();
+      const filtered = q ? cmdCommands.filter(c => c.label.toLowerCase().includes(q) || c.id.includes(q)) : cmdCommands;
+      el.cmdPaletteList.innerHTML = filtered.map((c, i) => `<button class="cmd-item${i === 0 ? ' active' : ''}" data-cmd-idx="${i}">${c.icon} ${c.label}</button>`).join('');
+      el.cmdPaletteList.querySelectorAll('.cmd-item').forEach((btn) => {
+        btn.onclick = () => { const idx = Number(btn.dataset.cmdIdx); filtered[idx]?.action(); closeCmdPalette(); };
+      });
+    }
+    if (el.cmdPaletteInput) {
+      el.cmdPaletteInput.oninput = () => renderCmdList(el.cmdPaletteInput.value);
+      el.cmdPaletteInput.onkeydown = (e) => {
+        if (e.key === 'Escape') { closeCmdPalette(); e.stopPropagation(); return; }
+        const items = el.cmdPaletteList.querySelectorAll('.cmd-item');
+        const active = el.cmdPaletteList.querySelector('.cmd-item.active');
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const arr = [...items]; const idx = arr.indexOf(active);
+          const next = e.key === 'ArrowDown' ? (idx + 1) % arr.length : (idx - 1 + arr.length) % arr.length;
+          arr.forEach((it, i) => it.classList.toggle('active', i === next));
+          arr[next]?.scrollIntoView({ block: 'nearest' });
+        }
+        if (e.key === 'Enter') { e.preventDefault(); active?.click(); }
+      };
+    }
+    if (el.cmdPaletteOverlay) el.cmdPaletteOverlay.onclick = (e) => { if (e.target === el.cmdPaletteOverlay) closeCmdPalette(); };
+
+    /* ── HTML Export ── */
+    if (el.exportHtmlBtn) el.exportHtmlBtn.onclick = () => {
+      try {
+        const html = buildPrintHTML(doc);
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.html`; a.click();
+        URL.revokeObjectURL(url);
+        showToast(labels.toastHtmlDone);
+      } catch { showToast(labels.toastHtmlFailed); }
+      closeTransientOverlays();
+    };
+
+    /* ── Batch Export (Mail Merge) ── */
+    let batchCsvData = [];
+    if (el.batchExportBtn) el.batchExportBtn.onclick = () => { el.batchModal.hidden = false; closeTransientOverlays(); };
+    if (el.batchCloseBtn) el.batchCloseBtn.onclick = () => { el.batchModal.hidden = true; };
+    if (el.batchCsvInput) el.batchCsvInput.onchange = async () => {
+      const file = el.batchCsvInput.files?.[0]; if (!file) return;
+      const text = await file.text();
+      const lines = text.split('\n').map(l => l.split(',').map(c => c.trim()));
+      const headers = lines[0] || [];
+      batchCsvData = lines.slice(1).filter(r => r.length >= headers.length).map(r => {
+        const obj = {}; headers.forEach((h, i) => obj[h] = r[i] || ''); return obj;
+      });
+      el.batchPreview.innerHTML = `<strong>${batchCsvData.length} satır</strong><br>Sütunlar: ${headers.join(', ')}`;
+    };
+    if (el.batchGenerateBtn) el.batchGenerateBtn.onclick = async () => {
+      if (!batchCsvData.length) { showToast(labels.toastBatchFailed); return; }
+      showToast(labels.toastZipGenerating);
+      try {
+        const zip = new JSZip();
+        for (let r = 0; r < batchCsvData.length; r++) {
+          const row = batchCsvData[r];
+          const cloneDoc = structuredClone(doc);
+          cloneDoc.pages.forEach(pg => pg.nodes.forEach(n => {
+            if (n.props.text) {
+              Object.keys(row).forEach(k => { n.props.text = n.props.text.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), row[k]); });
+            }
+          }));
+          for (let i = 0; i < cloneDoc.pages.length; i++) {
+            const pngBlob = await exportPageToPng(cloneDoc, cloneDoc.pages[i].id);
+            zip.file(`satir-${r + 1}-sayfa-${i + 1}.png`, pngBlob);
+          }
+        }
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a'); a.href = url; a.download = `printforge-toplu-${Date.now()}.zip`; a.click();
+        URL.revokeObjectURL(url);
+        showToast(labels.toastBatchDone);
+      } catch { showToast(labels.toastBatchFailed); }
+      el.batchModal.hidden = true;
+    };
+
+    /* ── History Timeline ── */
+    function openHistory() {
+      if (!el.historyPanel) return;
+      el.historyPanel.hidden = false;
+      renderHistory();
+    }
+    function renderHistory() {
+      if (!el.historyList) return;
+      el.historyList.innerHTML = undoStack.map((snap, i) => {
+        const isCurrent = i === undoStack.length - 1;
+        return `<button class="history-item${isCurrent ? ' active' : ''}" data-history-idx="${i}">Adım ${i + 1}${isCurrent ? ' (şuanki)' : ''} — ${snap.pages?.length || 0} sayfa</button>`;
+      }).join('');
+      el.historyList.querySelectorAll('.history-item').forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.dataset.historyIdx);
+          if (idx < 0 || idx >= undoStack.length) return;
+          doc = structuredClone(undoStack[idx]);
+          undoStack.length = idx + 1;
+          redoStack.length = 0;
+          setPrimarySelection(null);
+          dirty = true; setSaveIndicator(); autosaveSchedule();
+          render(); renderHistory();
+        };
+      });
+    }
+    if (el.historyClose) el.historyClose.onclick = () => { el.historyPanel.hidden = true; };
+
+    /* ── Ctrl+K shortcut for command palette ── */
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (el.cmdPaletteOverlay && !el.cmdPaletteOverlay.hidden) closeCmdPalette(); else openCmdPalette();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && el.cmdPaletteOverlay && !el.cmdPaletteOverlay.hidden) { closeCmdPalette(); e.stopPropagation(); }
+      if (e.key === 'Escape' && el.historyPanel && !el.historyPanel.hidden) { el.historyPanel.hidden = true; }
+      if (e.key === 'Escape' && el.batchModal && !el.batchModal.hidden) { el.batchModal.hidden = true; }
+    }, true);
 
     renderAssets();
     switchThemeSubtab('page');

@@ -3,7 +3,7 @@ import type { Doc, Node, NodeType, Page } from "../model";
 export interface TemplateMeta {
   id: string;
   name: string;
-  category: "Planner" | "Tracker" | "Study" | "Home" | "Finance";
+  category: "Planner" | "Tracker" | "Study" | "Home" | "Finance" | "Business" | "Certificate" | "Social" | "Invoice" | "CV" | "Menu";
   isPack: boolean;
   pagesCount: number;
   thumbnail: string;
@@ -512,7 +512,147 @@ const packs: TemplateDefinition[] = [
   },
 ];
 
-const templates = [...singleTemplates, ...packs];
+const rating = (ctx: BuildContext, name: string, xMm: number, yMm: number, wMm: number, hMm: number, z: number, extra: Partial<Node["props"]> = {}): Node => ({
+  id: ctx.nextId("node"), type: "rating", name, xMm, yMm, wMm, hMm, z, visible: true, locked: false, groupId: null,
+  props: { ratingValue: 4, ratingMax: 5, ratingIcon: "star", ratingColor: "#f59e0b", ...extra },
+});
+
+const signature = (ctx: BuildContext, name: string, xMm: number, yMm: number, wMm: number, hMm: number, z: number, extra: Partial<Node["props"]> = {}): Node => ({
+  id: ctx.nextId("node"), type: "signature", name, xMm, yMm, wMm, hMm, z, visible: true, locked: false, groupId: null,
+  props: { signatureLabel: "Signature", ...extra },
+});
+
+const progressbar = (ctx: BuildContext, name: string, xMm: number, yMm: number, wMm: number, hMm: number, z: number, val: number, extra: Partial<Node["props"]> = {}): Node => ({
+  id: ctx.nextId("node"), type: "progressbar", name, xMm, yMm, wMm, hMm, z, visible: true, locked: false, groupId: null,
+  props: { progressValue: val, progressTrack: "#e2e8f0", progressBar: "#6366f1", ...extra },
+});
+
+const newTemplates: TemplateDefinition[] = [
+  {
+    id: "business-card", name: "Business Card", category: "Business", isPack: false, pagesCount: 1, thumbnail: thumb("Business Card"),
+    build: (ctx) => [pg(ctx, "Business Card", [
+      box(ctx, "BG", 0, 0, 210, 297, 0, { fill: "#0f172a", stroke: "#0f172a", radius: 0 }),
+      highlight(ctx, "Accent", 0, 0, 210, 80, 1, { fill: "#6366f1", stroke: "#6366f1", radius: 0 }),
+      text(ctx, "Name", "John Doe", 24, 24, 160, 18, 2, "heading", { color: "#ffffff", fontSize: 28, fontWeight: 700 }),
+      text(ctx, "Title", "Senior Product Designer", 24, 46, 160, 10, 3, "text", { color: "#c7d2fe", fontSize: 14 }),
+      divider(ctx, "Sep", 24, 60, 72, 4, { color: "#818cf8" }),
+      text(ctx, "Email", "✉  john@company.com", 24, 96, 160, 10, 5, "text", { color: "#94a3b8", fontSize: 12 }),
+      text(ctx, "Phone", "☎  +1 (555) 123-4567", 24, 110, 160, 10, 6, "text", { color: "#94a3b8", fontSize: 12 }),
+      text(ctx, "Web", "🌐  www.company.com", 24, 124, 160, 10, 7, "text", { color: "#94a3b8", fontSize: 12 }),
+      text(ctx, "Address", "123 Design Street, Creative City", 24, 144, 160, 10, 8, "text", { color: "#64748b", fontSize: 11 }),
+    ])],
+  },
+  {
+    id: "certificate", name: "Certificate", category: "Certificate", isPack: false, pagesCount: 1, thumbnail: thumb("Certificate"),
+    build: (ctx) => [pg(ctx, "Certificate", [
+      box(ctx, "Border", 10, 10, 190, 277, 1, { fill: "#fffbeb", stroke: "#d97706", strokeWidth: 3, radius: 12 }),
+      box(ctx, "InnerBorder", 16, 16, 178, 265, 2, { fill: "#ffffff", stroke: "#fbbf24", strokeWidth: 1, radius: 8 }),
+      text(ctx, "Org", "PRINTFORGE ACADEMY", 30, 30, 150, 12, 3, "heading", { fontSize: 14, color: "#d97706", align: "center", fontWeight: 600 }),
+      divider(ctx, "TopLine", 60, 48, 90, 4, { color: "#fbbf24" }),
+      text(ctx, "Title", "Certificate of Achievement", 30, 58, 150, 20, 5, "heading", { fontSize: 26, color: "#0f172a", align: "center", fontWeight: 700 }),
+      text(ctx, "Subtitle", "This is to certify that", 30, 86, 150, 10, 6, "text", { fontSize: 13, color: "#64748b", align: "center" }),
+      text(ctx, "Recipient", "Jane Smith", 30, 102, 150, 18, 7, "heading", { fontSize: 30, color: "#6366f1", align: "center", fontWeight: 700, italic: true }),
+      text(ctx, "Body", "has successfully completed the requirements for the\nAdvanced Design Masterclass program with distinction.", 30, 128, 150, 20, 8, "text", { fontSize: 12, color: "#374151", align: "center", lineHeight: 1.6 }),
+      text(ctx, "Date", "March 2026", 30, 160, 150, 10, 9, "text", { fontSize: 12, color: "#64748b", align: "center" }),
+      divider(ctx, "BottomLine", 30, 190, 150, 10, { color: "#e5e7eb" }),
+      signature(ctx, "Sig1", 30, 200, 60, 18, 11, { signatureLabel: "Director" }),
+      signature(ctx, "Sig2", 120, 200, 60, 18, 12, { signatureLabel: "Instructor" }),
+      rating(ctx, "Stars", 80, 230, 50, 10, 13, { ratingValue: 5, ratingMax: 5, ratingColor: "#fbbf24" }),
+    ])],
+  },
+  {
+    id: "social-instagram", name: "Social Media Post", category: "Social", isPack: false, pagesCount: 1, thumbnail: thumb("Social Post"),
+    build: (ctx) => [pg(ctx, "Social Post", [
+      box(ctx, "BG", 14, 14, 182, 182, 1, { fill: "#0f172a", stroke: "#6366f1", strokeWidth: 2, radius: 16 }),
+      highlight(ctx, "Accent", 14, 14, 182, 56, 2, { fill: "#6366f1", stroke: "#6366f1", radius: 16 }),
+      text(ctx, "Headline", "5 Design Tips\nYou Need to Know", 28, 28, 154, 30, 3, "heading", { color: "#ffffff", fontSize: 22, fontWeight: 700, lineHeight: 1.2 }),
+      text(ctx, "Subtitle", "Boost your creativity today", 28, 64, 154, 10, 4, "text", { color: "#c7d2fe", fontSize: 13 }),
+      divider(ctx, "Sep", 28, 80, 154, 5, { color: "#4f46e5" }),
+      text(ctx, "Tip1", "1️⃣  Use consistent spacing", 28, 88, 154, 10, 6, "text", { color: "#e2e8f0", fontSize: 12 }),
+      text(ctx, "Tip2", "2️⃣  Limit your color palette", 28, 102, 154, 10, 7, "text", { color: "#e2e8f0", fontSize: 12 }),
+      text(ctx, "Tip3", "3️⃣  Choose readable fonts", 28, 116, 154, 10, 8, "text", { color: "#e2e8f0", fontSize: 12 }),
+      text(ctx, "Tip4", "4️⃣  Add visual hierarchy", 28, 130, 154, 10, 9, "text", { color: "#e2e8f0", fontSize: 12 }),
+      text(ctx, "Tip5", "5️⃣  Keep it simple", 28, 144, 154, 10, 10, "text", { color: "#e2e8f0", fontSize: 12 }),
+      text(ctx, "CTA", "@yourhandle | Follow for more", 28, 168, 154, 10, 11, "text", { color: "#818cf8", fontSize: 11, align: "center" }),
+    ])],
+  },
+  {
+    id: "invoice-basic", name: "Invoice", category: "Invoice", isPack: false, pagesCount: 1, thumbnail: thumb("Invoice"),
+    build: (ctx) => [pg(ctx, "Invoice", [
+      highlight(ctx, "Header", 12, 10, 186, 32, 1, { fill: "#1e293b", stroke: "#1e293b", radius: 10 }),
+      text(ctx, "Company", "Your Company Name", 20, 14, 100, 12, 2, "heading", { color: "#ffffff", fontSize: 18 }),
+      text(ctx, "InvoiceLabel", "INVOICE", 140, 14, 50, 12, 3, "heading", { color: "#818cf8", fontSize: 18, align: "right" }),
+      text(ctx, "InvNo", "#INV-2026-001", 140, 28, 50, 8, 4, "text", { color: "#94a3b8", fontSize: 10, align: "right" }),
+      text(ctx, "BillTo", "Bill To:", 14, 50, 50, 8, 5, "text", { color: "#6366f1", fontSize: 11, fontWeight: 600 }),
+      text(ctx, "ClientName", "Client Name\n123 Client Street\nCity, State 12345", 14, 60, 80, 24, 6, "text", { color: "#374151", fontSize: 11, lineHeight: 1.5 }),
+      text(ctx, "DateLabel", "Date: March 7, 2026\nDue: April 7, 2026", 120, 50, 76, 16, 7, "text", { color: "#374151", fontSize: 11, align: "right", lineHeight: 1.5 }),
+      divider(ctx, "Sep1", 14, 90, 182, 8),
+      table(ctx, "Items", 14, 96, 182, 120, 9, 6, 4),
+      text(ctx, "TableHeader", "Item       Qty      Price      Total", 16, 98, 178, 8, 10, "text", { fontSize: 10, fontWeight: 700, color: "#374151" }),
+      divider(ctx, "Sep2", 14, 220, 182, 11),
+      text(ctx, "Subtotal", "Subtotal: $1,200.00", 120, 226, 76, 8, 12, "text", { fontSize: 11, align: "right", color: "#374151" }),
+      text(ctx, "Tax", "Tax (10%): $120.00", 120, 236, 76, 8, 13, "text", { fontSize: 11, align: "right", color: "#64748b" }),
+      highlight(ctx, "TotalBg", 120, 248, 76, 14, 14, { fill: "#6366f1", stroke: "#6366f1", radius: 6 }),
+      text(ctx, "Total", "Total: $1,320.00", 124, 250, 68, 10, 15, "text", { fontSize: 13, fontWeight: 700, align: "right", color: "#ffffff" }),
+      text(ctx, "Notes", "Thank you for your business!\nPayment terms: Net 30", 14, 270, 120, 16, 16, "text", { fontSize: 10, color: "#94a3b8", lineHeight: 1.4 }),
+    ])],
+  },
+  {
+    id: "cv-modern", name: "Modern CV", category: "CV", isPack: false, pagesCount: 1, thumbnail: thumb("Modern CV"),
+    build: (ctx) => [pg(ctx, "CV Page 1", [
+      box(ctx, "Sidebar", 0, 0, 70, 297, 1, { fill: "#1e293b", stroke: "#1e293b", radius: 0 }),
+      text(ctx, "Name", "Jane\nSmith", 10, 20, 54, 30, 2, "heading", { color: "#ffffff", fontSize: 24, fontWeight: 700, lineHeight: 1.1 }),
+      text(ctx, "Role", "UX Designer", 10, 56, 54, 10, 3, "text", { color: "#818cf8", fontSize: 12 }),
+      divider(ctx, "Sep1", 10, 70, 50, 4, { color: "#475569" }),
+      text(ctx, "ContactLabel", "CONTACT", 10, 78, 50, 8, 5, "text", { color: "#94a3b8", fontSize: 9, fontWeight: 700 }),
+      text(ctx, "ContactInfo", "jane@mail.com\n+1 555 0123\nNew York, NY\nlinkedin.com/in/jane", 10, 88, 54, 36, 6, "text", { color: "#cbd5e1", fontSize: 9, lineHeight: 1.6 }),
+      text(ctx, "SkillsLabel", "SKILLS", 10, 132, 50, 8, 7, "text", { color: "#94a3b8", fontSize: 9, fontWeight: 700 }),
+      text(ctx, "Skills", "Figma\nSketch\nUser Research\nPrototyping\nDesign Systems\nHTML/CSS", 10, 142, 54, 50, 8, "text", { color: "#cbd5e1", fontSize: 9, lineHeight: 1.6 }),
+      progressbar(ctx, "Skill1", 10, 200, 50, 5, 9, 90, { progressBar: "#6366f1" }),
+      progressbar(ctx, "Skill2", 10, 210, 50, 5, 10, 85, { progressBar: "#818cf8" }),
+      progressbar(ctx, "Skill3", 10, 220, 50, 5, 11, 75, { progressBar: "#a78bfa" }),
+      text(ctx, "ExpTitle", "Experience", 80, 20, 120, 12, 12, "heading", { fontSize: 18, color: "#0f172a", fontWeight: 700 }),
+      divider(ctx, "ExpSep", 80, 34, 120, 13, { color: "#6366f1" }),
+      text(ctx, "Job1", "Senior UX Designer", 80, 40, 120, 8, 14, "text", { fontSize: 13, fontWeight: 700, color: "#1e293b" }),
+      text(ctx, "Job1Co", "TechCorp Inc. | 2023 – Present", 80, 50, 120, 8, 15, "text", { fontSize: 10, color: "#64748b" }),
+      text(ctx, "Job1Desc", "Led design team of 5 members. Redesigned main product increasing user retention by 40%. Created comprehensive design system.", 80, 60, 120, 24, 16, "text", { fontSize: 10, color: "#374151", lineHeight: 1.5 }),
+      text(ctx, "Job2", "UX Designer", 80, 90, 120, 8, 17, "text", { fontSize: 13, fontWeight: 700, color: "#1e293b" }),
+      text(ctx, "Job2Co", "DesignStudio | 2020 – 2023", 80, 100, 120, 8, 18, "text", { fontSize: 10, color: "#64748b" }),
+      text(ctx, "Job2Desc", "Conducted user research and usability testing. Delivered wireframes and high-fidelity prototypes for mobile and web apps.", 80, 110, 120, 24, 19, "text", { fontSize: 10, color: "#374151", lineHeight: 1.5 }),
+      text(ctx, "EduTitle", "Education", 80, 146, 120, 12, 20, "heading", { fontSize: 18, color: "#0f172a", fontWeight: 700 }),
+      divider(ctx, "EduSep", 80, 160, 120, 21, { color: "#6366f1" }),
+      text(ctx, "Edu1", "M.S. Human-Computer Interaction", 80, 166, 120, 8, 22, "text", { fontSize: 12, fontWeight: 600, color: "#1e293b" }),
+      text(ctx, "Edu1Univ", "Stanford University | 2020", 80, 176, 120, 8, 23, "text", { fontSize: 10, color: "#64748b" }),
+    ])],
+  },
+  {
+    id: "menu-restaurant", name: "Restaurant Menu", category: "Menu", isPack: false, pagesCount: 1, thumbnail: thumb("Menu Card"),
+    build: (ctx) => [pg(ctx, "Menu", [
+      box(ctx, "BG", 0, 0, 210, 297, 0, { fill: "#faf7f2", stroke: "#faf7f2", radius: 0 }),
+      text(ctx, "RestName", "La Maison", 20, 16, 170, 18, 1, "heading", { fontSize: 32, color: "#1c1917", align: "center", fontWeight: 700, fontFamily: "Georgia,serif" }),
+      text(ctx, "Tagline", "— FINE DINING SINCE 1998 —", 40, 42, 130, 8, 2, "text", { fontSize: 10, color: "#a8a29e", align: "center", fontFamily: "Georgia,serif" }),
+      divider(ctx, "TopDiv", 60, 56, 90, 3, { color: "#d6d3d1" }),
+      text(ctx, "Cat1", "Starters", 20, 66, 170, 10, 4, "heading", { fontSize: 16, color: "#b45309", align: "center", fontFamily: "Georgia,serif", fontWeight: 600 }),
+      text(ctx, "Item1", "Truffle Soup\nCreamy seasonal mushroom with black truffle", 20, 80, 130, 14, 5, "text", { fontSize: 11, color: "#44403c", lineHeight: 1.4, fontFamily: "Georgia,serif" }),
+      text(ctx, "Price1", "$18", 160, 80, 30, 8, 6, "text", { fontSize: 12, color: "#b45309", align: "right", fontWeight: 600 }),
+      text(ctx, "Item2", "Tuna Tartare\nFresh ahi tuna, avocado, sesame crisps", 20, 100, 130, 14, 7, "text", { fontSize: 11, color: "#44403c", lineHeight: 1.4, fontFamily: "Georgia,serif" }),
+      text(ctx, "Price2", "$22", 160, 100, 30, 8, 8, "text", { fontSize: 12, color: "#b45309", align: "right", fontWeight: 600 }),
+      divider(ctx, "Div2", 60, 120, 90, 9, { color: "#d6d3d1" }),
+      text(ctx, "Cat2", "Main Course", 20, 128, 170, 10, 10, "heading", { fontSize: 16, color: "#b45309", align: "center", fontFamily: "Georgia,serif", fontWeight: 600 }),
+      text(ctx, "Item3", "Wagyu Steak\nA5 grade with roasted vegetables and jus", 20, 142, 130, 14, 11, "text", { fontSize: 11, color: "#44403c", lineHeight: 1.4, fontFamily: "Georgia,serif" }),
+      text(ctx, "Price3", "$65", 160, 142, 30, 8, 12, "text", { fontSize: 12, color: "#b45309", align: "right", fontWeight: 600 }),
+      text(ctx, "Item4", "Lobster Risotto\nCreamy arborio with butter-poached lobster", 20, 162, 130, 14, 13, "text", { fontSize: 11, color: "#44403c", lineHeight: 1.4, fontFamily: "Georgia,serif" }),
+      text(ctx, "Price4", "$48", 160, 162, 30, 8, 14, "text", { fontSize: 12, color: "#b45309", align: "right", fontWeight: 600 }),
+      divider(ctx, "Div3", 60, 182, 90, 15, { color: "#d6d3d1" }),
+      text(ctx, "Cat3", "Desserts", 20, 190, 170, 10, 16, "heading", { fontSize: 16, color: "#b45309", align: "center", fontFamily: "Georgia,serif", fontWeight: 600 }),
+      text(ctx, "Item5", "Crème Brûlée\nMadagascar vanilla, caramelized sugar", 20, 204, 130, 14, 17, "text", { fontSize: 11, color: "#44403c", lineHeight: 1.4, fontFamily: "Georgia,serif" }),
+      text(ctx, "Price5", "$14", 160, 204, 30, 8, 18, "text", { fontSize: 12, color: "#b45309", align: "right", fontWeight: 600 }),
+      text(ctx, "Footer", "Prices exclude tax. Service charge 15%.", 20, 260, 170, 8, 19, "text", { fontSize: 9, color: "#a8a29e", align: "center", fontFamily: "Georgia,serif" }),
+    ])],
+  },
+];
+
+const templates = [...singleTemplates, ...packs, ...newTemplates];
 
 export function listTemplates(): TemplateMeta[] {
   return templates.map(({ build: _build, ...meta }) => ({ ...meta }));

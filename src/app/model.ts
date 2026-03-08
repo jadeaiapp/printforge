@@ -25,7 +25,13 @@ export type NodeType =
   | "progressbar"
   | "star"
   | "stickynote"
-  | "ruler";
+  | "ruler"
+  | "rating"
+  | "signature"
+  | "barcode"
+  | "chart"
+  | "timeline"
+  | "countdown";
 
 export interface NodeProps {
   text?: string;
@@ -70,6 +76,32 @@ export interface NodeProps {
   innerRadius?: number;
   /** Sticky note background color */
   noteBg?: string;
+  /** Rating value 0-5 */
+  ratingValue?: number;
+  /** Rating max stars */
+  ratingMax?: number;
+  /** Rating icon: star | heart | circle */
+  ratingIcon?: "star" | "heart" | "circle";
+  /** Rating active color */
+  ratingColor?: string;
+  /** Signature field label */
+  signatureLabel?: string;
+  /** Barcode data text */
+  barcodeText?: string;
+  /** Barcode format */
+  barcodeFormat?: "CODE128" | "EAN13" | "QR";
+  /** Chart data (comma-separated numbers) */
+  chartData?: string;
+  /** Chart type */
+  chartType?: "bar" | "pie" | "line";
+  /** Chart colors (comma-separated hex) */
+  chartColors?: string;
+  /** Timeline items (JSON string of [{date,title}]) */
+  timelineItems?: string;
+  /** Countdown target date (ISO string) */
+  countdownTarget?: string;
+  /** Countdown label */
+  countdownLabel?: string;
 }
 
 
@@ -119,6 +151,12 @@ export interface Doc {
   };
   watermark?: { text: string; fontSize: number; color: string; opacity: number };
   meta?: { projectName?: string };
+  /** Master nodes displayed on every page */
+  masterNodes?: Node[];
+  /** Template variables for mail-merge / placeholders */
+  templateVars?: Record<string, string>;
+  /** Saved component library */
+  savedComponents?: { id: string; name: string; nodes: Node[] }[];
   pages: Page[];
   activePageId: string;
 }

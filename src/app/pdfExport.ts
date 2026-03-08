@@ -204,8 +204,24 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         pdf.setFillColor(fr * 255, fg * 255, fb * 255);
         pdf.setDrawColor(sr * 255, sg * 255, sb * 255);
         pdf.setLineWidth(0.5);
+        const cx = x + w / 2;
+        const cy = y + h / 2;
         const r = Math.min(w, h) / 2;
-        pdf.circle(x + w / 2, y + h / 2, r, "FD");
+        const pts = Math.max(3, Math.min(12, node.props.points ?? 5));
+        const ir = Math.max(0.2, Math.min(0.9, node.props.innerRadius ?? 0.45));
+        const angleStep = Math.PI / pts;
+        const ri = r * ir;
+        const path: { op: string; c: number[] }[] = [];
+        for (let i = 0; i < pts * 2; i++) {
+          const a = i * angleStep - Math.PI / 2;
+          const rad = i % 2 === 0 ? r : ri;
+          const px = cx + Math.cos(a) * rad;
+          const py = cy + Math.sin(a) * rad;
+          if (i === 0) path.push({ op: "m", c: [px, py] });
+          else path.push({ op: "l", c: [px, py] });
+        }
+        path.push({ op: "h", c: [] });
+        pdf.path(path, "FD");
         break;
       }
       case "stickynote": {
@@ -231,6 +247,91 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         pdf.setFontSize(7);
         pdf.setTextColor(rr * 255, rg * 255, rb * 255);
         pdf.text(`${w.toFixed(1)} mm`, x + w / 2, y + h / 2 - 2, { align: "center" });
+        break;
+      }
+      case "rating": {
+        const val = node.props.ratingValue ?? 3;
+        const max = node.props.ratingMax ?? 5;
+        const color = node.props.ratingColor || "#f59e0b";
+        const [cr, cg, cb] = hexToRgb(color);
+        pdf.setFontSize(Math.min(h * 2, 14));
+        for (let i = 0; i < max; i++) {
+          pdf.setTextColor(i < val ? cr * 255 : 180, i < val ? cg * 255 : 180, i < val ? cb * 255 : 180);
+          pdf.text("★", x + i * (w / max), y + h * 0.7);
+        }
+        break;
+      }
+      case "signature": {
+        pdf.setDrawColor(55, 65, 81);
+        pdf.setLineWidth(0.4);
+        pdf.line(x + 2, y + h * 0.7, x + w - 2, y + h * 0.7);
+        pdf.setFontSize(7);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text(node.props.signatureLabel || "Signature", x + 2, y + h - 1);
+        break;
+      }
+      case "barcode": {
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(x, y, w, h, "F");
+        pdf.setDrawColor(0, 0, 0);
+        const txt = node.props.barcodeText || "123456789";
+        const barW = w / (txt.length * 2 + 10);
+        for (let i = 0; i < txt.length; i++) {
+          const bx = x + 4 + i * barW * 2;
+          const bh = h * 0.6;
+          pdf.setFillColor(0, 0, 0);
+          pdf.rect(bx, y + 2, barW, bh, "F");
+        }
+        pdf.setFontSize(7);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(txt, x + w / 2, y + h - 2, { align: "center" });
+        break;
+      }
+      case "chart": {
+        const data = (node.props.chartData || "10,30,20,50,40").split(",").map(Number);
+        const maxVal = Math.max(...data, 1);
+        const color = node.props.chartColors || "#6366f1";
+        const [cr2, cg2, cb2] = hexToRgb(color);
+        pdf.setFillColor(cr2 * 255, cg2 * 255, cb2 * 255);
+        const barWidth = w / data.length * 0.8;
+        const gap = w / data.length * 0.1;
+        data.forEach((v, i) => {
+          const bh = (v / maxVal) * h;
+          const bx = x + i * (w / data.length) + gap;
+          pdf.rect(bx, y + h - bh, barWidth, bh, "F");
+        });
+        break;
+      }
+      case "timeline": {
+        let items: { date: string; title: string }[] = [];
+        try { items = JSON.parse(node.props.timelineItems || "[]"); } catch {}
+        if (!items.length) items = [{ date: "2026", title: "Event" }];
+        const color2 = node.props.fill || "#6366f1";
+        const [tr2, tg2, tb2] = hexToRgb(color2);
+        items.forEach((it, i) => {
+          const iy = y + i * (h / items.length) + 5;
+          pdf.setFillColor(tr2 * 255, tg2 * 255, tb2 * 255);
+          pdf.circle(x + 3, iy, 1.5, "F");
+          pdf.setFontSize(8);
+          pdf.setTextColor(17, 24, 39);
+          pdf.text(it.date || "", x + 8, iy + 1);
+          pdf.setFontSize(7);
+          pdf.setTextColor(100, 116, 139);
+          pdf.text(it.title || "", x + 8, iy + 4.5);
+        });
+        break;
+      }
+      case "countdown": {
+        const target = node.props.countdownTarget || new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10);
+        const diff = Math.max(0, Math.ceil((new Date(target).getTime() - Date.now()) / 86400000));
+        const color3 = node.props.fill || "#6366f1";
+        const [cr3, cg3, cb3] = hexToRgb(color3);
+        pdf.setFontSize(20);
+        pdf.setTextColor(cr3 * 255, cg3 * 255, cb3 * 255);
+        pdf.text(String(diff), x + w / 2, y + h * 0.5, { align: "center" });
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(node.props.countdownLabel || "Days left", x + w / 2, y + h * 0.75, { align: "center" });
         break;
       }
       default:

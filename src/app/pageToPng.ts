@@ -329,7 +329,10 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
           ctx.font = `${fs}px ${getCanvasFontFamily(def.fontFamily || "Inter")}`;
           ctx.fillStyle = "#1c1917";
           ctx.textBaseline = "top";
+          ctx.save();
+          ctx.translate(x + 10 * SCALE, y + 10 * SCALE);
           wrapText(ctx, text, width - 20 * SCALE, fs * 1.4);
+          ctx.restore();
         }
         break;
       }
@@ -354,6 +357,113 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         ctx.fillText(`${n.wMm.toFixed(1)} mm`, x + width / 2, y + height / 2 - 4 * SCALE);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+        break;
+      }
+      case "rating": {
+        const val = n.props.ratingValue ?? 3;
+        const max = n.props.ratingMax ?? 5;
+        const color = n.props.ratingColor || "#f59e0b";
+        const empty = "#d1d5db";
+        const fs = Math.min(height * 0.8, 20 * SCALE);
+        ctx.font = `${fs}px sans-serif`;
+        ctx.textBaseline = "middle";
+        for (let i = 0; i < max; i++) {
+          ctx.fillStyle = i < val ? color : empty;
+          ctx.fillText("★", x + i * (width / max), y + height / 2);
+        }
+        ctx.textBaseline = "alphabetic";
+        break;
+      }
+      case "signature": {
+        ctx.strokeStyle = "#374151";
+        ctx.lineWidth = 1.5 * SCALE;
+        ctx.beginPath();
+        ctx.moveTo(x + 6 * SCALE, y + height * 0.7);
+        ctx.lineTo(x + width - 6 * SCALE, y + height * 0.7);
+        ctx.stroke();
+        ctx.fillStyle = "#6b7280";
+        ctx.font = `${8 * SCALE}px sans-serif`;
+        ctx.fillText(n.props.signatureLabel || "Signature", x + 6 * SCALE, y + height - 4 * SCALE);
+        break;
+      }
+      case "barcode": {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.strokeRect(x, y, width, height);
+        const txt = n.props.barcodeText || "123456789";
+        const barW = Math.max(1, width / (txt.length * 2 + 10));
+        ctx.fillStyle = "#000000";
+        for (let i = 0; i < txt.length; i++) {
+          const bx = x + 8 * SCALE + i * barW * 2;
+          const bh = height * 0.6;
+          ctx.fillRect(bx, y + 4 * SCALE, barW, bh);
+        }
+        ctx.fillStyle = "#000000";
+        ctx.font = `${8 * SCALE}px monospace`;
+        ctx.textAlign = "center";
+        ctx.fillText(txt, x + width / 2, y + height - 4 * SCALE);
+        ctx.textAlign = "start";
+        break;
+      }
+      case "chart": {
+        const data = (n.props.chartData || "10,30,20,50,40").split(",").map(Number);
+        const maxVal = Math.max(...data, 1);
+        const chartColor = n.props.chartColors || "#6366f1";
+        ctx.fillStyle = chartColor;
+        const barWidth2 = width / data.length * 0.8;
+        const gap = width / data.length * 0.1;
+        data.forEach((v, i) => {
+          const bh = (v / maxVal) * height;
+          const bx = x + i * (width / data.length) + gap;
+          ctx.beginPath();
+          ctx.roundRect(bx, y + height - bh, barWidth2, bh, 2 * SCALE);
+          ctx.fill();
+        });
+        break;
+      }
+      case "timeline": {
+        let items: { date: string; title: string }[] = [];
+        try { items = JSON.parse(n.props.timelineItems || "[]"); } catch {}
+        if (!items.length) items = [{ date: "2026", title: "Event" }];
+        const tlColor = n.props.fill || "#6366f1";
+        ctx.strokeStyle = tlColor;
+        ctx.globalAlpha = 0.3;
+        ctx.lineWidth = 2 * SCALE;
+        ctx.beginPath();
+        ctx.moveTo(x + 5 * SCALE, y + 8 * SCALE);
+        ctx.lineTo(x + 5 * SCALE, y + height - 8 * SCALE);
+        ctx.stroke();
+        ctx.globalAlpha = n.props.opacity ?? 1;
+        items.forEach((it, i) => {
+          const iy = y + i * (height / items.length) + 12 * SCALE;
+          ctx.fillStyle = tlColor;
+          ctx.beginPath();
+          ctx.arc(x + 5 * SCALE, iy, 4 * SCALE, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#111827";
+          ctx.font = `bold ${9 * SCALE}px sans-serif`;
+          ctx.fillText(it.date || "", x + 14 * SCALE, iy);
+          ctx.fillStyle = "#64748b";
+          ctx.font = `${8 * SCALE}px sans-serif`;
+          ctx.fillText(it.title || "", x + 14 * SCALE, iy + 10 * SCALE);
+        });
+        break;
+      }
+      case "countdown": {
+        const target = n.props.countdownTarget || new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10);
+        const diff = Math.max(0, Math.ceil((new Date(target).getTime() - Date.now()) / 86400000));
+        const cdColor = n.props.fill || "#6366f1";
+        ctx.fillStyle = cdColor;
+        ctx.font = `bold ${24 * SCALE}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(diff), x + width / 2, y + height * 0.45);
+        ctx.fillStyle = "#64748b";
+        ctx.font = `${9 * SCALE}px sans-serif`;
+        ctx.fillText(n.props.countdownLabel || "Days left", x + width / 2, y + height * 0.75);
         ctx.textAlign = "start";
         ctx.textBaseline = "alphabetic";
         break;
