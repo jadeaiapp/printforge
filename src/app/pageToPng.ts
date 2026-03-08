@@ -72,8 +72,20 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas 2d not available");
 
-  const pageBg = page.nodes.length ? "#ffffff" : (doc.pageBg || "#ffffff");
-  ctx.fillStyle = pageBg;
+  const pageBgGrad = doc.pageBgGradient;
+  if (pageBgGrad?.start && pageBgGrad?.end) {
+    const angle = (pageBgGrad.angle ?? 90) * (Math.PI / 180);
+    const cx = w / 2;
+    const cy = h / 2;
+    const dx = Math.cos(angle) * w;
+    const dy = Math.sin(angle) * h;
+    const grd = ctx.createLinearGradient(cx - dx / 2, cy - dy / 2, cx + dx / 2, cy + dy / 2);
+    grd.addColorStop(0, pageBgGrad.start);
+    grd.addColorStop(1, pageBgGrad.end);
+    ctx.fillStyle = grd;
+  } else {
+    ctx.fillStyle = doc.pageBg || "#ffffff";
+  }
   ctx.fillRect(0, 0, w, h);
 
   const def = doc.defaults || {};
@@ -119,11 +131,19 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
       case "box":
       case "highlight":
       case "roundedrect": {
-        const fill = n.props.fill || defaultFill;
+        const fillGrad = n.props.fillGradient;
         const stroke = n.props.stroke || defaultStroke;
         const strokeW = (n.props.strokeWidth ?? 1) * SCALE;
         const radius = Math.min((n.props.radius ?? 0) * SCALE, width / 2, height / 2);
-        ctx.fillStyle = fill;
+        if (fillGrad?.start && fillGrad?.end) {
+          const angle = (fillGrad.angle ?? 90) * (Math.PI / 180);
+          const grd = ctx.createLinearGradient(x, y, x + Math.cos(angle) * width, y + Math.sin(angle) * height);
+          grd.addColorStop(0, fillGrad.start);
+          grd.addColorStop(1, fillGrad.end);
+          ctx.fillStyle = grd;
+        } else {
+          ctx.fillStyle = n.props.fill || defaultFill;
+        }
         ctx.strokeStyle = stroke;
         ctx.lineWidth = strokeW;
         ctx.beginPath();
@@ -146,13 +166,21 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
         break;
       }
       case "circle": {
-        const fill = n.props.fill || defaultFill;
+        const fillGradCircle = n.props.fillGradient;
         const stroke = n.props.stroke || defaultStroke;
         const strokeW = (n.props.strokeWidth ?? 1) * SCALE;
         const cx = x + width / 2;
         const cy = y + height / 2;
         const r = Math.min(width, height) / 2 - strokeW / 2;
-        ctx.fillStyle = fill;
+        if (fillGradCircle?.start && fillGradCircle?.end) {
+          const angle = (fillGradCircle.angle ?? 90) * (Math.PI / 180);
+          const grd = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
+          grd.addColorStop(0, fillGradCircle.start);
+          grd.addColorStop(1, fillGradCircle.end);
+          ctx.fillStyle = grd;
+        } else {
+          ctx.fillStyle = n.props.fill || defaultFill;
+        }
         ctx.strokeStyle = stroke;
         ctx.lineWidth = strokeW;
         ctx.beginPath();

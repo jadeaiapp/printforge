@@ -125,7 +125,19 @@ const base = import.meta.env.BASE_URL ?? "/";
 
               <section class="theme-subpanel active" data-theme-panel="page" role="tabpanel">
                 <h3>Page background</h3>
-                <label class="field"><span>Background color</span><input id="theme-page-color" class="control" type="color" /></label>
+                <label class="field"><span>Background color</span>
+                  <div class="color-with-hex">
+                    <input id="theme-page-color" class="control" type="color" />
+                    <span class="hex-value" id="theme-page-color-hex" aria-live="polite"></span>
+                    <button type="button" class="btn copy-hex" title={labels.copyHex} aria-label={labels.copyHex}>⎘</button>
+                  </div>
+                </label>
+                <label class="checkline"><input type="checkbox" id="theme-page-gradient-toggle" /> {labels.pageGradient}</label>
+                <div id="theme-page-gradient-fields" class="gradient-fields" hidden>
+                  <label class="field"><span>{labels.angle} (°)</span><input id="theme-page-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
+                  <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="theme-page-gradient-start" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="theme-page-gradient-end" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                </div>
 
                 <div class="theme-brand-colors">
                   <h3>{labels.brandColors}</h3>
@@ -139,9 +151,9 @@ const base = import.meta.env.BASE_URL ?? "/";
                 <details class="theme-advanced">
                   <summary>Advanced</summary>
                   <h3>New elements defaults</h3>
-                  <label class="field"><span>New text color</span><input id="theme-default-text" class="control" type="color" /></label>
-                  <label class="field"><span>New shape fill</span><input id="theme-default-fill" class="control" type="color" /></label>
-                  <label class="field"><span>New stroke color</span><input id="theme-default-stroke" class="control" type="color" /></label>
+                  <label class="field"><span>New text color</span><div class="color-with-hex"><input id="theme-default-text" class="control" type="color" /><span class="hex-value" id="theme-default-text-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="field"><span>New shape fill</span><div class="color-with-hex"><input id="theme-default-fill" class="control" type="color" /><span class="hex-value" id="theme-default-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="field"><span>New stroke color</span><div class="color-with-hex"><input id="theme-default-stroke" class="control" type="color" /><span class="hex-value" id="theme-default-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
                   <label class="field"><span>New corner radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
                   <div id="style-presets" class="theme-preset-list"></div>
                   <div class="theme-actions">
@@ -168,14 +180,14 @@ const base = import.meta.env.BASE_URL ?? "/";
       <section class="panel canvas-panel">
         <div id="arrange-toolbar" class="arrange-toolbar" hidden>
           <span>{labels.arrange}</span>
-          <button type="button" data-arrange="align-left" class="btn">⟸</button>
-          <button type="button" data-arrange="align-center" class="btn">↔</button>
-          <button type="button" data-arrange="align-right" class="btn">⟹</button>
-          <button type="button" data-arrange="align-top" class="btn">⟰</button>
-          <button type="button" data-arrange="align-middle" class="btn">↕</button>
-          <button type="button" data-arrange="align-bottom" class="btn">⟱</button>
-          <button type="button" data-arrange="dist-h" class="btn">⇆</button>
-          <button type="button" data-arrange="dist-v" class="btn">⇅</button>
+          <button type="button" data-arrange="align-left" class="btn" title={labels.arrangeAlignLeft}>⟸</button>
+          <button type="button" data-arrange="align-center" class="btn" title={labels.arrangeAlignCenter}>↔</button>
+          <button type="button" data-arrange="align-right" class="btn" title={labels.arrangeAlignRight}>⟹</button>
+          <button type="button" data-arrange="align-top" class="btn" title={labels.arrangeAlignTop}>⟰</button>
+          <button type="button" data-arrange="align-middle" class="btn" title={labels.arrangeAlignMiddle}>↕</button>
+          <button type="button" data-arrange="align-bottom" class="btn" title={labels.arrangeAlignBottom}>⟱</button>
+          <button type="button" data-arrange="dist-h" class="btn" title={labels.arrangeDistributeH}>⇆</button>
+          <button type="button" data-arrange="dist-v" class="btn" title={labels.arrangeDistributeV}>⇅</button>
           <span class="arrange-sep" aria-hidden="true">|</span>
           <button type="button" id="copy-style-btn" class="btn" title={labels.copyStyle}>{labels.copyStyle}</button>
           <button type="button" id="paste-style-btn" class="btn" title={labels.pasteStyle}>{labels.pasteStyle}</button>
@@ -223,15 +235,21 @@ const base = import.meta.env.BASE_URL ?? "/";
                 <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
                 <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
                 <label class="field"><span>Align</span><select id="ins-align" class="control"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-                <label class="field"><span>Text color</span><input id="ins-text-color" class="control" type="color" /></label>
+                <label class="field"><span>Text color</span><div class="color-with-hex"><input id="ins-text-color" class="control" type="color" /><span class="hex-value" id="ins-text-color-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
                 <label class="field"><span>Line height</span><input id="ins-line-height" class="control" type="number" min="1" max="2.4" step="0.05" /></label>
               </div>
             </section>
 
             <section class="ins-group" data-for="shape">
               <div class="inspector-grid">
-                <label class="field"><span>Fill</span><input id="ins-fill" class="control" type="color" /></label>
-                <label class="field"><span>Stroke</span><input id="ins-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-fill" class="control" type="color" /><span class="hex-value" id="ins-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                <label class="field toggle-field"><span>{labels.fillGradient}</span><input type="checkbox" id="ins-fill-gradient-toggle" /></label>
+                <div id="ins-fill-gradient-fields" class="gradient-fields" hidden>
+                  <label class="field"><span>{labels.angle} (°)</span><input id="ins-fill-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
+                  <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-start" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-end" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                </div>
+                <label class="field"><span>Stroke</span><div class="color-with-hex"><input id="ins-stroke" class="control" type="color" /><span class="hex-value" id="ins-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
                 <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
                 <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
               </div>
@@ -240,7 +258,7 @@ const base = import.meta.env.BASE_URL ?? "/";
             <section class="ins-group" data-for="line">
               <div class="inspector-grid">
                 <label class="field"><span>Line w</span><input id="ins-thickness" class="control" type="number" min="1" max="20" /></label>
-                <label class="field"><span>Line color</span><input id="ins-color" class="control" type="color" /></label>
+                <label class="field"><span>Line color</span><div class="color-with-hex"><input id="ins-color" class="control" type="color" /><span class="hex-value" id="ins-color-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
               </div>
             </section>
 
@@ -252,8 +270,8 @@ const base = import.meta.env.BASE_URL ?? "/";
 
             <section class="ins-group" data-for="svg">
               <div class="inspector-grid">
-                <label class="field"><span>Fill</span><input id="ins-svg-fill" class="control" type="color" /></label>
-                <label class="field"><span>Stroke</span><input id="ins-svg-stroke" class="control" type="color" /></label>
+                <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-svg-fill" class="control" type="color" /><span class="hex-value" id="ins-svg-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                <label class="field"><span>Stroke</span><div class="color-with-hex"><input id="ins-svg-stroke" class="control" type="color" /><span class="hex-value" id="ins-svg-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
                 <label class="field"><span>Rotation</span><input id="ins-rotation" class="control" type="range" min="0" max="360" step="1" /></label>
               </div>
             </section>
@@ -295,6 +313,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       <button type="button" data-context-action="front">{labels.contextFront}</button>
       <button type="button" data-context-action="back">{labels.contextBack}</button>
       <button type="button" data-context-action="lock">{labels.contextLock}</button>
+      <button type="button" data-context-action="lockSelection" id="context-lock-selection" hidden>{labels.contextLockSelection}</button>
+      <button type="button" data-context-action="unlockSelection" id="context-unlock-selection" hidden>{labels.contextUnlockSelection}</button>
       <button type="button" data-context-action="visibility">{labels.contextVisibility}</button>
       <button type="button" data-context-action="copy">{labels.contextCopy}</button>
       <button type="button" data-context-action="paste">{labels.contextPaste}</button>
@@ -347,7 +367,7 @@ const base = import.meta.env.BASE_URL ?? "/";
           <li><kbd>Ctrl</kbd><kbd>Z</kbd> {labels.shortcutsUndo}</li>
           <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Z</kbd> {labels.shortcutsRedo}</li>
           <li><kbd>Ctrl</kbd><kbd>D</kbd> {labels.shortcutsDuplicate}</li>
-          <li><kbd>Delete</kbd> / <kbd>Backspace</kbd> {labels.shortcutsDelete}</li>
+          <li><kbd>Delete</kbd> {labels.shortcutsDelete}</li>
           <li><kbd>Ctrl</kbd><kbd>G</kbd> {labels.shortcutsGroup}</li>
           <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>G</kbd> {labels.shortcutsUngroup}</li>
           <li><kbd>Space</kbd> + drag {labels.shortcutsPan}</li>
@@ -467,6 +487,10 @@ const base = import.meta.env.BASE_URL ?? "/";
       insLineHeight: document.getElementById('ins-line-height'), insListLineHeight: document.getElementById('ins-list-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
       themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
+      themePageGradientToggle: document.getElementById('theme-page-gradient-toggle'), themePageGradientFields: document.getElementById('theme-page-gradient-fields'),
+      themePageGradientAngle: document.getElementById('theme-page-gradient-angle'), themePageGradientStart: document.getElementById('theme-page-gradient-start'), themePageGradientEnd: document.getElementById('theme-page-gradient-end'),
+      insFillGradientToggle: document.getElementById('ins-fill-gradient-toggle'), insFillGradientFields: document.getElementById('ins-fill-gradient-fields'),
+      insFillGradientAngle: document.getElementById('ins-fill-gradient-angle'), insFillGradientStart: document.getElementById('ins-fill-gradient-start'), insFillGradientEnd: document.getElementById('ins-fill-gradient-end'),
       stylePresets: document.getElementById('style-presets'), presetApplySelection: document.getElementById('preset-apply-selection'), presetApplyAll: document.getElementById('preset-apply-all'), brandSwatchesContainer: document.getElementById('brand-swatches'), recentSwatchesContainer: document.getElementById('recent-swatches'),
       themeSubtabs: [...document.querySelectorAll('[data-theme-subtab]')], themePanels: [...document.querySelectorAll('[data-theme-panel]')],
       inspectorGroups: [...document.querySelectorAll('.ins-group')],
@@ -506,6 +530,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (!nextDoc.workspaceGradientId) nextDoc.workspaceGradientId = 'light';
       if (typeof nextDoc.workspacePatternOn !== 'boolean') nextDoc.workspacePatternOn = false;
       if (!nextDoc.pageBg) nextDoc.pageBg = '#ffffff';
+      if (nextDoc.pageBgGradient && (typeof nextDoc.pageBgGradient.angle !== 'number' || !nextDoc.pageBgGradient.start || !nextDoc.pageBgGradient.end)) nextDoc.pageBgGradient = undefined;
       if (!Array.isArray(nextDoc.brandSwatches) || nextDoc.brandSwatches.length > 5) nextDoc.brandSwatches = ['#6366f1', '#14b8a6', '#f97316'];
       if (!Array.isArray(nextDoc.recentColors) || nextDoc.recentColors.length > 8) nextDoc.recentColors = [];
       if (!nextDoc.grid || typeof nextDoc.grid.enabled !== 'boolean') nextDoc.grid = { enabled: false, stepMm: 5 };
@@ -530,6 +555,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (["line", "divider"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.strokeColor;
         if (["box", "highlight", "roundedrect", "circle", "svg"].includes(node.type)) {
           if (!node.props.fill) node.props.fill = nextDoc.defaults.fillColor;
+          if (node.props.fillGradient && (typeof node.props.fillGradient.angle !== 'number' || !node.props.fillGradient.start || !node.props.fillGradient.end)) node.props.fillGradient = undefined;
           if (!node.props.stroke) node.props.stroke = nextDoc.defaults.strokeColor;
         }
         if (["text", "heading", "paragraph", "datelabel"].includes(node.type) && !node.props.color) node.props.color = nextDoc.defaults.textColor;
@@ -699,6 +725,10 @@ const base = import.meta.env.BASE_URL ?? "/";
     };
     const focusCanvas = () => requestAnimationFrame(() => el.stage.focus());
     const setSaveIndicator = () => { el.saveIndicator.textContent = dirty ? labels.unsaved : labels.saved; el.saveIndicator.classList.toggle('dirty', dirty); };
+    const updateHexDisplay = (input) => { if (!input) return; const hex = input.closest('.color-with-hex')?.querySelector('.hex-value'); if (hex) hex.textContent = (input.value || '').toUpperCase(); };
+    const updateAllHexDisplays = () => { document.querySelectorAll('.color-with-hex input[type=color]').forEach(updateHexDisplay); };
+    document.querySelectorAll('.color-with-hex input[type=color]').forEach((inp) => { inp.addEventListener('input', () => updateHexDisplay(inp)); });
+    document.body.addEventListener('click', (e) => { const btn = e.target.closest('.copy-hex'); if (!btn) return; const wrap = btn.closest('.color-with-hex'); const input = wrap?.querySelector('input[type=color]'); if (input?.value) { navigator.clipboard.writeText(input.value).then(() => showToast(labels.toastCopied || 'Copied')).catch(() => {}); } });
 
     const resetHistory = () => { undoStack = [structuredClone(doc)]; redoStack = []; dirty = false; setSaveIndicator(); };
     const loadDoc = (nextDoc) => { doc = normalizeDoc(nextDoc); setPrimarySelection(null); ensureProjectName(); resetHistory(); render(); autosaveSchedule(); focusCanvas(); };
@@ -839,7 +869,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       el.workspace.style.setProperty('--workspace-solid', doc.workspaceBg || '#e5e7eb');
       el.workspace.style.setProperty('--workspace-gradient', gradient.value);
       el.workspace.classList.toggle('with-pattern', !!doc.workspacePatternOn);
-      el.page.style.setProperty('--page-bg', doc.pageBg || '#ffffff');
+      if (doc.pageBgGradient?.start && doc.pageBgGradient?.end) {
+        el.page.style.background = `linear-gradient(${doc.pageBgGradient.angle ?? 90}deg, ${doc.pageBgGradient.start}, ${doc.pageBgGradient.end})`;
+        el.page.style.removeProperty('--page-bg');
+      } else {
+        el.page.style.removeProperty('background');
+        el.page.style.setProperty('--page-bg', doc.pageBg || '#ffffff');
+      }
       el.page.style.width = `${mmToPx(d.wMm)}px`;
       el.page.style.height = `${mmToPx(d.hMm)}px`;
       const rulerOn = !!doc.rulerOn;
@@ -903,6 +939,18 @@ const base = import.meta.env.BASE_URL ?? "/";
       });
 
       el.themePageColor.value = doc.pageBg || '#ffffff';
+      const hasPageGrad = doc.pageBgGradient?.start && doc.pageBgGradient?.end;
+      if (el.themePageGradientToggle) { el.themePageGradientToggle.checked = !!hasPageGrad; }
+      if (el.themePageGradientFields) { el.themePageGradientFields.hidden = !hasPageGrad; }
+      if (hasPageGrad) {
+        if (el.themePageGradientAngle) el.themePageGradientAngle.value = String(doc.pageBgGradient.angle ?? 90);
+        if (el.themePageGradientStart) el.themePageGradientStart.value = doc.pageBgGradient.start;
+        if (el.themePageGradientEnd) el.themePageGradientEnd.value = doc.pageBgGradient.end;
+      } else {
+        if (el.themePageGradientAngle) el.themePageGradientAngle.value = '90';
+        if (el.themePageGradientStart) el.themePageGradientStart.value = doc.pageBg || '#ffffff';
+        if (el.themePageGradientEnd) el.themePageGradientEnd.value = '#e5e7eb';
+      }
       el.themeDefaultText.value = doc.defaults.textColor || '#111827';
       el.themeDefaultFill.value = doc.defaults.fillColor || '#e2e8f0';
       el.themeDefaultStroke.value = doc.defaults.strokeColor || '#94a3b8';
@@ -941,6 +989,7 @@ const base = import.meta.env.BASE_URL ?? "/";
 
       const recent = doc.recentColors || [];
       el.recentSwatchesContainer.innerHTML = recent.length ? recent.map((hex) => `<button type="button" class="brand-swatch" data-recent-color="${hex}" title="${hex}" style="background:${hex}" aria-label="Apply ${hex}"></button>`).join('') : '';
+      updateAllHexDisplays();
       el.recentSwatchesContainer.querySelectorAll('[data-recent-color]').forEach((btn) => {
         btn.onclick = () => {
           const color = btn.dataset.recentColor;
@@ -1040,7 +1089,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       }
       if (["box","highlight","roundedrect","circle"].includes(n.type)) {
         const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
-        return `<div class="box-content" style="background:${n.props.fill||doc.defaults.fillColor||'#e2e8f0'};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||doc.defaults.strokeColor||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};"></div>`;
+        const fillBg = (n.props.fillGradient?.start && n.props.fillGradient?.end) ? `linear-gradient(${n.props.fillGradient.angle ?? 90}deg, ${n.props.fillGradient.start}, ${n.props.fillGradient.end})` : (n.props.fill||doc.defaults.fillColor||'#e2e8f0');
+        return `<div class="box-content" style="background:${fillBg};border:${n.props.strokeWidth||1}px solid ${n.props.stroke||doc.defaults.strokeColor||'#94a3b8'};border-radius:${radius};opacity:${n.props.opacity||1};"></div>`;
       }
       if (["line","divider"].includes(n.type)) return `<div class="line-content" style="height:${n.props.thickness||2}px;background:${n.props.color||'#334155'};opacity:${n.props.opacity||1}"></div>`;
       if (n.type === 'checkbox') return `<div class="meta-content">${n.props.checked?'☑':'☐'} ${n.props.text||'Checkbox item'}</div>`;
@@ -1232,6 +1282,18 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isShape = n && ["box","highlight","roundedrect","circle"].includes(n.type);
       const isSvg = n && n.type === 'svg';
       enableControl(el.insFill, isShape, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
+      const hasFillGrad = isShape && n?.props?.fillGradient?.start && n?.props?.fillGradient?.end;
+      if (el.insFillGradientToggle) { el.insFillGradientToggle.checked = !!hasFillGrad; enableControl(el.insFillGradientToggle, isShape, !!hasFillGrad, true); }
+      if (el.insFillGradientFields) { el.insFillGradientFields.hidden = !hasFillGrad; }
+      if (hasFillGrad) {
+        if (el.insFillGradientAngle) { el.insFillGradientAngle.value = String(n.props.fillGradient.angle ?? 90); el.insFillGradientAngle.disabled = false; }
+        if (el.insFillGradientStart) { el.insFillGradientStart.value = n.props.fillGradient.start; el.insFillGradientStart.disabled = false; }
+        if (el.insFillGradientEnd) { el.insFillGradientEnd.value = n.props.fillGradient.end; el.insFillGradientEnd.disabled = false; }
+      } else if (isShape && el.insFillGradientAngle) {
+        el.insFillGradientAngle.value = '90';
+        if (el.insFillGradientStart) el.insFillGradientStart.value = n?.props?.fill || doc.defaults.fillColor || '#e2e8f0';
+        if (el.insFillGradientEnd) el.insFillGradientEnd.value = '#94a3b8';
+      }
       enableControl(el.insStroke, isShape, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
       enableControl(el.insSvgFill, isSvg, n?.props.fill || doc.defaults.fillColor || '#e2e8f0');
       enableControl(el.insSvgStroke, isSvg, n?.props.stroke || doc.defaults.strokeColor || '#94a3b8');
@@ -1257,6 +1319,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insTableCols, isTable, clamp(Number(n?.props.cols || 4), 2, 10));
 
       el.note.textContent = '';
+      updateAllHexDisplays();
     }
 
     function renderSelectionOverlays() {
@@ -1333,12 +1396,12 @@ const base = import.meta.env.BASE_URL ?? "/";
       render();
     }
 
-    const STYLE_KEYS = ['color', 'fill', 'stroke', 'strokeWidth', 'radius', 'fontSize', 'fontFamily', 'fontWeight', 'italic', 'align', 'thickness', 'boxShadow'];
+    const STYLE_KEYS = ['color', 'fill', 'fillGradient', 'stroke', 'strokeWidth', 'radius', 'fontSize', 'fontFamily', 'fontWeight', 'italic', 'align', 'thickness', 'boxShadow'];
     function copyStyle() {
       const n = activeNode();
       if (!n || selectedNodeIds.size !== 1) return;
       copiedStyle = {};
-      STYLE_KEYS.forEach((k) => { if (n.props[k] !== undefined) copiedStyle[k] = n.props[k]; });
+      STYLE_KEYS.forEach((k) => { if (n.props[k] !== undefined) copiedStyle[k] = structuredClone(n.props[k]); });
     }
     function pasteStyle() {
       if (!copiedStyle || Object.keys(copiedStyle).length === 0 || !selectedNodeIds.size) return;
@@ -1349,6 +1412,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (n.locked) return;
         if (copiedStyle.color !== undefined && (textTypes.includes(n.type) || lineTypes.includes(n.type))) n.props.color = copiedStyle.color;
         if (copiedStyle.fill !== undefined && shapeTypes.includes(n.type)) n.props.fill = copiedStyle.fill;
+        if (copiedStyle.fillGradient !== undefined && shapeTypes.includes(n.type)) n.props.fillGradient = copiedStyle.fillGradient ? structuredClone(copiedStyle.fillGradient) : undefined;
         if (copiedStyle.stroke !== undefined && shapeTypes.includes(n.type)) n.props.stroke = copiedStyle.stroke;
         if (copiedStyle.strokeWidth !== undefined && shapeTypes.includes(n.type)) n.props.strokeWidth = copiedStyle.strokeWidth;
         if (copiedStyle.radius !== undefined && shapeTypes.includes(n.type) && n.type !== 'circle') n.props.radius = copiedStyle.radius;
@@ -1500,9 +1564,21 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     function openContextMenu(clientX, clientY, nodeId) {
       contextNodeId = nodeId;
+      const lockSel = document.getElementById('context-lock-selection');
+      const unlockSel = document.getElementById('context-unlock-selection');
+      if (lockSel && unlockSel && selectedNodeIds.size >= 2) {
+        const p = activePage();
+        const selected = p ? p.nodes.filter((n) => selectedNodeIds.has(n.id)) : [];
+        const allLocked = selected.length > 0 && selected.every((n) => n.locked);
+        lockSel.hidden = allLocked;
+        unlockSel.hidden = !allLocked;
+      } else if (lockSel && unlockSel) {
+        lockSel.hidden = true;
+        unlockSel.hidden = true;
+      }
       el.contextMenu.hidden = false;
       const menuWidth = 190;
-      const menuHeight = 290;
+      const menuHeight = 320;
       el.contextMenu.style.left = `${Math.min(clientX, window.innerWidth - menuWidth)}px`;
       el.contextMenu.style.top = `${Math.min(clientY, window.innerHeight - menuHeight)}px`;
     }
@@ -1763,7 +1839,26 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insItalic.onchange = () => applyInspector((n)=>n.props.italic = el.insItalic.checked);
     el.insAlign.onchange = () => applyInspector((n)=>n.props.align = el.insAlign.value);
     el.insTextColor.onchange = () => { addRecentColor(el.insTextColor.value); applyInspector((n)=>n.props.color = el.insTextColor.value); };
-    el.insFill.onchange = () => { addRecentColor(el.insFill.value); applyInspector((n)=>n.props.fill = el.insFill.value); };
+    el.insFill.onchange = () => { addRecentColor(el.insFill.value); applyInspector((n)=>{ n.props.fill = el.insFill.value; if (n.props.fillGradient) n.props.fillGradient = undefined; }); };
+    if (el.insFillGradientToggle) {
+      el.insFillGradientToggle.onchange = () => {
+        if (el.insFillGradientToggle.checked) {
+          applyInspector((n) => {
+            n.props.fillGradient = { angle: 90, start: n.props.fill || doc.defaults.fillColor || '#e2e8f0', end: '#94a3b8' };
+          });
+          if (el.insFillGradientFields) el.insFillGradientFields.hidden = false;
+        } else {
+          applyInspector((n) => { n.props.fillGradient = undefined; });
+          if (el.insFillGradientFields) el.insFillGradientFields.hidden = true;
+        }
+        updateAllHexDisplays();
+        commitChange();
+        render();
+      };
+    }
+    if (el.insFillGradientAngle) el.insFillGradientAngle.onchange = () => { applyInspector((n)=>{ if (n.props.fillGradient) n.props.fillGradient.angle = clamp(Number(el.insFillGradientAngle.value) || 90, 0, 360); }); commitChange(); render(); };
+    if (el.insFillGradientStart) el.insFillGradientStart.onchange = () => { applyInspector((n)=>{ if (n.props.fillGradient) { n.props.fillGradient.start = el.insFillGradientStart.value; addRecentColor(el.insFillGradientStart.value); } }); commitChange(); render(); };
+    if (el.insFillGradientEnd) el.insFillGradientEnd.onchange = () => { applyInspector((n)=>{ if (n.props.fillGradient) { n.props.fillGradient.end = el.insFillGradientEnd.value; addRecentColor(el.insFillGradientEnd.value); } }); commitChange(); render(); };
     el.insStroke.onchange = () => { addRecentColor(el.insStroke.value); applyInspector((n)=>n.props.stroke = el.insStroke.value); };
     el.insSvgFill.onchange = () => { addRecentColor(el.insSvgFill.value); applyInspector((n)=>n.props.fill = el.insSvgFill.value); };
     el.insSvgStroke.onchange = () => { addRecentColor(el.insSvgStroke.value); applyInspector((n)=>n.props.stroke = el.insSvgStroke.value); };
@@ -1854,7 +1949,27 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
     el.themeWorkspaceColor.onchange = () => { addRecentColor(el.themeWorkspaceColor.value); doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
     el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
-    el.themePageColor.onchange = () => { addRecentColor(el.themePageColor.value); doc.pageBg = el.themePageColor.value; commitChange(); render(); };
+    el.themePageColor.onchange = () => { addRecentColor(el.themePageColor.value); if (!doc.pageBgGradient) doc.pageBg = el.themePageColor.value; commitChange(); render(); };
+    if (el.themePageGradientToggle) {
+      el.themePageGradientToggle.onchange = () => {
+        if (el.themePageGradientToggle.checked) {
+          doc.pageBgGradient = { angle: 90, start: doc.pageBg || '#ffffff', end: '#e5e7eb' };
+          if (el.themePageGradientFields) el.themePageGradientFields.hidden = false;
+          if (el.themePageGradientAngle) el.themePageGradientAngle.value = '90';
+          if (el.themePageGradientStart) el.themePageGradientStart.value = doc.pageBgGradient.start;
+          if (el.themePageGradientEnd) el.themePageGradientEnd.value = doc.pageBgGradient.end;
+        } else {
+          doc.pageBgGradient = undefined;
+          if (el.themePageGradientFields) el.themePageGradientFields.hidden = true;
+        }
+        updateAllHexDisplays();
+        commitChange();
+        render();
+      };
+    }
+    if (el.themePageGradientAngle) el.themePageGradientAngle.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.angle = clamp(Number(el.themePageGradientAngle.value) || 90, 0, 360); commitChange(); render(); } };
+    if (el.themePageGradientStart) el.themePageGradientStart.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.start = el.themePageGradientStart.value; addRecentColor(el.themePageGradientStart.value); commitChange(); render(); } };
+    if (el.themePageGradientEnd) el.themePageGradientEnd.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.end = el.themePageGradientEnd.value; addRecentColor(el.themePageGradientEnd.value); commitChange(); render(); } };
     el.themeDefaultText.onchange = () => { addRecentColor(el.themeDefaultText.value); doc.defaults.textColor = el.themeDefaultText.value; commitChange(); render(); };
     el.themeDefaultFill.onchange = () => { addRecentColor(el.themeDefaultFill.value); doc.defaults.fillColor = el.themeDefaultFill.value; commitChange(); render(); };
     el.themeDefaultStroke.onchange = () => { addRecentColor(el.themeDefaultStroke.value); doc.defaults.strokeColor = el.themeDefaultStroke.value; commitChange(); render(); };
@@ -1882,7 +1997,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       const dims = pageDimensionsMm(d.pageSize, d.orientation);
       const pxPerMm = 3.7795275591;
       const def = d.defaults || {};
-      const pageStyle = `width:${dims.wMm}mm;height:${dims.hMm}mm;background:${d.pageBg||'#fff'};position:relative;page-break-after:always;margin:0 auto 12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;`;
+      const pageBg = d.pageBgGradient?.start && d.pageBgGradient?.end ? `linear-gradient(${d.pageBgGradient.angle ?? 90}deg, ${d.pageBgGradient.start}, ${d.pageBgGradient.end})` : (d.pageBg || '#fff');
+      const pageStyle = `width:${dims.wMm}mm;height:${dims.hMm}mm;background:${pageBg};position:relative;page-break-after:always;margin:0 auto 12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;`;
       let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Print</title><style>body{margin:0;padding:12px;background:#666;} .page{${pageStyle}} .node{position:absolute;font-family:Inter,sans-serif;} .p-text{white-space:pre-wrap;word-break:break-word;} .p-box{box-sizing:border-box;} .p-table{display:grid;border:1px solid #94a3b8;} .p-table>div{border:1px solid #94a3b8;} @media print{body{background:#fff;padding:0;} .page{page-break-after:always;box-shadow:none;margin:0;} .page:last-child{page-break-after:auto;}}</style></head><body>`;
       d.pages.forEach((pg) => {
         html += `<div class="page" style="${pageStyle}">`;
@@ -1895,10 +2011,14 @@ const base = import.meta.env.BASE_URL ?? "/";
             const fs = n.props.fontSize||14; const c = n.props.color||def.textColor||'#111'; const align = n.props.align||'left';
             inner = `<div class="p-text" style="font-size:${fs}px;color:${c};text-align:${align};line-height:${(n.props.lineHeight||1.3)};margin:0;">${(n.props.text||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
           } else if (['box','highlight','roundedrect'].includes(n.type)) {
-            const fill = n.props.fill||def.fillColor||'#e2e8f0'; const stroke = n.props.stroke||def.strokeColor||'#94a3b8'; const r = n.props.radius||0;
+            const fg = n.props.fillGradient;
+            const fill = (fg?.start && fg?.end) ? `linear-gradient(${fg.angle ?? 90}deg, ${fg.start}, ${fg.end})` : (n.props.fill||def.fillColor||'#e2e8f0');
+            const stroke = n.props.stroke||def.strokeColor||'#94a3b8'; const r = n.props.radius||0;
             inner = `<div class="p-box" style="width:100%;height:100%;background:${fill};border:1px solid ${stroke};border-radius:${r}px;"></div>`;
           } else if (n.type === 'circle') {
-            const fill = n.props.fill||def.fillColor; const stroke = n.props.stroke||def.strokeColor;
+            const fg = n.props.fillGradient;
+            const fill = (fg?.start && fg?.end) ? `linear-gradient(${fg.angle ?? 90}deg, ${fg.start}, ${fg.end})` : (n.props.fill||def.fillColor);
+            const stroke = n.props.stroke||def.strokeColor;
             inner = `<div class="p-box" style="width:100%;height:100%;background:${fill};border:1px solid ${stroke};border-radius:50%;"></div>`;
           } else if (['line','divider'].includes(n.type)) {
             const th = n.props.thickness||2; const col = n.props.color||def.strokeColor||'#334155';
@@ -1972,7 +2092,8 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     el.contextMenu.addEventListener('click', (event) => {
       const action = event.target.closest('[data-context-action]')?.dataset.contextAction;
-      if (!action || !contextNodeId) return;
+      if (!action) return;
+      if (!contextNodeId && action !== 'lockSelection' && action !== 'unlockSelection') return;
       if (action === 'duplicate') duplicateNode(contextNodeId);
       if (action === 'delete') deleteNodeById(contextNodeId, true);
       if (action === 'front') { setSelection([contextNodeId], contextNodeId); zMove('front'); }
@@ -1980,6 +2101,18 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (action === 'lock') {
         const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
         if (node) { node.locked = !node.locked; commitChange(); render(); }
+      }
+      if (action === 'lockSelection' && selectedNodeIds.size >= 2) {
+        const p = activePage();
+        if (p) p.nodes.forEach((n) => { if (selectedNodeIds.has(n.id)) n.locked = true; });
+        commitChange();
+        render();
+      }
+      if (action === 'unlockSelection' && selectedNodeIds.size >= 2) {
+        const p = activePage();
+        if (p) p.nodes.forEach((n) => { if (selectedNodeIds.has(n.id)) n.locked = false; });
+        commitChange();
+        render();
       }
       if (action === 'visibility') {
         const node = activePage()?.nodes.find((item) => item.id === contextNodeId);
@@ -2061,7 +2194,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         e.preventDefault();
       }
       if (typing) return;
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIds.size) {
+      if (e.key === 'Delete' && selectedNodeIds.size) {
         e.preventDefault();
         deleteSelectedNodes();
       }
@@ -2084,5 +2217,6 @@ const base = import.meta.env.BASE_URL ?? "/";
     render();
     if (localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
     focusCanvas();
+    window.addEventListener('beforeunload', () => saveToLocal(doc));
   </script>
 </BaseLayout>

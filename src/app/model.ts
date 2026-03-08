@@ -49,6 +49,8 @@ export interface NodeProps {
   svgMarkup?: string;
   rotation?: number;
   boxShadow?: string;
+  /** Linear gradient for fill (shapes). If set, used instead of fill for background. */
+  fillGradient?: { angle: number; start: string; end: string };
 }
 
 
@@ -85,6 +87,8 @@ export interface Doc {
   workspaceGradientId: string;
   workspacePatternOn: boolean;
   pageBg: string;
+  /** Page background as linear gradient. When set, overrides pageBg for canvas. */
+  pageBgGradient?: { angle: number; start: string; end: string };
   brandSwatches: string[];
   recentColors?: string[];
   defaults: {

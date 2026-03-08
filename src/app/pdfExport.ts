@@ -80,7 +80,8 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
       case "box":
       case "highlight":
       case "roundedrect": {
-        const fill = node.props.fill || doc.defaults?.fillColor || "#e2e8f0";
+        const fillGrad = node.props.fillGradient;
+        const fill = (fillGrad?.start ? fillGrad.start : null) ?? node.props.fill ?? doc.defaults?.fillColor ?? "#e2e8f0";
         const stroke = node.props.stroke || doc.defaults?.strokeColor || "#94a3b8";
         const radius = Math.min((node.props.radius ?? 0) / 2, w / 2, h / 2);
         const [fr, fg, fb] = hexToRgb(fill);
@@ -96,7 +97,8 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         break;
       }
       case "circle": {
-        const fill = node.props.fill || doc.defaults?.fillColor || "#e2e8f0";
+        const fillGradCircle = node.props.fillGradient;
+        const fill = (fillGradCircle?.start ? fillGradCircle.start : null) ?? node.props.fill ?? doc.defaults?.fillColor ?? "#e2e8f0";
         const stroke = node.props.stroke || doc.defaults?.strokeColor || "#94a3b8";
         const [fr, fg, fb] = hexToRgb(fill);
         const [sr, sg, sb] = hexToRgb(stroke);
@@ -182,6 +184,9 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
     ? (doc.orientation === "portrait" ? { w: 210, h: 297 } : { w: 297, h: 210 })
     : (doc.orientation === "portrait" ? { w: 148, h: 210 } : { w: 210, h: 148 });
 
+  const pageBgHex = doc.pageBgGradient?.start ?? doc.pageBg ?? "#ffffff";
+  const [pageR, pageG, pageB] = hexToRgb(pageBgHex);
+
   doc.pages.forEach((page: Page, index: number) => {
     if (index > 0) {
       pdf.addPage(
@@ -189,7 +194,7 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         doc.orientation
       );
     }
-    pdf.setFillColor(255, 255, 255);
+    pdf.setFillColor(pageR * 255, pageG * 255, pageB * 255);
     pdf.rect(0, 0, pageDims.w, pageDims.h, "F");
     const sorted = [...page.nodes].sort((a, b) => a.z - b.z);
     sorted.forEach((node) => drawNode(pdf, node, pageDims.w, pageDims.h));
