@@ -940,3 +940,63 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .app-shell.dark-mode .history-header { color: #e2e2f0; border-color: #2e2e42; }
 .app-shell.dark-mode .history-item { color: #a0a0b8; }
 .app-shell.dark-mode .history-item.active { background: #6366f1; color: #fff; }
+
+/* Favorites bar */
+.favorites-bar { padding: 6px 10px; border-bottom: 1px solid var(--panel-border, #e2e8f0); background: var(--panel-bg, #fff); }
+.favorites-bar[hidden] { display: none; }
+.favorites-label { font-size: 10px; font-weight: 600; color: var(--ctrl-muted, #64748b); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+.favorites-items { display: flex; gap: 4px; flex-wrap: wrap; }
+.fav-item { padding: 4px 8px; border: 1px solid var(--ctrl-br, #cbd5e1); border-radius: 6px; font-size: 11px; cursor: pointer; background: var(--panel-bg, #fff); color: var(--ctrl-text, #111); }
+.fav-item:hover { background: var(--canva-accent, #6366f1); color: #fff; }
+
+/* Font preview select */
+.font-preview-select option { padding: 4px; font-size: 14px; }
+
+/* Color generator */
+.color-gen-panel { display: flex; flex-direction: column; gap: 6px; }
+
+/* Master list */
+.master-list { margin-top: 8px; }
+.master-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; font-size: 12px; border-bottom: 1px solid var(--panel-border, #e2e8f0); }
+
+/* Component list */
+.component-list { margin-top: 8px; }
+.component-item { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.component-item .btn { font-size: 11px; padding: 3px 8px; }
+
+/* Template var buttons */
+.template-var-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.template-var-btns .btn { font-size: 11px; padding: 4px 8px; }
+
+/* Print profile */
+.print-profile-panel { display: flex; flex-direction: column; gap: 6px; }
+
+/* Spread view */
+.spread-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 550; display: flex; flex-direction: column; }
+.spread-overlay[hidden] { display: none; }
+.spread-header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(0,0,0,.8); color: #fff; font-size: 14px; font-weight: 600; }
+.spread-pages { flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 20px; padding: 24px; overflow: auto; }
+.spread-page-wrap { cursor: pointer; text-align: center; transition: transform 0.15s; }
+.spread-page-wrap:hover { transform: scale(1.03); }
+.spread-page-label { font-size: 11px; color: rgba(255,255,255,.6); margin-bottom: 6px; }
+.spread-page-canvas { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.3); border-radius: 4px; }
+
+/* A11y panel */
+.a11y-panel { position: fixed; right: 0; top: 48px; bottom: 0; width: 280px; background: var(--panel-bg, #fff); border-left: 1px solid var(--panel-border, #e2e8f0); z-index: 300; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,.1); }
+.a11y-panel[hidden] { display: none; }
+.a11y-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--panel-border, #e2e8f0); font-size: 13px; font-weight: 600; color: var(--ctrl-text, #111); }
+.a11y-results { flex: 1; overflow-y: auto; padding: 10px; }
+.a11y-item { padding: 8px; margin-bottom: 6px; border-radius: 6px; font-size: 12px; }
+.a11y-item.pass { background: #ecfdf5; border: 1px solid #6ee7b7; }
+.a11y-item.fail { background: #fef2f2; border: 1px solid #fca5a5; }
+.a11y-summary { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--ctrl-text, #111); }
+.a11y-pass-all { color: #059669; font-weight: 600; }
+
+/* Dark mode for new panels */
+.app-shell.dark-mode .favorites-bar { background: #1a1a2e; border-color: #2e2e42; }
+.app-shell.dark-mode .fav-item { background: #1a1a2e; border-color: #2e2e42; color: #e2e2f0; }
+.app-shell.dark-mode .spread-overlay { background: rgba(0,0,0,.85); }
+.app-shell.dark-mode .a11y-panel { background: #1e1e2e; border-color: #2e2e42; }
+.app-shell.dark-mode .a11y-header { color: #e2e2f0; border-color: #2e2e42; }
+.app-shell.dark-mode .a11y-item.pass { background: #052e16; border-color: #065f46; }
+.app-shell.dark-mode .a11y-item.fail { background: #2d1515; border-color: #7f1d1d; }

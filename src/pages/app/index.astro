@@ -55,6 +55,7 @@ const base = import.meta.env.BASE_URL ?? "/";
             <button type="button" id="share-btn" class="file-menu-item" role="menuitem">{labels.shareReadOnly}</button>
             <button type="button" id="export-html-btn" class="file-menu-item" role="menuitem">{labels.exportHtml}</button>
             <button type="button" id="batch-export-btn" class="file-menu-item" role="menuitem">{labels.batchExport}</button>
+            <button type="button" id="export-pptx-btn" class="file-menu-item" role="menuitem">Export PPTX</button>
             <div class="file-menu-recent">
               <strong>{labels.recentProjects}</strong>
               <div id="recent-projects" class="recent-projects-empty">{labels.noSnapshots}</div>
@@ -77,6 +78,10 @@ const base = import.meta.env.BASE_URL ?? "/";
 
         <div id="left-scroll" class="left-scroll">
           <section id="panel-blocks" class="tab-panel active" role="tabpanel" aria-labelledby="tab-blocks">
+            <div id="favorites-bar" class="favorites-bar" hidden>
+              <span class="favorites-label">{labels.favorites}</span>
+              <div id="favorites-items" class="favorites-items"></div>
+            </div>
             <div id="block-list" class="block-list">
               <button class="block-item" data-block="text" draggable="true">🅣 Text</button>
               <button class="block-item" data-block="heading" draggable="true">Ⓗ Heading</button>
@@ -193,6 +198,53 @@ const base = import.meta.env.BASE_URL ?? "/";
               </details>
 
               <details class="theme-advanced">
+                <summary>{labels.colorGenerator}</summary>
+                <div class="color-gen-panel">
+                  <label class="field"><span>Base</span><input id="color-gen-base" class="control" type="color" value="#6366f1" /></label>
+                  <label class="field"><span>{labels.harmony}</span><select id="color-gen-harmony" class="control"><option value="analogous">{labels.analogous}</option><option value="complementary">{labels.complementary}</option><option value="triadic">{labels.triadic}</option></select></label>
+                  <button type="button" id="color-gen-btn" class="btn">{labels.generatePalette}</button>
+                  <div id="color-gen-swatches" class="brand-swatches"></div>
+                </div>
+              </details>
+
+              <details class="theme-advanced">
+                <summary>{labels.masterLayout}</summary>
+                <p class="theme-note">{labels.masterInfo}</p>
+                <button type="button" id="master-add-btn" class="btn">{labels.masterAdd}</button>
+                <button type="button" id="master-clear-btn" class="btn">{labels.masterClear}</button>
+                <div id="master-list" class="master-list"></div>
+              </details>
+
+              <details class="theme-advanced">
+                <summary>{labels.componentLibrary}</summary>
+                <button type="button" id="save-component-btn" class="btn">{labels.saveComponent}</button>
+                <div id="component-list" class="component-list"><p class="theme-note">{labels.noComponents}</p></div>
+              </details>
+
+              <details class="theme-advanced">
+                <summary>{labels.templateVar}</summary>
+                <p class="theme-note">{labels.batchPlaceholder}</p>
+                <div class="template-var-btns">
+                  <button type="button" class="btn" data-var="page_no">{labels.varPageNo}</button>
+                  <button type="button" class="btn" data-var="date">{labels.varDate}</button>
+                  <button type="button" class="btn" data-var="project_name">{labels.varProjectName}</button>
+                </div>
+              </details>
+
+              <details class="theme-advanced">
+                <summary>{labels.printProfile}</summary>
+                <div class="print-profile-panel">
+                  <select id="print-profile-select" class="control">
+                    <option value="home">{labels.profileHome}</option>
+                    <option value="office">{labels.profileOffice}</option>
+                    <option value="print">{labels.profilePrint}</option>
+                  </select>
+                  <label class="checkline"><input type="checkbox" id="crop-marks-toggle" /> {labels.cropMarks}</label>
+                  <div id="print-profile-info" class="theme-note"></div>
+                </div>
+              </details>
+
+              <details class="theme-advanced">
                 <summary>Workspace (Advanced, editor only)</summary>
                 <p class="theme-note">Does not affect PDF export.</p>
                 <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
@@ -260,7 +312,7 @@ const base = import.meta.env.BASE_URL ?? "/";
 
             <section class="ins-group" data-for="text">
               <div class="inspector-grid">
-                <label class="field"><span>Font</span><select id="ins-font-family" class="control"><option value="Inter,system-ui">Inter</option><option value="Arial,sans-serif">Arial</option><option value="Georgia,serif">Georgia</option><option value="Verdana,sans-serif">Verdana</option><option value="Trebuchet MS,sans-serif">Trebuchet MS</option><option value="Segoe UI,sans-serif">Segoe UI</option></select></label>
+                <label class="field"><span>Font</span><select id="ins-font-family" class="control font-preview-select"><option value="Inter,system-ui" style="font-family:Inter,system-ui">Inter</option><option value="Arial,sans-serif" style="font-family:Arial,sans-serif">Arial</option><option value="Georgia,serif" style="font-family:Georgia,serif">Georgia</option><option value="Verdana,sans-serif" style="font-family:Verdana,sans-serif">Verdana</option><option value="Trebuchet MS,sans-serif" style="font-family:'Trebuchet MS',sans-serif">Trebuchet MS</option><option value="Segoe UI,sans-serif" style="font-family:'Segoe UI',sans-serif">Segoe UI</option><option value="Courier New,monospace" style="font-family:'Courier New',monospace">Courier New</option><option value="Times New Roman,serif" style="font-family:'Times New Roman',serif">Times New Roman</option><option value="Comic Sans MS,cursive" style="font-family:'Comic Sans MS',cursive">Comic Sans</option></select></label>
                 <label class="field"><span>Font size</span><input id="ins-font-size" class="control" type="number" min="8" max="72" /></label>
                 <label class="field"><span>Weight</span><select id="ins-font-weight" class="control"><option value="400">Regular</option><option value="600">Semi-bold</option><option value="700">Bold</option></select></label>
                 <label class="field toggle-field"><span>Italic</span><input id="ins-italic" type="checkbox" /></label>
@@ -519,6 +571,24 @@ const base = import.meta.env.BASE_URL ?? "/";
       </div>
     </div>
 
+    <!-- Spread view overlay -->
+    <div id="spread-overlay" class="spread-overlay" hidden>
+      <div class="spread-header">
+        <span>Spread View</span>
+        <button type="button" id="spread-close" class="btn">×</button>
+      </div>
+      <div id="spread-pages" class="spread-pages"></div>
+    </div>
+
+    <!-- A11y checker panel -->
+    <div id="a11y-panel" class="a11y-panel" hidden>
+      <div class="a11y-header">
+        <span>{labels.contrastRatio}</span>
+        <button type="button" id="a11y-close" class="btn">×</button>
+      </div>
+      <div id="a11y-results" class="a11y-results"></div>
+    </div>
+
     <!-- Command palette -->
     <div id="cmd-palette-overlay" class="cmd-palette-overlay" hidden>
       <div class="cmd-palette-dialog" role="dialog" aria-modal="true">
@@ -669,6 +739,15 @@ const base = import.meta.env.BASE_URL ?? "/";
       exportHtmlBtn: document.getElementById('export-html-btn'), batchExportBtn: document.getElementById('batch-export-btn'),
       batchModal: document.getElementById('batch-modal'), batchCloseBtn: document.getElementById('batch-close-btn'), batchCsvInput: document.getElementById('batch-csv-input'), batchPreview: document.getElementById('batch-preview'), batchGenerateBtn: document.getElementById('batch-generate-btn'),
       historyPanel: document.getElementById('history-panel'), historyClose: document.getElementById('history-close'), historyList: document.getElementById('history-list'),
+      favoritesBar: document.getElementById('favorites-bar'), favoritesItems: document.getElementById('favorites-items'),
+      colorGenBase: document.getElementById('color-gen-base'), colorGenHarmony: document.getElementById('color-gen-harmony'), colorGenBtn: document.getElementById('color-gen-btn'), colorGenSwatches: document.getElementById('color-gen-swatches'),
+      masterAddBtn: document.getElementById('master-add-btn'), masterClearBtn: document.getElementById('master-clear-btn'), masterList: document.getElementById('master-list'),
+      saveComponentBtn: document.getElementById('save-component-btn'), componentList: document.getElementById('component-list'),
+      templateVarBtns: [...document.querySelectorAll('[data-var]')],
+      printProfileSelect: document.getElementById('print-profile-select'), cropMarksToggle: document.getElementById('crop-marks-toggle'), printProfileInfo: document.getElementById('print-profile-info'),
+      exportPptxBtn: document.getElementById('export-pptx-btn'),
+      spreadOverlay: document.getElementById('spread-overlay'), spreadClose: document.getElementById('spread-close'), spreadPages: document.getElementById('spread-pages'),
+      a11yPanel: document.getElementById('a11y-panel'), a11yClose: document.getElementById('a11y-close'), a11yResults: document.getElementById('a11y-results'),
       watermarkOverlay: document.getElementById('watermark-overlay'), watermarkToggle: document.getElementById('watermark-toggle'), watermarkFields: document.getElementById('watermark-fields'), watermarkText: document.getElementById('watermark-text'), watermarkSize: document.getElementById('watermark-size'), watermarkColor: document.getElementById('watermark-color'), watermarkOpacity: document.getElementById('watermark-opacity'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
       themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
@@ -3238,12 +3317,257 @@ const base = import.meta.env.BASE_URL ?? "/";
       }
     });
 
-    /* Escape closes cmd palette */
-    const origEscape = document.querySelector('#app-shell');
+    /* ── Favorites Bar ── */
+    const FAV_KEY = 'printforge_favorites_v1';
+    function loadFavorites() { try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; } }
+    function saveFavorites(favs) { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }
+    function renderFavorites() {
+      const favs = loadFavorites();
+      if (!el.favoritesBar || !el.favoritesItems) return;
+      el.favoritesBar.hidden = favs.length === 0;
+      el.favoritesItems.innerHTML = favs.map(f => `<button class="fav-item" data-fav-block="${f}" draggable="true" title="${f}">${f}</button>`).join('');
+      el.favoritesItems.querySelectorAll('.fav-item').forEach(btn => {
+        btn.onclick = () => createPreset(btn.dataset.favBlock, 30, 60);
+        btn.ondragstart = (e) => { draggingBlock = btn.dataset.favBlock; e.dataTransfer.setData('text/plain', btn.dataset.favBlock); };
+        btn.oncontextmenu = (e) => { e.preventDefault(); const favs2 = loadFavorites().filter(x => x !== btn.dataset.favBlock); saveFavorites(favs2); renderFavorites(); };
+      });
+    }
+    el.blockList?.querySelectorAll('.block-item').forEach(btn => {
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const blockType = btn.dataset.block;
+        const favs = loadFavorites();
+        if (favs.includes(blockType)) { saveFavorites(favs.filter(x => x !== blockType)); }
+        else { favs.push(blockType); saveFavorites(favs); }
+        renderFavorites();
+      });
+    });
+    renderFavorites();
+
+    /* ── Color Generator UI ── */
+    if (el.colorGenBtn) el.colorGenBtn.onclick = () => {
+      const base = el.colorGenBase?.value || '#6366f1';
+      const harmony = el.colorGenHarmony?.value || 'analogous';
+      const palette = generateColorPalette(base, harmony);
+      if (el.colorGenSwatches) {
+        el.colorGenSwatches.innerHTML = palette.map(c => `<button class="swatch" style="background:${c}" data-color="${c}" title="${c}"></button>`).join('');
+        el.colorGenSwatches.querySelectorAll('.swatch').forEach(sw => {
+          sw.onclick = () => { navigator.clipboard?.writeText(sw.dataset.color); showToast(labels.toastCopied); };
+          sw.ondblclick = () => { doc.brandSwatches.push(sw.dataset.color); if (doc.brandSwatches.length > 8) doc.brandSwatches.shift(); commitChange(); render(); showToast(labels.saveToBrand); };
+        });
+      }
+    };
+
+    /* ── Master Layout ── */
+    function renderMasterList() {
+      if (!el.masterList) return;
+      if (!doc.masterNodes || !doc.masterNodes.length) { el.masterList.innerHTML = '<p class="theme-note">No master nodes</p>'; return; }
+      el.masterList.innerHTML = doc.masterNodes.map((n, i) => `<div class="master-item"><span>${n.name} (${n.type})</span><button class="btn" data-master-remove="${i}">×</button></div>`).join('');
+      el.masterList.querySelectorAll('[data-master-remove]').forEach(btn => {
+        btn.onclick = () => { const idx = Number(btn.dataset.masterRemove); doc.masterNodes.splice(idx, 1); commitChange(); render(); renderMasterList(); };
+      });
+    }
+    if (el.masterAddBtn) el.masterAddBtn.onclick = () => {
+      const sel = selectedNodes();
+      if (!sel.length) return;
+      if (!doc.masterNodes) doc.masterNodes = [];
+      sel.forEach(n => doc.masterNodes.push(structuredClone(n)));
+      commitChange(); render(); renderMasterList();
+    };
+    if (el.masterClearBtn) el.masterClearBtn.onclick = () => { doc.masterNodes = []; commitChange(); render(); renderMasterList(); };
+    renderMasterList();
+
+    /* ── Saved Components Library ── */
+    function renderComponentList() {
+      if (!el.componentList) return;
+      if (!doc.savedComponents || !doc.savedComponents.length) { el.componentList.innerHTML = `<p class="theme-note">${labels.noComponents}</p>`; return; }
+      el.componentList.innerHTML = doc.savedComponents.map((comp, i) => `<div class="component-item"><button class="btn" data-comp-insert="${i}">${comp.name} (${comp.nodes.length})</button><button class="btn" data-comp-remove="${i}">×</button></div>`).join('');
+      el.componentList.querySelectorAll('[data-comp-insert]').forEach(btn => {
+        btn.onclick = () => {
+          const comp = doc.savedComponents[Number(btn.dataset.compInsert)];
+          if (!comp) return;
+          const p = activePage(); if (!p) return;
+          const maxZ = p.nodes.reduce((m, n) => Math.max(m, n.z), 0);
+          comp.nodes.forEach((n, i) => { const clone = structuredClone(n); clone.id = createId('node'); clone.z = maxZ + i + 1; clone.xMm += 5; clone.yMm += 5; p.nodes.push(clone); });
+          commitChange(); render();
+        };
+      });
+      el.componentList.querySelectorAll('[data-comp-remove]').forEach(btn => {
+        btn.onclick = () => { doc.savedComponents.splice(Number(btn.dataset.compRemove), 1); commitChange(); renderComponentList(); };
+      });
+    }
+    if (el.saveComponentBtn) el.saveComponentBtn.onclick = () => {
+      const sel = selectedNodes();
+      if (!sel.length) return;
+      if (!doc.savedComponents) doc.savedComponents = [];
+      const name = `Component ${doc.savedComponents.length + 1}`;
+      doc.savedComponents.push({ id: createId('comp'), name, nodes: sel.map(n => structuredClone(n)) });
+      commitChange(); renderComponentList();
+    };
+    renderComponentList();
+
+    /* ── Template Variables ── */
+    el.templateVarBtns?.forEach(btn => {
+      btn.onclick = () => {
+        const varName = btn.dataset.var;
+        const n = activeNode();
+        if (!n || !['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) return;
+        const tag = `{{${varName}}}`;
+        n.props.text = (n.props.text || '') + tag;
+        commitChange(); render();
+      };
+    });
+
+    /* ── Print Profiles ── */
+    const PRINT_PROFILES = {
+      home: { dpi: 150, bleedMm: 0, cropMarks: false, info: 'Home printer: 150 DPI, no bleed' },
+      office: { dpi: 300, bleedMm: 0, cropMarks: false, info: 'Office: 300 DPI, no bleed' },
+      print: { dpi: 300, bleedMm: 3, cropMarks: true, info: 'Print shop: 300 DPI, 3mm bleed, crop marks' },
+    };
+    function updatePrintProfile() {
+      const profile = PRINT_PROFILES[el.printProfileSelect?.value || 'home'];
+      if (el.printProfileInfo) el.printProfileInfo.textContent = profile.info;
+      if (el.cropMarksToggle) el.cropMarksToggle.checked = profile.cropMarks;
+    }
+    if (el.printProfileSelect) { el.printProfileSelect.onchange = updatePrintProfile; updatePrintProfile(); }
+
+    /* ── PPTX Export (basic HTML-based) ── */
+    if (el.exportPptxBtn) el.exportPptxBtn.onclick = async () => {
+      showToast(labels.toastZipGenerating);
+      closeTransientOverlays();
+      try {
+        const zip = new JSZip();
+        const dims = pageDimensionsMm(doc.pageSize, doc.orientation);
+        const emu = (mm) => Math.round(mm * 914400 / 25.4);
+        const slideW = emu(dims.wMm); const slideH = emu(dims.hMm);
+        let slidesXml = '';
+        let relsXml = '';
+        doc.pages.forEach((pg, idx) => {
+          const slideNum = idx + 1;
+          let shapes = '';
+          [...pg.nodes].sort((a,b) => a.z - b.z).forEach((n, si) => {
+            if (!n.visible) return;
+            const x = emu(n.xMm); const y = emu(n.yMm); const w = emu(n.wMm); const h = emu(n.hMm);
+            let text = '';
+            if (['text','heading','paragraph','datelabel'].includes(n.type)) text = (n.props.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            else if (n.type === 'stickynote') text = (n.props.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const fs = (n.props.fontSize || 14) * 100;
+            shapes += `<p:sp><p:nvSpPr><p:cNvPr id="${si+2}" name="${n.name}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="${fs}" dirty="0"/><a:t>${text}</a:t></a:r></a:p></p:txBody></p:sp>`;
+          });
+          const slideContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${slideW}" cy="${slideH}"/><a:chOff x="0" y="0"/><a:chExt cx="${slideW}" cy="${slideH}"/></a:xfrm></p:grpSpPr>${shapes}</p:spTree></p:cSld></p:sld>`;
+          zip.file(`ppt/slides/slide${slideNum}.xml`, slideContent);
+          zip.file(`ppt/slides/_rels/slide${slideNum}.xml.rels`, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+          slidesXml += `<p:sldIdLst><p:sldId id="${256+idx}" r:id="rId${idx+2}"/></p:sldIdLst>`;
+          relsXml += `<Relationship Id="rId${idx+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${slideNum}.xml"/>`;
+        });
+        zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>${doc.pages.map((_,i) => `<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/></Types>`);
+        zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>`);
+        zip.file('ppt/presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>${slidesXml}<p:sldSz cx="${slideW}" cy="${slideH}"/><p:notesSz cx="${slideW}" cy="${slideH}"/></p:presentation>`);
+        zip.file('ppt/_rels/presentation.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>${relsXml}</Relationships>`);
+        zip.file('ppt/slideMasters/slideMaster1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst></p:sldMaster>`);
+        zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+        zip.file('ppt/slideLayouts/slideLayout1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld></p:sldLayout>`);
+        zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`);
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.pptx`; a.click();
+        URL.revokeObjectURL(url);
+        showToast('PPTX downloaded');
+      } catch(e) { console.error(e); showToast('PPTX export failed'); }
+    };
+
+    /* ── Spread View ── */
+    function openSpreadView() {
+      if (!el.spreadOverlay || !el.spreadPages) return;
+      el.spreadOverlay.hidden = false;
+      const dims = pageDimensionsMm(doc.pageSize, doc.orientation);
+      el.spreadPages.innerHTML = '';
+      doc.pages.forEach((pg, idx) => {
+        const container = document.createElement('div');
+        container.className = 'spread-page-wrap';
+        container.innerHTML = `<div class="spread-page-label">Page ${idx + 1}: ${pg.name}</div>`;
+        const canvas = document.createElement('canvas');
+        const scale = 0.4;
+        canvas.width = mmToPx(dims.wMm) * scale;
+        canvas.height = mmToPx(dims.hMm) * scale;
+        canvas.className = 'spread-page-canvas';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.fillStyle = doc.pageBg || '#fff';
+        ctx.fillRect(0, 0, mmToPx(dims.wMm), mmToPx(dims.hMm));
+        [...pg.nodes].sort((a,b) => a.z - b.z).forEach(n => {
+          if (!n.visible) return;
+          const x = mmToPx(n.xMm); const y = mmToPx(n.yMm); const w = mmToPx(n.wMm); const h = mmToPx(n.hMm);
+          if (['box','highlight','roundedrect','circle'].includes(n.type)) { ctx.fillStyle = n.props.fill || '#e2e8f0'; ctx.fillRect(x, y, w, h); }
+          else if (['text','heading','paragraph','datelabel'].includes(n.type)) { ctx.fillStyle = n.props.color || '#111'; ctx.font = `${n.props.fontSize || 14}px sans-serif`; ctx.fillText((n.props.text || '').substring(0, 30), x, y + (n.props.fontSize || 14)); }
+          else { ctx.fillStyle = '#f1f5f9'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#d1d5db'; ctx.strokeRect(x, y, w, h); }
+        });
+        container.appendChild(canvas);
+        container.onclick = () => { doc.activePageId = pg.id; el.spreadOverlay.hidden = true; render(); };
+        el.spreadPages.appendChild(container);
+      });
+    }
+    if (el.spreadClose) el.spreadClose.onclick = () => { el.spreadOverlay.hidden = true; };
+
+    /* ── Accessibility Checker ── */
+    function luminance(hex) {
+      const r = parseInt(hex.slice(1, 3), 16) / 255; const g = parseInt(hex.slice(3, 5), 16) / 255; const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const sR = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+      const sG = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+      const sB = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+      return 0.2126 * sR + 0.7152 * sG + 0.0722 * sB;
+    }
+    function contrastRatio(hex1, hex2) {
+      const l1 = luminance(hex1); const l2 = luminance(hex2);
+      const lighter = Math.max(l1, l2); const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+    function runA11yCheck() {
+      if (!el.a11yPanel || !el.a11yResults) return;
+      el.a11yPanel.hidden = false;
+      const p = activePage(); if (!p) { el.a11yResults.innerHTML = '<p>No active page</p>'; return; }
+      const bg = doc.pageBg || '#ffffff';
+      let html = '';
+      let issues = 0;
+      p.nodes.forEach(n => {
+        if (!n.visible) return;
+        if (['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) {
+          const color = n.props.color || '#111827';
+          const ratio = contrastRatio(color, bg);
+          const pass = ratio >= 4.5;
+          if (!pass) issues++;
+          html += `<div class="a11y-item ${pass ? 'pass' : 'fail'}"><strong>${n.name}</strong>: ${ratio.toFixed(1)}:1 ${pass ? labels.contrastPass : labels.contrastFail}<br><span style="color:${color}">■</span> on <span style="color:${bg};background:${bg};border:1px solid #ccc">■</span>${n.props.fontSize && n.props.fontSize < 12 ? ' ⚠ Small font' : ''}</div>`;
+        }
+      });
+      if (!html) html = '<p class="a11y-pass-all">All elements pass accessibility checks!</p>';
+      else html = `<p class="a11y-summary">${issues} issue${issues !== 1 ? 's' : ''} found</p>` + html;
+      el.a11yResults.innerHTML = html;
+    }
+    if (el.a11yClose) el.a11yClose.onclick = () => { el.a11yPanel.hidden = true; };
+
+    /* ── Auto Placement Suggestions ── */
+    function suggestPlacement(node) {
+      if (!node) return;
+      const d = dims();
+      const centerX = (d.wMm - node.wMm) / 2;
+      const centerY = (d.hMm - node.hMm) / 2;
+      if (Math.abs(node.xMm - centerX) < 5) node.xMm = centerX;
+      if (Math.abs(node.yMm - centerY) < 5) node.yMm = centerY;
+    }
+
+    /* Add spread + a11y to command palette */
+    cmdCommands.push(
+      { id: 'spread', label: 'Spread view', icon: '📖', action: () => openSpreadView() },
+      { id: 'a11y', label: 'Accessibility check', icon: '♿', action: () => runA11yCheck() }
+    );
+
+    /* Escape closes new panels */
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && el.cmdPaletteOverlay && !el.cmdPaletteOverlay.hidden) { closeCmdPalette(); e.stopPropagation(); }
       if (e.key === 'Escape' && el.historyPanel && !el.historyPanel.hidden) { el.historyPanel.hidden = true; }
       if (e.key === 'Escape' && el.batchModal && !el.batchModal.hidden) { el.batchModal.hidden = true; }
+      if (e.key === 'Escape' && el.spreadOverlay && !el.spreadOverlay.hidden) { el.spreadOverlay.hidden = true; }
+      if (e.key === 'Escape' && el.a11yPanel && !el.a11yPanel.hidden) { el.a11yPanel.hidden = true; }
     }, true);
 
     renderAssets();
