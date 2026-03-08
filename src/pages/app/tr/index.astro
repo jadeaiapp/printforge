@@ -14,6 +14,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         <span>PrintForge</span>
       </a>
       <a class="btn ghost lang-switcher" href={withBase("/app/", base)}>{labels.langSwitch}</a>
+      <label class="dark-toggle"><input type="checkbox" id="dark-mode-toggle" /> {labels.darkMode}</label>
       <button type="button" class="btn ghost btn-icon" id="shortcuts-btn" title={labels.shortcutsTitle} aria-label={labels.shortcutsTitle}>⌘</button>
       <button type="button" class="btn ghost btn-icon" id="tips-btn" title={labels.tipsTitle} aria-label={labels.tipsTitle}>?</button>
       <div class="top-controls">
@@ -44,10 +45,14 @@ const base = import.meta.env.BASE_URL ?? "/";
             <button type="button" id="load-btn" class="file-menu-item" role="menuitem">{labels.loadLocal}</button>
             <button type="button" id="export-pdf-btn" class="file-menu-item" role="menuitem">{labels.exportPdf}</button>
             <button type="button" id="export-png-btn" class="file-menu-item" role="menuitem">{labels.exportPagePng}</button>
+            <button type="button" id="export-svg-btn" class="file-menu-item" role="menuitem">{labels.exportSvg}</button>
+            <button type="button" id="export-zip-btn" class="file-menu-item" role="menuitem">{labels.exportZip}</button>
             <button type="button" id="export-btn" class="file-menu-item" role="menuitem">{labels.exportJson}</button>
             <button type="button" id="import-btn" class="file-menu-item" role="menuitem">{labels.importJson}</button>
             <button type="button" id="print-preview-btn" class="file-menu-item" role="menuitem">{labels.printPreview}</button>
             <button type="button" id="print-btn" class="file-menu-item" role="menuitem">{labels.print}</button>
+            <button type="button" id="presentation-btn" class="file-menu-item" role="menuitem">{labels.presentationMode}</button>
+            <button type="button" id="share-btn" class="file-menu-item" role="menuitem">{labels.shareReadOnly}</button>
             <div class="file-menu-recent">
               <strong>{labels.recentProjects}</strong>
               <div id="recent-projects" class="recent-projects-empty">{labels.noSnapshots}</div>
@@ -87,6 +92,8 @@ const base = import.meta.env.BASE_URL ?? "/";
               <button class="block-item" data-block="image" draggable="true">🖼 Image</button>
               <button class="block-item" data-block="box" draggable="true">⬚ Box</button>
               <button class="block-item" data-block="line" draggable="true">⎯ Line</button>
+              <button class="block-item" data-block="qrcode" draggable="true">⊞ {labels.qrCode}</button>
+              <button class="block-item" data-block="progressbar" draggable="true">▰ {labels.progressBar}</button>
             </div>
           </section>
 
@@ -240,17 +247,27 @@ const base = import.meta.env.BASE_URL ?? "/";
             </section>
 
             <section class="ins-group" data-for="shape">
-              <div class="inspector-grid">
-                <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-fill" class="control" type="color" /><span class="hex-value" id="ins-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                <label class="field toggle-field"><span>{labels.fillGradient}</span><input type="checkbox" id="ins-fill-gradient-toggle" /></label>
-                <div id="ins-fill-gradient-fields" class="gradient-fields" hidden>
-                  <label class="field"><span>{labels.angle} (°)</span><input id="ins-fill-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
-                  <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-start" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-end" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              <div class="ins-shape-stack">
+                <div class="ins-subsection">
+                  <span class="ins-subsection-title">Fill</span>
+                  <label class="field field-full"><span>Color</span><div class="color-with-hex"><input id="ins-fill" class="control" type="color" /><span class="hex-value" id="ins-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="checkline ins-gradient-toggle"><input type="checkbox" id="ins-fill-gradient-toggle" /> {labels.fillGradient}</label>
+                  <div id="ins-fill-gradient-fields" class="gradient-fields" hidden>
+                    <label class="field"><span>{labels.angle} (°)</span><input id="ins-fill-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
+                    <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-start" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                    <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="ins-fill-gradient-end" class="control" type="color" /><span class="hex-value" id="ins-fill-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  </div>
                 </div>
-                <label class="field"><span>Stroke</span><div class="color-with-hex"><input id="ins-stroke" class="control" type="color" /><span class="hex-value" id="ins-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                <label class="field"><span>Stroke w</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
-                <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+                <div class="ins-subsection">
+                  <span class="ins-subsection-title">Stroke</span>
+                  <div class="ins-subsection-row">
+                    <label class="field"><span>Color</span><div class="color-with-hex"><input id="ins-stroke" class="control" type="color" /><span class="hex-value" id="ins-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                    <label class="field"><span>Width</span><input id="ins-stroke-width" class="control" type="number" min="0.5" max="20" step="0.5" /></label>
+                  </div>
+                </div>
+                <div class="ins-subsection">
+                  <label class="field"><span>Radius</span><input id="ins-radius" class="control" type="number" min="0" max="80" /></label>
+                </div>
               </div>
             </section>
 
@@ -289,6 +306,20 @@ const base = import.meta.env.BASE_URL ?? "/";
                   <label class="field"><span>Rows</span><input id="ins-table-rows" class="control" type="number" min="2" max="10" step="1" /></label>
                   <label class="field"><span>Cols</span><input id="ins-table-cols" class="control" type="number" min="2" max="10" step="1" /></label>
                 </div>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="qrcode">
+              <div class="inspector-grid">
+                <label class="field" style="grid-column:1/-1"><span>{labels.qrText}</span><input id="ins-qr-text" class="control" type="text" placeholder="https://example.com" /></label>
+              </div>
+            </section>
+
+            <section class="ins-group" data-for="progressbar">
+              <div class="inspector-grid">
+                <label class="field"><span>{labels.progressValue}</span><input id="ins-progress-value" class="control" type="number" min="0" max="100" step="1" /></label>
+                <label class="field"><span>{labels.progressTrack}</span><div class="color-with-hex"><input id="ins-progress-track" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                <label class="field"><span>{labels.progressBarColor}</span><div class="color-with-hex"><input id="ins-progress-bar" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
               </div>
             </section>
           </div>
@@ -390,6 +421,29 @@ const base = import.meta.env.BASE_URL ?? "/";
         <p class="tips-footer">{labels.dataStoredLocally}</p>
       </div>
     </div>
+
+    <div id="onboarding-overlay" class="onboarding-overlay" hidden>
+      <div class="onboarding-dialog" role="dialog" aria-modal="true">
+        <h2 id="onboarding-title">{labels.onboardingWelcome}</h2>
+        <p id="onboarding-body">{labels.onboardingStep1}</p>
+        <div class="onboarding-dots" id="onboarding-dots"></div>
+        <div class="onboarding-actions">
+          <button type="button" id="onboarding-prev" class="btn">{labels.onboardingPrev}</button>
+          <button type="button" id="onboarding-next" class="btn btn-primary">{labels.onboardingNext}</button>
+          <button type="button" id="onboarding-skip" class="btn">{labels.onboardingSkip}</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="presentation-overlay" class="presentation-overlay" hidden>
+      <div class="presentation-bar">
+        <button type="button" id="presentation-prev">{labels.presentationPrev}</button>
+        <span id="presentation-indicator">1 / 1</span>
+        <button type="button" id="presentation-next">{labels.presentationNext}</button>
+        <span style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.4)">{labels.presentationExit}</span>
+      </div>
+      <div class="presentation-stage" id="presentation-stage"></div>
+    </div>
   </div>
 
   <script is:inline define:vars={{ labels }}>
@@ -401,6 +455,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     import { ASSETS } from "../../../app/assets";
     import { exportDocToPDF } from "../../../app/pdfExport";
     import { exportPageToPng } from "../../../app/pageToPng";
+    import QRCode from "qrcode";
+    import JSZip from "jszip";
     const labels = window.__PRINTFORGE_LABELS || {};
     const mmToPx = (mm) => mm * 3.7795275591;
     const pxToMm = (px) => px / 3.7795275591;
@@ -415,8 +471,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     const DOC_STORAGE_KEY = 'printforge_doc_v2d';
     const ASSETS_PAGE_SIZE = 24;
     const RECENT_PROJECTS_KEY = 'printforge_recent_projects_v1';
-    const loadFromLocal = () => { try { const raw = localStorage.getItem(DOC_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
-    const saveToLocal = (doc) => localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc));
+    const loadFromLocal = () => { try { const raw = localStorage.getItem(DOC_STORAGE_KEY); if (!raw) { console.info('[PrintForge] No saved doc in localStorage'); return null; } const parsed = JSON.parse(raw); console.info('[PrintForge] Loaded doc from localStorage', parsed?.meta?.projectName); return parsed; } catch (err) { console.error('[PrintForge] loadFromLocal failed', err); return null; } };
+    const saveToLocal = (doc) => { try { localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc)); } catch (err) { console.error('[PrintForge] saveToLocal failed', err); } };
     const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
     const importJSON = async (file) => JSON.parse(await file.text());
 
@@ -467,7 +523,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       gridToggle: document.getElementById('grid-toggle'), rulerToggle: document.getElementById('ruler-toggle'), safeAreaToggle: document.getElementById('safe-area-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
       canvasInner: document.getElementById('canvas-inner'), safeAreaOverlay: document.getElementById('safe-area-overlay'), copyStyleBtn: document.getElementById('copy-style-btn'), pasteStyleBtn: document.getElementById('paste-style-btn'), rulerCorner: document.getElementById('ruler-corner'), rulerTop: document.getElementById('ruler-top'), rulerLeft: document.getElementById('ruler-left'),
       addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
-      fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), exportPdf: document.getElementById('export-pdf-btn'), exportPng: document.getElementById('export-png-btn'), printPreview: document.getElementById('print-preview-btn'), printBtn: document.getElementById('print-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), exportPdf: document.getElementById('export-pdf-btn'), exportPng: document.getElementById('export-png-btn'), exportSvg: document.getElementById('export-svg-btn'), exportZip: document.getElementById('export-zip-btn'), presentationBtn: document.getElementById('presentation-btn'), printPreview: document.getElementById('print-preview-btn'), printBtn: document.getElementById('print-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
+      darkModeToggle: document.getElementById('dark-mode-toggle'),
       recentProjects: document.getElementById('recent-projects'), projectName: document.getElementById('project-name'),
       importInput: document.getElementById('import-input'), imageInput: document.getElementById('image-input'),
       dropPreview: document.getElementById('drop-preview'), guideX: document.getElementById('guide-x'), guideY: document.getElementById('guide-y'), multiBox: document.getElementById('multi-box'), marquee: document.getElementById('marquee'), toast: document.getElementById('toast'), contextMenu: document.getElementById('context-menu'),
@@ -483,6 +540,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       insFill: document.getElementById('ins-fill'), insStroke: document.getElementById('ins-stroke'), insStrokeWidth: document.getElementById('ins-stroke-width'), insRadius: document.getElementById('ins-radius'), insSvgFill: document.getElementById('ins-svg-fill'), insSvgStroke: document.getElementById('ins-svg-stroke'),
       insThickness: document.getElementById('ins-thickness'), insColor: document.getElementById('ins-color'), insObjectFit: document.getElementById('ins-object-fit'), insOpacity: document.getElementById('ins-opacity'), insShadow: document.getElementById('ins-shadow'), insRotation: document.getElementById('ins-rotation'),
       insLineHeight: document.getElementById('ins-line-height'), insListLineHeight: document.getElementById('ins-list-line-height'), insListStyle: document.getElementById('ins-list-style'), insTableRows: document.getElementById('ins-table-rows'), insTableCols: document.getElementById('ins-table-cols'),
+      insQrText: document.getElementById('ins-qr-text'), insProgressValue: document.getElementById('ins-progress-value'), insProgressTrack: document.getElementById('ins-progress-track'), insProgressBar: document.getElementById('ins-progress-bar'),
       themeWorkspaceColor: document.getElementById('theme-workspace-color'), themeWorkspacePattern: document.getElementById('theme-workspace-pattern'), themeGradients: document.getElementById('theme-gradients'),
       themePageColor: document.getElementById('theme-page-color'), themeDefaultText: document.getElementById('theme-default-text'), themeDefaultFill: document.getElementById('theme-default-fill'), themeDefaultStroke: document.getElementById('theme-default-stroke'), themeDefaultRadius: document.getElementById('theme-default-radius'),
       themePageGradientToggle: document.getElementById('theme-page-gradient-toggle'), themePageGradientFields: document.getElementById('theme-page-gradient-fields'),
@@ -606,15 +664,26 @@ const base = import.meta.env.BASE_URL ?? "/";
         const queryOk = !query || asset.name.toLowerCase().includes(query) || asset.category.toLowerCase().includes(query);
         return categoryOk && queryOk;
       });
-      const page = Math.max(1, Math.ceil(visibleAssetCount / ASSETS_PAGE_SIZE));
+      // Cap visible count to actual list so "Load more" and page label stay correct when category has fewer items
+      const maxNeeded = Math.max(filtered.length, ASSETS_PAGE_SIZE);
+      if (visibleAssetCount > maxNeeded) visibleAssetCount = maxNeeded;
       const visible = filtered.slice(0, visibleAssetCount);
+      const totalPages = Math.max(1, Math.ceil(filtered.length / ASSETS_PAGE_SIZE));
+      const currentPage = Math.max(1, Math.ceil(visible.length / ASSETS_PAGE_SIZE));
+      const hasMore = filtered.length > visible.length;
       el.assetsList.innerHTML = visible.map((asset) => `<button type="button" class="asset-item" data-asset-id="${asset.id}" draggable="true"><span class="asset-preview">${asset.svgMarkup}</span><span class="asset-meta"><strong>${asset.name}</strong><span>${asset.category}</span></span></button>`).join('') || '<p class="template-empty">No assets found.</p>';
       el.assetsList.querySelectorAll('.asset-item').forEach((item) => {
         item.ondragstart = () => { draggingAssetId = item.dataset.assetId; };
         item.ondragend = () => { draggingAssetId = null; el.dropPreview.classList.remove('show'); };
       });
-      el.assetPageLabel.textContent = `Page ${page}`;
-      el.assetLoadMore.hidden = visible.length >= filtered.length || filtered.length === 0;
+      if (filtered.length === 0) {
+        el.assetPageLabel.textContent = '';
+      } else if (totalPages <= 1) {
+        el.assetPageLabel.textContent = `1–${visible.length} of ${filtered.length}`;
+      } else {
+        el.assetPageLabel.textContent = `Page ${currentPage} of ${totalPages}`;
+      }
+      el.assetLoadMore.hidden = !hasMore;
     }
 
     const categories = [...new Set(templates.map((t) => t.category))];
@@ -1006,15 +1075,61 @@ const base = import.meta.env.BASE_URL ?? "/";
       });
     }
 
+    function renderPageMiniCanvas(pg, canvasEl) {
+      const dims = pageDimensionsMm(doc.pageSize, doc.orientation);
+      const thumbW = 56; const thumbH = Math.round(thumbW * dims.hMm / dims.wMm);
+      canvasEl.width = thumbW; canvasEl.height = thumbH;
+      canvasEl.style.width = `${thumbW}px`; canvasEl.style.height = `${thumbH}px`;
+      const ctx = canvasEl.getContext('2d'); if (!ctx) return;
+      const scale = thumbW / (dims.wMm * 3.7795275591);
+      ctx.fillStyle = doc.pageBg || '#fff';
+      ctx.fillRect(0, 0, thumbW, thumbH);
+      [...pg.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const x = n.xMm * 3.7795275591 * scale;
+        const y = n.yMm * 3.7795275591 * scale;
+        const w = n.wMm * 3.7795275591 * scale;
+        const h = n.hMm * 3.7795275591 * scale;
+        if (['box','highlight','roundedrect','circle'].includes(n.type)) {
+          ctx.fillStyle = n.props.fill || doc.defaults.fillColor || '#e2e8f0';
+          if (n.type === 'circle') { ctx.beginPath(); ctx.arc(x+w/2,y+h/2,Math.min(w,h)/2,0,Math.PI*2); ctx.fill(); }
+          else ctx.fillRect(x, y, w, h);
+        } else if (['text','heading','paragraph','datelabel'].includes(n.type)) {
+          ctx.fillStyle = n.props.color || doc.defaults.textColor || '#111';
+          ctx.fillRect(x, y + h * 0.2, w * 0.8, Math.max(2, h * 0.15));
+          if (h > 6) ctx.fillRect(x, y + h * 0.5, w * 0.6, Math.max(2, h * 0.12));
+        } else if (['line','divider'].includes(n.type)) {
+          ctx.fillStyle = n.props.color || '#334155';
+          ctx.fillRect(x, y + h/2 - 0.5, w, 1);
+        } else if (n.type === 'image') {
+          ctx.fillStyle = '#e5e7eb'; ctx.fillRect(x, y, w, h);
+        } else if (n.type === 'table') {
+          ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = 0.5; ctx.strokeRect(x, y, w, h);
+        } else if (n.type === 'progressbar') {
+          ctx.fillStyle = n.props.progressTrack || '#e2e8f0'; ctx.fillRect(x, y, w, h);
+          ctx.fillStyle = n.props.progressBar || '#6366f1'; ctx.fillRect(x, y, w * (n.props.progressValue || 50) / 100, h);
+        } else {
+          ctx.fillStyle = '#f3f4f6'; ctx.fillRect(x, y, w, h);
+        }
+      });
+    }
+
     function renderPages() {
       el.pagesList.innerHTML = '';
       doc.pages.forEach((page, i) => {
         const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = `page-thumb ${page.id === doc.activePageId ? 'active' : ''}`;
-        chip.textContent = page.name || `Page ${i + 1}`;
         chip.draggable = true;
         chip.dataset.pageId = page.id;
+        const preview = document.createElement('canvas');
+        preview.className = 'page-thumb-canvas';
+        chip.appendChild(preview);
+        const label = document.createElement('span');
+        label.className = 'page-thumb-label';
+        label.textContent = page.name || `Page ${i + 1}`;
+        chip.appendChild(label);
+        renderPageMiniCanvas(page, preview);
         chip.onclick = (e) => { if (!e.defaultPrevented) { setPrimarySelection(null); doc.activePageId = page.id; render(); } };
         chip.ondragstart = (e) => { e.dataTransfer.setData('text/plain', page.id); e.dataTransfer.effectAllowed = 'move'; chip.classList.add('page-thumb-dragging'); };
         chip.ondragend = () => chip.classList.remove('page-thumb-dragging');
@@ -1083,7 +1198,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function nodeHtml(n) {
       if (["text","heading","paragraph","datelabel"].includes(n.type)) {
         const style = `font-size:${n.props.fontSize||14}px;font-family:${n.props.fontFamily||doc.defaults.fontFamily||'Inter,system-ui'};font-weight:${n.props.fontWeight||400};font-style:${n.props.italic?'italic':'normal'};text-align:${n.props.align||'left'};line-height:${n.props.lineHeight||1.3};opacity:${n.props.opacity||1};color:${n.props.color||doc.defaults.textColor||'#111827'};`;
-        return `<div class="text-content" style="${style}" contenteditable="true">${n.props.text || ''}</div>`;
+        return `<div class="text-node-wrap"><div class="text-drag-handle" data-drag-handle="true" aria-label="Drag to move"></div><div class="text-content" style="${style}" contenteditable="true">${n.props.text || ''}</div></div>`;
       }
       if (["box","highlight","roundedrect","circle"].includes(n.type)) {
         const radius = n.type === 'circle' ? '9999px' : `${n.props.radius || 0}px`;
@@ -1103,6 +1218,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       }
       if (n.type === 'image') return `<img class="image-content" style="object-fit:${n.props.objectFit||'contain'};opacity:${n.props.opacity||1}" src="${n.props.src||''}" alt="image"/>`;
       if (n.type === 'svg') return `<div class="svg-content" style="opacity:${n.props.opacity ?? 1};transform:rotate(${n.props.rotation || 0}deg);--svg-fill:${n.props.fill || doc.defaults.fillColor || '#1d4ed8'};--svg-stroke:${n.props.stroke || doc.defaults.strokeColor || '#334155'};">${n.props.svgMarkup || ''}</div>`;
+      if (n.type === 'qrcode') return `<div class="qr-content" data-qr-node="${n.id}" data-qr-text="${(n.props.qrText || '').replace(/"/g, '&quot;')}"><div class="qr-placeholder">QR</div></div>`;
+      if (n.type === 'progressbar') {
+        const val = Math.max(0, Math.min(100, n.props.progressValue ?? 50));
+        const track = n.props.progressTrack || '#e2e8f0';
+        const bar = n.props.progressBar || '#6366f1';
+        return `<div class="progress-content"><div class="progress-track" style="background:${track}"><div class="progress-bar" style="width:${val}%;background:${bar}"></div><div class="progress-label">${val}%</div></div></div>`;
+      }
       return '';
     }
 
@@ -1226,6 +1348,17 @@ const base = import.meta.env.BASE_URL ?? "/";
 
         el.stage.appendChild(d);
       });
+      el.stage.querySelectorAll('[data-qr-node]').forEach(async (container) => {
+        const text = container.dataset.qrText;
+        if (!text) return;
+        try {
+          const canvas = await QRCode.toCanvas(text, { width: container.clientWidth || 120, margin: 1, color: { dark: '#000', light: '#fff' } });
+          canvas.style.maxWidth = '100%';
+          canvas.style.maxHeight = '100%';
+          container.innerHTML = '';
+          container.appendChild(canvas);
+        } catch { /* keep placeholder */ }
+      });
       syncInspector();
     }
 
@@ -1251,6 +1384,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         box: 'shape', highlight: 'shape', roundedrect: 'shape', circle: 'shape',
         line: 'line', divider: 'line',
         image: 'image', svg: 'svg', table: 'table',
+        qrcode: 'qrcode', progressbar: 'progressbar',
       };
       const activeGroup = has ? (groupForType[n.type] || null) : null;
       el.inspectorGroups.forEach((group) => {
@@ -1315,6 +1449,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isTable = n && n.type === 'table';
       enableControl(el.insTableRows, isTable, clamp(Number(n?.props.rows || 4), 2, 10));
       enableControl(el.insTableCols, isTable, clamp(Number(n?.props.cols || 4), 2, 10));
+
+      const isQr = n && n.type === 'qrcode';
+      enableControl(el.insQrText, isQr, n?.props.qrText || '');
+      const isProgress = n && n.type === 'progressbar';
+      enableControl(el.insProgressValue, isProgress, n?.props.progressValue ?? 50);
+      enableControl(el.insProgressTrack, isProgress, n?.props.progressTrack || '#e2e8f0');
+      enableControl(el.insProgressBar, isProgress, n?.props.progressBar || '#6366f1');
 
       el.note.textContent = '';
       updateAllHexDisplays();
@@ -1464,6 +1605,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         calendar: { name:'Calendar', wMm:92, hMm:72, props:{ month:now.getMonth()+1, year:now.getFullYear() } },
         image: { name:'Image', wMm:86, hMm:62, props:{ src:'', objectFit:'contain', opacity:1 } },
         svg: { name:'SVG', wMm:30, hMm:30, props:{ svgMarkup:'', fill:doc.defaults.fillColor, stroke:doc.defaults.strokeColor, opacity:1, rotation:0 } },
+        qrcode: { name:'QR Code', wMm:32, hMm:32, props:{ qrText:'https://printforge.app', fill:'#000000' } },
+        progressbar: { name:'Progress', wMm:80, hMm:12, props:{ progressValue:65, progressTrack:'#e2e8f0', progressBar:'#6366f1' } },
       };
       const preset = presets[type]; if (!preset) return;
       p.nodes.push({ ...base, ...preset, ...extra, props: { ...base.props, ...preset.props, ...(extra.props||{}) } });
@@ -1632,8 +1775,9 @@ const base = import.meta.env.BASE_URL ?? "/";
       if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id);
       if (n.locked) { render(); return; }
       const handle = e.target.dataset.handle || null;
+      const isDragHandle = e.target.closest('[data-drag-handle="true"]');
       const isContentEditable = e.target.closest('[contenteditable="true"]');
-      let dragStarted = !!handle || !isContentEditable;
+      let dragStarted = !!handle || !!isDragHandle || !isContentEditable;
       const d = dims();
       const movingNodes = handle ? [n] : nodesFromSelectionOrGroup(n.id);
       const start = movingNodes.map((node) => ({ id: node.id, xMm: node.xMm, yMm: node.yMm, wMm: node.wMm, hMm: node.hMm }));
@@ -1874,6 +2018,11 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.insTableRows.onchange = () => applyInspector((n)=>n.props.rows = clamp(Math.round(Number(el.insTableRows.value) || 2), 2, 10));
     el.insTableCols.onchange = () => applyInspector((n)=>n.props.cols = clamp(Math.round(Number(el.insTableCols.value) || 2), 2, 10));
 
+    el.insQrText.onchange = () => applyInspector((n) => { n.props.qrText = el.insQrText.value; });
+    el.insProgressValue.onchange = () => applyInspector((n) => { n.props.progressValue = clamp(Number(el.insProgressValue.value) || 0, 0, 100); });
+    el.insProgressTrack.onchange = () => applyInspector((n) => { n.props.progressTrack = el.insProgressTrack.value; });
+    el.insProgressBar.onchange = () => applyInspector((n) => { n.props.progressBar = el.insProgressBar.value; });
+
     function applyStylePreset(target = 'selection') {
       const preset = STYLE_PRESETS[doc.pendingStylePreset || 'minimal'];
       const targetNodes = target === 'all'
@@ -2031,6 +2180,12 @@ const base = import.meta.env.BASE_URL ?? "/";
             inner = `<div class="p-table" style="width:100%;height:100%;grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);">${Array(rows*cols).fill('<div></div>').join('')}</div>`;
           } else if (n.type === 'image' && n.props.src) {
             inner = `<img src="${n.props.src}" alt="" style="width:100%;height:100%;object-fit:${n.props.objectFit||'contain'};display:block;">`;
+          } else if (n.type === 'qrcode') {
+            inner = `<div style="width:100%;height:100%;display:grid;place-items:center;background:#fff;padding:4px;"><img data-qr-print="${(n.props.qrText||'').replace(/"/g,'&quot;')}" style="max-width:100%;max-height:100%;" alt="QR"/></div>`;
+          } else if (n.type === 'progressbar') {
+            const val = Math.max(0, Math.min(100, n.props.progressValue ?? 50));
+            const tk = n.props.progressTrack||'#e2e8f0'; const br = n.props.progressBar||'#6366f1';
+            inner = `<div style="width:100%;height:100%;display:flex;align-items:center"><div style="width:100%;height:100%;border-radius:999px;overflow:hidden;background:${tk};position:relative"><div style="height:100%;width:${val}%;background:${br};border-radius:999px;"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)">${val}%</div></div></div>`;
           } else { inner = '<div style="width:100%;height:100%;background:#f1f5f9;"></div>'; }
           html += `<div class="node" style="${pos}">${inner}</div>`;
         });
@@ -2064,6 +2219,227 @@ const base = import.meta.env.BASE_URL ?? "/";
     document.getElementById('tips-btn').onclick = () => { if (tipsOverlay) tipsOverlay.hidden = false; };
     if (tipsClose) tipsClose.onclick = () => { if (tipsOverlay) tipsOverlay.hidden = true; };
     if (tipsOverlay) tipsOverlay.onclick = (ev) => { if (ev.target === tipsOverlay) tipsOverlay.hidden = true; };
+
+    /* ── Dark Mode ── */
+    const DARK_KEY = 'printforge_dark_mode';
+    const appShell = document.getElementById('app-shell');
+    if (localStorage.getItem(DARK_KEY) === '1') { appShell.classList.add('dark-mode'); el.darkModeToggle.checked = true; }
+    el.darkModeToggle.onchange = () => {
+      const on = el.darkModeToggle.checked;
+      appShell.classList.toggle('dark-mode', on);
+      localStorage.setItem(DARK_KEY, on ? '1' : '0');
+    };
+
+    /* ── SVG Export ── */
+    function buildSvgForPage(pg, dims) {
+      const pxPerMm = 3.7795275591;
+      const def = doc.defaults || {};
+      const pageBg = doc.pageBgGradient?.start && doc.pageBgGradient?.end
+        ? `url(#pgGrad)` : (doc.pageBg || '#fff');
+      let defs = '';
+      if (doc.pageBgGradient?.start && doc.pageBgGradient?.end) {
+        const a = (doc.pageBgGradient.angle ?? 90) * Math.PI / 180;
+        const x1 = 50 - 50 * Math.cos(a); const y1 = 50 - 50 * Math.sin(a);
+        const x2 = 50 + 50 * Math.cos(a); const y2 = 50 + 50 * Math.sin(a);
+        defs += `<linearGradient id="pgGrad" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%"><stop offset="0%" stop-color="${doc.pageBgGradient.start}"/><stop offset="100%" stop-color="${doc.pageBgGradient.end}"/></linearGradient>`;
+      }
+      let svgContent = `<rect width="${dims.wMm}mm" height="${dims.hMm}mm" fill="${pageBg}"/>`;
+      [...pg.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const x = n.xMm; const y = n.yMm; const w = n.wMm; const h = n.hMm;
+        if (['text','heading','paragraph','datelabel'].includes(n.type)) {
+          const fs = n.props.fontSize||14; const c = n.props.color||def.textColor||'#111';
+          const lines = (n.props.text||'').split('\n');
+          let textSvg = `<text x="${x}mm" y="${y + fs * 0.35}mm" font-size="${fs}" fill="${c}" font-family="${n.props.fontFamily||'Inter,sans-serif'}" font-weight="${n.props.fontWeight||400}">`;
+          lines.forEach((line, i) => { textSvg += `<tspan x="${x}mm" dy="${i === 0 ? 0 : fs * 1.3}">${line.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</tspan>`; });
+          textSvg += '</text>';
+          svgContent += textSvg;
+        } else if (['box','highlight','roundedrect'].includes(n.type)) {
+          const fg = n.props.fillGradient;
+          const fill = (fg?.start && fg?.end) ? fg.start : (n.props.fill||def.fillColor||'#e2e8f0');
+          const stroke = n.props.stroke||def.strokeColor||'#94a3b8';
+          const r = n.props.radius||0;
+          svgContent += `<rect x="${x}mm" y="${y}mm" width="${w}mm" height="${h}mm" rx="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`;
+        } else if (n.type === 'circle') {
+          const fg = n.props.fillGradient;
+          const fill = (fg?.start && fg?.end) ? fg.start : (n.props.fill||def.fillColor);
+          const stroke = n.props.stroke||def.strokeColor;
+          svgContent += `<ellipse cx="${x + w/2}mm" cy="${y + h/2}mm" rx="${w/2}mm" ry="${h/2}mm" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`;
+        } else if (['line','divider'].includes(n.type)) {
+          const col = n.props.color||def.strokeColor||'#334155'; const th = n.props.thickness||2;
+          svgContent += `<line x1="${x}mm" y1="${y + h/2}mm" x2="${x+w}mm" y2="${y + h/2}mm" stroke="${col}" stroke-width="${th}"/>`;
+        } else if (n.type === 'progressbar') {
+          const val = Math.max(0, Math.min(100, n.props.progressValue ?? 50));
+          const tk = n.props.progressTrack||'#e2e8f0'; const br = n.props.progressBar||'#6366f1';
+          svgContent += `<rect x="${x}mm" y="${y}mm" width="${w}mm" height="${h}mm" rx="${h/2}mm" fill="${tk}"/>`;
+          svgContent += `<rect x="${x}mm" y="${y}mm" width="${w * val / 100}mm" height="${h}mm" rx="${h/2}mm" fill="${br}"/>`;
+        }
+      });
+      return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${dims.wMm}mm" height="${dims.hMm}mm" viewBox="0 0 ${dims.wMm} ${dims.hMm}">${defs ? `<defs>${defs}</defs>` : ''}${svgContent}</svg>`;
+    }
+    el.exportSvg.onclick = () => {
+      try {
+        const dims = pageDimensionsMm(doc.pageSize, doc.orientation);
+        const pg = activePage();
+        if (!pg) return;
+        const svgStr = buildSvgForPage(pg, dims);
+        const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `printforge-page-${Date.now()}.svg`; a.click();
+        URL.revokeObjectURL(url);
+        showToast(labels.toastSvgDone);
+      } catch { showToast(labels.toastSvgFailed); }
+      closeTransientOverlays();
+    };
+
+    /* ── ZIP Export ── */
+    el.exportZip.onclick = async () => {
+      showToast(labels.toastZipGenerating);
+      closeTransientOverlays();
+      try {
+        const zip = new JSZip();
+        for (let i = 0; i < doc.pages.length; i++) {
+          const pngBlob = await exportPageToPng(doc, doc.pages[i].id);
+          zip.file(`page-${i + 1}.png`, pngBlob);
+        }
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url; a.download = `printforge-${Date.now()}.zip`; a.click();
+        URL.revokeObjectURL(url);
+        showToast(labels.toastZipDone);
+      } catch { showToast(labels.toastZipFailed); }
+    };
+
+    /* ── Presentation Mode ── */
+    const presOverlay = document.getElementById('presentation-overlay');
+    const presStage = document.getElementById('presentation-stage');
+    const presIndicator = document.getElementById('presentation-indicator');
+    let presPageIdx = 0;
+    function renderPresPage() {
+      const dims = pageDimensionsMm(doc.pageSize, doc.orientation);
+      const pxPerMm = 3.7795275591;
+      const pg = doc.pages[presPageIdx];
+      if (!pg) return;
+      presIndicator.textContent = `${presPageIdx + 1} / ${doc.pages.length}`;
+      const maxW = presStage.clientWidth - 48;
+      const maxH = presStage.clientHeight - 48;
+      const pageWPx = dims.wMm * pxPerMm; const pageHPx = dims.hMm * pxPerMm;
+      const scale = Math.min(maxW / pageWPx, maxH / pageHPx, 1.5);
+      presStage.innerHTML = '';
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'presentation-page';
+      pageDiv.style.width = `${pageWPx}px`;
+      pageDiv.style.height = `${pageHPx}px`;
+      pageDiv.style.transform = `scale(${scale})`;
+      pageDiv.style.transformOrigin = 'center center';
+      const pageBg = doc.pageBgGradient?.start && doc.pageBgGradient?.end
+        ? `linear-gradient(${doc.pageBgGradient.angle ?? 90}deg, ${doc.pageBgGradient.start}, ${doc.pageBgGradient.end})`
+        : (doc.pageBg || '#fff');
+      pageDiv.style.background = pageBg;
+      [...pg.nodes].sort((a,b)=>a.z-b.z).forEach((n) => {
+        if (!n.visible) return;
+        const nd = document.createElement('div');
+        nd.style.cssText = `position:absolute;left:${mmToPx(n.xMm)}px;top:${mmToPx(n.yMm)}px;width:${mmToPx(n.wMm)}px;height:${mmToPx(n.hMm)}px;z-index:${n.z};`;
+        if (n.props.boxShadow) nd.style.boxShadow = n.props.boxShadow;
+        nd.innerHTML = nodeHtml(n);
+        const editable = nd.querySelector('[contenteditable]');
+        if (editable) editable.removeAttribute('contenteditable');
+        pageDiv.appendChild(nd);
+      });
+      presStage.appendChild(pageDiv);
+    }
+    function openPresentation() {
+      presPageIdx = doc.pages.findIndex(p => p.id === doc.activePageId);
+      if (presPageIdx < 0) presPageIdx = 0;
+      presOverlay.hidden = false;
+      renderPresPage();
+    }
+    function closePresentation() { presOverlay.hidden = true; }
+    el.presentationBtn.onclick = () => { openPresentation(); closeTransientOverlays(); };
+    document.getElementById('presentation-prev').onclick = () => { presPageIdx = Math.max(0, presPageIdx - 1); renderPresPage(); };
+    document.getElementById('presentation-next').onclick = () => { presPageIdx = Math.min(doc.pages.length - 1, presPageIdx + 1); renderPresPage(); };
+    presOverlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePresentation();
+      if (e.key === 'ArrowLeft') { presPageIdx = Math.max(0, presPageIdx - 1); renderPresPage(); }
+      if (e.key === 'ArrowRight') { presPageIdx = Math.min(doc.pages.length - 1, presPageIdx + 1); renderPresPage(); }
+    });
+
+    /* ── Share (read-only URL) ── */
+    document.getElementById('share-btn').onclick = async () => {
+      closeTransientOverlays();
+      try {
+        const json = JSON.stringify(doc);
+        const encoder = new TextEncoder();
+        const data = encoder.encode(json);
+        const cs = new CompressionStream('gzip');
+        const writer = cs.writable.getWriter();
+        writer.write(data); writer.close();
+        const reader = cs.readable.getReader();
+        const chunks = [];
+        while (true) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); }
+        const compressed = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0));
+        let offset = 0;
+        for (const c of chunks) { compressed.set(c, offset); offset += c.length; }
+        let b64 = '';
+        for (let i = 0; i < compressed.length; i++) b64 += String.fromCharCode(compressed[i]);
+        b64 = btoa(b64);
+        const url = `${window.location.origin}${window.location.pathname}#share=${encodeURIComponent(b64)}`;
+        await navigator.clipboard.writeText(url);
+        showToast(labels.shareCopied);
+      } catch (err) {
+        console.error('[Share]', err);
+        showToast('Share failed');
+      }
+    };
+    if (window.location.hash.startsWith('#share=')) {
+      try {
+        const b64 = decodeURIComponent(window.location.hash.slice('#share='.length));
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const ds = new DecompressionStream('gzip');
+        const writer = ds.writable.getWriter();
+        writer.write(bytes); writer.close();
+        const reader = ds.readable.getReader();
+        const chunks = [];
+        (async () => {
+          while (true) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); }
+          const result = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0));
+          let off = 0; for (const c of chunks) { result.set(c, off); off += c.length; }
+          const json = new TextDecoder().decode(result);
+          const shared = JSON.parse(json);
+          loadDoc(shared);
+          showToast(labels.toastLoaded);
+          window.location.hash = '';
+        })();
+      } catch (err) { console.error('[Share load]', err); }
+    }
+
+    /* ── Onboarding ── */
+    const ONBOARDING_KEY = 'printforge_onboarded_v1';
+    const onboardingSteps = [labels.onboardingStep1, labels.onboardingStep2, labels.onboardingStep3, labels.onboardingStep4];
+    const onbOverlay = document.getElementById('onboarding-overlay');
+    const onbTitle = document.getElementById('onboarding-title');
+    const onbBody = document.getElementById('onboarding-body');
+    const onbDots = document.getElementById('onboarding-dots');
+    const onbPrev = document.getElementById('onboarding-prev');
+    const onbNext = document.getElementById('onboarding-next');
+    const onbSkip = document.getElementById('onboarding-skip');
+    let onbStep = 0;
+    function renderOnboarding() {
+      onbTitle.textContent = onbStep === 0 ? labels.onboardingWelcome : `${onbStep + 1} / ${onboardingSteps.length}`;
+      onbBody.textContent = onboardingSteps[onbStep];
+      onbDots.innerHTML = onboardingSteps.map((_, i) => `<span class="onboarding-dot${i === onbStep ? ' active' : ''}"></span>`).join('');
+      onbPrev.hidden = onbStep === 0;
+      onbNext.textContent = onbStep === onboardingSteps.length - 1 ? labels.onboardingGotIt : labels.onboardingNext;
+    }
+    function closeOnboarding() { onbOverlay.hidden = true; localStorage.setItem(ONBOARDING_KEY, '1'); }
+    onbNext.onclick = () => { if (onbStep < onboardingSteps.length - 1) { onbStep++; renderOnboarding(); } else closeOnboarding(); };
+    onbPrev.onclick = () => { if (onbStep > 0) { onbStep--; renderOnboarding(); } };
+    onbSkip.onclick = () => closeOnboarding();
+    onbOverlay.onclick = (ev) => { if (ev.target === onbOverlay) closeOnboarding(); };
 
     el.duplicateProjectBtn.onclick = () => {
       const duplicate = structuredClone(doc);
@@ -2172,6 +2548,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       }
 
       if (e.key === 'Escape') {
+        if (!presOverlay.hidden) { closePresentation(); return; }
+        if (!onbOverlay.hidden) { closeOnboarding(); return; }
         const shortcutsEl = document.getElementById('shortcuts-overlay');
         if (shortcutsEl && !shortcutsEl.hidden) { shortcutsEl.hidden = true; focusCanvas(); return; }
         const tipsEl = document.getElementById('tips-overlay');
@@ -2213,7 +2591,9 @@ const base = import.meta.env.BASE_URL ?? "/";
     switchThemeSubtab('page');
     renderRecentProjects();
     render();
-    if (localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
+    const hasSavedDoc = !!localStorage.getItem(DOC_STORAGE_KEY);
+    if (!hasSavedDoc && localStorage.getItem(TEMPLATE_HIDE_KEY) !== '1') openTemplateModal();
+    if (!localStorage.getItem(ONBOARDING_KEY)) { renderOnboarding(); onbOverlay.hidden = false; }
     focusCanvas();
     window.addEventListener('beforeunload', () => saveToLocal(doc));
   </script>

@@ -254,6 +254,36 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
         });
         break;
       }
+      case "qrcode": {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = "#6b7280";
+        ctx.font = `${12 * SCALE}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("QR", x + width / 2, y + height / 2);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+        break;
+      }
+      case "progressbar": {
+        const val = Math.max(0, Math.min(100, n.props.progressValue ?? 50));
+        const track = n.props.progressTrack || "#e2e8f0";
+        const bar = n.props.progressBar || "#6366f1";
+        const rr = height / 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === "function") ctx.roundRect(x, y, width, height, rr);
+        else { ctx.moveTo(x + rr, y); ctx.arcTo(x + width, y, x + width, y + height, rr); ctx.arcTo(x + width, y + height, x, y + height, rr); ctx.arcTo(x, y + height, x, y, rr); ctx.arcTo(x, y, x + rr, y, rr); }
+        ctx.fillStyle = track; ctx.fill();
+        const bw = width * val / 100;
+        if (bw > 0) {
+          ctx.beginPath();
+          if (typeof ctx.roundRect === "function") ctx.roundRect(x, y, bw, height, rr);
+          else { ctx.moveTo(x + rr, y); ctx.arcTo(x + bw, y, x + bw, y + height, Math.min(rr, bw/2)); ctx.arcTo(x + bw, y + height, x, y + height, Math.min(rr, bw/2)); ctx.arcTo(x, y + height, x, y, rr); ctx.arcTo(x, y, x + rr, y, rr); }
+          ctx.fillStyle = bar; ctx.fill();
+        }
+        break;
+      }
       default:
         ctx.fillStyle = "#f3f4f6";
         ctx.fillRect(x, y, width, height);

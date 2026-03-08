@@ -20,7 +20,9 @@ export type NodeType =
   | "table"
   | "calendar"
   | "image"
-  | "svg";
+  | "svg"
+  | "qrcode"
+  | "progressbar";
 
 export interface NodeProps {
   text?: string;
@@ -51,6 +53,14 @@ export interface NodeProps {
   boxShadow?: string;
   /** Linear gradient for fill (shapes). If set, used instead of fill for background. */
   fillGradient?: { angle: number; start: string; end: string };
+  /** QR code data text */
+  qrText?: string;
+  /** Progress bar value 0-100 */
+  progressValue?: number;
+  /** Progress bar track color */
+  progressTrack?: string;
+  /** Progress bar bar color */
+  progressBar?: string;
 }
 
 

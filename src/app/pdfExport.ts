@@ -175,6 +175,27 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         pdf.setFillColor(245, 245, 245);
         pdf.roundedRect(x, y, w, h, 1, 1, "F");
         break;
+      case "qrcode":
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(x, y, w, h, "F");
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text("QR", x + w / 2, y + h / 2, { align: "center" });
+        break;
+      case "progressbar": {
+        const val = Math.max(0, Math.min(100, node.props.progressValue ?? 50));
+        const track = node.props.progressTrack || "#e2e8f0";
+        const bar = node.props.progressBar || "#6366f1";
+        const [tr, tg, tb] = hexToRgb(track);
+        pdf.setFillColor(tr * 255, tg * 255, tb * 255);
+        const rr = Math.min(h / 2, 8);
+        pdf.roundedRect(x, y, w, h, rr, rr, "F");
+        const [br, bg, bb] = hexToRgb(bar);
+        pdf.setFillColor(br * 255, bg * 255, bb * 255);
+        const bw = w * val / 100;
+        if (bw > 0) pdf.roundedRect(x, y, bw, h, rr, rr, "F");
+        break;
+      }
       default:
         break;
     }
