@@ -284,6 +284,80 @@ export async function exportPageToPng(doc: Doc, pageId: string): Promise<Blob> {
         }
         break;
       }
+      case "star": {
+        const pts = n.props.points || 5;
+        const ir = n.props.innerRadius || 0.45;
+        const fill = n.props.fill || "#fbbf24";
+        const stroke = n.props.stroke || "#d97706";
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const outerR = Math.min(width, height) / 2;
+        const innerR = outerR * ir;
+        const angleStep = Math.PI / pts;
+        ctx.beginPath();
+        for (let i = 0; i < pts * 2; i++) {
+          const a = i * angleStep - Math.PI / 2;
+          const r = i % 2 === 0 ? outerR : innerR;
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 2 * SCALE;
+        ctx.stroke();
+        break;
+      }
+      case "stickynote": {
+        const bg = n.props.noteBg || "#fef08a";
+        ctx.fillStyle = bg;
+        ctx.fillRect(x, y, width, height);
+        ctx.shadowColor = "rgba(0,0,0,0.1)";
+        ctx.shadowBlur = 4 * SCALE;
+        ctx.shadowOffsetX = 2 * SCALE;
+        ctx.shadowOffsetY = 3 * SCALE;
+        ctx.fillRect(x, y, width, height);
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        const text = (n.props.text || "").trim();
+        if (text) {
+          const fs = (n.props.fontSize ?? 14) * SCALE;
+          ctx.font = `${fs}px ${getCanvasFontFamily(def.fontFamily || "Inter")}`;
+          ctx.fillStyle = "#1c1917";
+          ctx.textBaseline = "top";
+          wrapText(ctx, text, width - 20 * SCALE, fs * 1.4);
+        }
+        break;
+      }
+      case "ruler": {
+        const col = "#dc2626";
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2 * SCALE;
+        ctx.beginPath();
+        ctx.moveTo(x, y + height / 2);
+        ctx.lineTo(x + width, y + height / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + height / 2 - 4 * SCALE);
+        ctx.lineTo(x, y + height / 2 + 4 * SCALE);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + width, y + height / 2 - 4 * SCALE);
+        ctx.lineTo(x + width, y + height / 2 + 4 * SCALE);
+        ctx.stroke();
+        ctx.fillStyle = col;
+        ctx.font = `${10 * SCALE}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(`${n.wMm.toFixed(1)} mm`, x + width / 2, y + height / 2 - 4 * SCALE);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+        break;
+      }
       default:
         ctx.fillStyle = "#f3f4f6";
         ctx.fillRect(x, y, width, height);

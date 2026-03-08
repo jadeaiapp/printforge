@@ -22,7 +22,10 @@ export type NodeType =
   | "image"
   | "svg"
   | "qrcode"
-  | "progressbar";
+  | "progressbar"
+  | "star"
+  | "stickynote"
+  | "ruler";
 
 export interface NodeProps {
   text?: string;
@@ -61,6 +64,12 @@ export interface NodeProps {
   progressTrack?: string;
   /** Progress bar bar color */
   progressBar?: string;
+  /** Star/polygon point count */
+  points?: number;
+  /** Star inner radius ratio 0-1 */
+  innerRadius?: number;
+  /** Sticky note background color */
+  noteBg?: string;
 }
 
 
@@ -108,6 +117,7 @@ export interface Doc {
     fillColor: string;
     radius: number;
   };
+  watermark?: { text: string; fontSize: number; color: string; opacity: number };
   meta?: { projectName?: string };
   pages: Page[];
   activePageId: string;

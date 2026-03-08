@@ -196,6 +196,43 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         if (bw > 0) pdf.roundedRect(x, y, bw, h, rr, rr, "F");
         break;
       }
+      case "star": {
+        const fill = node.props.fill || "#fbbf24";
+        const stroke = node.props.stroke || "#d97706";
+        const [fr, fg, fb] = hexToRgb(fill);
+        const [sr, sg, sb] = hexToRgb(stroke);
+        pdf.setFillColor(fr * 255, fg * 255, fb * 255);
+        pdf.setDrawColor(sr * 255, sg * 255, sb * 255);
+        pdf.setLineWidth(0.5);
+        const r = Math.min(w, h) / 2;
+        pdf.circle(x + w / 2, y + h / 2, r, "FD");
+        break;
+      }
+      case "stickynote": {
+        const bg = node.props.noteBg || "#fef08a";
+        const [nr, ng, nb] = hexToRgb(bg);
+        pdf.setFillColor(nr * 255, ng * 255, nb * 255);
+        pdf.roundedRect(x, y, w, h, 2, 2, "F");
+        const text = (node.props.text || "").trim();
+        if (text) {
+          const fs = node.props.fontSize ?? 14;
+          pdf.setFontSize(fs);
+          pdf.setTextColor(28, 25, 23);
+          pdf.text(text, x + 3, y + fs * 0.4 + 2, { maxWidth: w - 6 });
+        }
+        break;
+      }
+      case "ruler": {
+        const col = "#dc2626";
+        const [rr, rg, rb] = hexToRgb(col);
+        pdf.setDrawColor(rr * 255, rg * 255, rb * 255);
+        pdf.setLineWidth(0.5);
+        pdf.line(x, y + h / 2, x + w, y + h / 2);
+        pdf.setFontSize(7);
+        pdf.setTextColor(rr * 255, rg * 255, rb * 255);
+        pdf.text(`${w.toFixed(1)} mm`, x + w / 2, y + h / 2 - 2, { align: "center" });
+        break;
+      }
       default:
         break;
     }
