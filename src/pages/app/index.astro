@@ -32,6 +32,11 @@ const base = import.meta.env.BASE_URL ?? "/";
           <select id="grid-step" class="control"><option value="2">2mm</option><option value="5" selected>5mm</option><option value="10">10mm</option></select>
         </label>
 
+        <span class="top-sep" aria-hidden="true">|</span>
+        <button type="button" id="add-page" class="btn">{labels.addPage}</button>
+        <button type="button" id="dup-page" class="btn">{labels.dupPage}</button>
+        <button type="button" id="del-page" class="btn">{labels.delPage}</button>
+
         <span id="save-indicator" class="save-indicator" aria-live="polite">{labels.saved}</span>
 
         <button type="button" id="delete-btn" class="btn btn-danger" disabled>{labels.delete}</button>
@@ -68,12 +73,12 @@ const base = import.meta.env.BASE_URL ?? "/";
     </header>
 
     <main class="app-main">
-      <aside class="panel left-panel">
+      <aside class="panel left-panel" id="left-panel">
+        <div class="left-panel-content">
         <div class="left-tabs" role="tablist" aria-label="Left panel tabs">
           <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">{labels.blocks}</button>
           <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">{labels.layers}</button>
           <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">{labels.assets}</button>
-          <button type="button" class="left-tab" id="tab-theme" data-tab="theme" role="tab" aria-selected="false">{labels.theme}</button>
         </div>
 
         <div id="left-scroll" class="left-scroll">
@@ -140,122 +145,9 @@ const base = import.meta.env.BASE_URL ?? "/";
             </div>
           </section>
 
-          <section id="panel-theme" class="tab-panel" role="tabpanel" aria-labelledby="tab-theme" hidden>
-            <div class="theme-panel">
-              <div class="theme-subtabs" role="tablist" aria-label="Theme subtabs">
-                <button type="button" class="theme-subtab is-active" data-theme-subtab="page" role="tab" aria-selected="true">Page</button>
-              </div>
-
-              <section class="theme-subpanel active" data-theme-panel="page" role="tabpanel">
-                <h3>Page background</h3>
-                <label class="field"><span>Background color</span>
-                  <div class="color-with-hex">
-                    <input id="theme-page-color" class="control" type="color" />
-                    <span class="hex-value" id="theme-page-color-hex" aria-live="polite"></span>
-                    <button type="button" class="btn copy-hex" title={labels.copyHex} aria-label={labels.copyHex}>⎘</button>
-                  </div>
-                </label>
-                <label class="checkline"><input type="checkbox" id="theme-page-gradient-toggle" /> {labels.pageGradient}</label>
-                <div id="theme-page-gradient-fields" class="gradient-fields" hidden>
-                  <label class="field"><span>{labels.angle} (°)</span><input id="theme-page-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
-                  <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="theme-page-gradient-start" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="theme-page-gradient-end" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                </div>
-
-                <div class="theme-brand-colors">
-                  <h3>{labels.brandColors}</h3>
-                  <div id="brand-swatches" class="brand-swatches" role="group" aria-label={labels.brandColors}></div>
-                </div>
-                <div class="theme-brand-colors">
-                  <h3>{labels.recentColors}</h3>
-                  <div id="recent-swatches" class="brand-swatches recent-swatches" role="group" aria-label={labels.recentColors}></div>
-                </div>
-
-                <details class="theme-advanced">
-                  <summary>Advanced</summary>
-                  <h3>New elements defaults</h3>
-                  <label class="field"><span>New text color</span><div class="color-with-hex"><input id="theme-default-text" class="control" type="color" /><span class="hex-value" id="theme-default-text-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>New shape fill</span><div class="color-with-hex"><input id="theme-default-fill" class="control" type="color" /><span class="hex-value" id="theme-default-fill-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>New stroke color</span><div class="color-with-hex"><input id="theme-default-stroke" class="control" type="color" /><span class="hex-value" id="theme-default-stroke-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>New corner radius</span><input id="theme-default-radius" class="control" type="number" min="0" max="80" step="1" /></label>
-                  <div id="style-presets" class="theme-preset-list"></div>
-                  <div class="theme-actions">
-                    <button type="button" id="preset-apply-selection" class="btn">Apply to selection</button>
-                    <button type="button" id="preset-apply-all" class="btn">Apply to all nodes</button>
-                  </div>
-                </details>
-              </section>
-
-              <details class="theme-advanced">
-                <summary>{labels.watermark}</summary>
-                <label class="checkline"><input type="checkbox" id="watermark-toggle" /> {labels.watermarkEnable}</label>
-                <div id="watermark-fields" hidden>
-                  <label class="field"><span>{labels.watermarkText}</span><input id="watermark-text" class="control" type="text" value="DRAFT" maxlength="40" /></label>
-                  <label class="field"><span>{labels.watermarkSize}</span><input id="watermark-size" class="control" type="number" min="20" max="200" value="60" /></label>
-                  <label class="field"><span>{labels.watermarkColor}</span><div class="color-with-hex"><input id="watermark-color" class="control" type="color" value="#000000" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
-                  <label class="field"><span>{labels.watermarkOpacity}</span><input id="watermark-opacity" class="control" type="range" min="0.02" max="0.4" step="0.02" value="0.08" /></label>
-                </div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>{labels.colorGenerator}</summary>
-                <div class="color-gen-panel">
-                  <label class="field"><span>Base</span><input id="color-gen-base" class="control" type="color" value="#6366f1" /></label>
-                  <label class="field"><span>{labels.harmony}</span><select id="color-gen-harmony" class="control"><option value="analogous">{labels.analogous}</option><option value="complementary">{labels.complementary}</option><option value="triadic">{labels.triadic}</option></select></label>
-                  <button type="button" id="color-gen-btn" class="btn">{labels.generatePalette}</button>
-                  <div id="color-gen-swatches" class="brand-swatches"></div>
-                </div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>{labels.masterLayout}</summary>
-                <p class="theme-note">{labels.masterInfo}</p>
-                <button type="button" id="master-add-btn" class="btn">{labels.masterAdd}</button>
-                <button type="button" id="master-clear-btn" class="btn">{labels.masterClear}</button>
-                <div id="master-list" class="master-list"></div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>{labels.componentLibrary}</summary>
-                <button type="button" id="save-component-btn" class="btn">{labels.saveComponent}</button>
-                <div id="component-list" class="component-list"><p class="theme-note">{labels.noComponents}</p></div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>{labels.templateVar}</summary>
-                <p class="theme-note">{labels.batchPlaceholder}</p>
-                <div class="template-var-btns">
-                  <button type="button" class="btn" data-var="page_no">{labels.varPageNo}</button>
-                  <button type="button" class="btn" data-var="date">{labels.varDate}</button>
-                  <button type="button" class="btn" data-var="project_name">{labels.varProjectName}</button>
-                </div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>{labels.printProfile}</summary>
-                <div class="print-profile-panel">
-                  <select id="print-profile-select" class="control">
-                    <option value="home">{labels.profileHome}</option>
-                    <option value="office">{labels.profileOffice}</option>
-                    <option value="print">{labels.profilePrint}</option>
-                  </select>
-                  <label class="checkline"><input type="checkbox" id="crop-marks-toggle" /> {labels.cropMarks}</label>
-                  <div id="print-profile-info" class="theme-note"></div>
-                </div>
-              </details>
-
-              <details class="theme-advanced">
-                <summary>Workspace (Advanced, editor only)</summary>
-                <p class="theme-note">Does not affect PDF export.</p>
-                <label class="field"><span>Solid color</span><input id="theme-workspace-color" class="control" type="color" /></label>
-                <div class="field"><span>Gradient presets</span>
-                  <div id="theme-gradients" class="theme-preset-list"></div>
-                </div>
-                <label class="checkline"><input id="theme-workspace-pattern" type="checkbox" />Subtle dots/grid background</label>
-              </details>
-            </div>
-          </section>
         </div>
+        </div>
+        <button type="button" class="panel-toggle left-panel-toggle" id="left-panel-toggle" title="Toggle blocks panel" aria-expanded="true" aria-label="Toggle blocks panel">◀</button>
       </aside>
 
       <section class="panel canvas-panel">
@@ -294,11 +186,39 @@ const base = import.meta.env.BASE_URL ?? "/";
         </div>
       </section>
 
-      <aside class="panel right-panel">
+      <aside class="panel right-panel" id="right-panel">
+        <button type="button" class="panel-toggle right-panel-toggle" id="right-panel-toggle" title="Toggle inspector" aria-expanded="true" aria-label="Toggle inspector">▶</button>
+        <div class="right-panel-content">
         <h2 id="inspector-title">{labels.noSelection}</h2>
         <div id="inspector-scroll" class="right-scroll">
           <div id="inspector-empty" class="ins-note">{labels.selectObject}</div>
           <div id="inspector-content" hidden>
+            <section class="ins-group" data-for="page">
+              <h3>Page</h3>
+              <label class="field"><span>Background color</span>
+                <div class="color-with-hex">
+                  <input id="theme-page-color" class="control" type="color" />
+                  <span class="hex-value" id="theme-page-color-hex" aria-live="polite"></span>
+                  <button type="button" class="btn copy-hex" title={labels.copyHex} aria-label={labels.copyHex}>⎘</button>
+                </div>
+              </label>
+              <label class="checkline"><input type="checkbox" id="theme-page-gradient-toggle" /> {labels.pageGradient}</label>
+              <div id="theme-page-gradient-fields" class="gradient-fields" hidden>
+                <label class="field"><span>{labels.angle} (°)</span><input id="theme-page-gradient-angle" class="control" type="number" min="0" max="360" value="90" /></label>
+                <label class="field"><span>{labels.startColor}</span><div class="color-with-hex"><input id="theme-page-gradient-start" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-start-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                <label class="field"><span>{labels.endColor}</span><div class="color-with-hex"><input id="theme-page-gradient-end" class="control" type="color" /><span class="hex-value" id="theme-page-gradient-end-hex"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+              </div>
+              <div class="ins-subsection" style="margin-top:10px">
+                <strong>{labels.watermark}</strong>
+                <label class="checkline"><input type="checkbox" id="watermark-toggle" /> {labels.watermarkEnable}</label>
+                <div id="watermark-fields" hidden>
+                  <label class="field"><span>{labels.watermarkText}</span><input id="watermark-text" class="control" type="text" value="DRAFT" maxlength="40" /></label>
+                  <label class="field"><span>{labels.watermarkSize}</span><input id="watermark-size" class="control" type="number" min="20" max="200" value="60" /></label>
+                  <label class="field"><span>{labels.watermarkColor}</span><div class="color-with-hex"><input id="watermark-color" class="control" type="color" value="#000000" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
+                  <label class="field"><span>{labels.watermarkOpacity}</span><input id="watermark-opacity" class="control" type="range" min="0.02" max="0.4" step="0.02" value="0.08" /></label>
+                </div>
+              </div>
+            </section>
             <section class="ins-group" data-for="common">
               <div class="inspector-grid">
                 <label class="field"><span>X (mm)</span><input id="ins-x" class="control" type="number" step="0.5" /></label>
@@ -446,7 +366,8 @@ const base = import.meta.env.BASE_URL ?? "/";
 
             <section class="ins-group" data-for="timeline">
               <div class="inspector-grid">
-                <label class="field" style="grid-column:1/-1"><span>{labels.timelineItems}</span><textarea id="ins-timeline-items" class="control" rows="3" placeholder='[{"date":"2026","title":"Event"}]'></textarea></label>
+                <label class="field" style="grid-column:1/-1"><span>{labels.timelineItems}</span></label>
+                <div id="timeline-items-editor" class="timeline-items-editor" style="grid-column:1/-1"></div>
                 <label class="field"><span>Fill</span><div class="color-with-hex"><input id="ins-timeline-color" class="control" type="color" /><span class="hex-value"></span><button type="button" class="btn copy-hex" title={labels.copyHex}>⎘</button></div></label>
               </div>
             </section>
@@ -461,17 +382,10 @@ const base = import.meta.env.BASE_URL ?? "/";
           </div>
           <p id="ins-note" class="ins-note"></p>
         </div>
+        </div>
       </aside>
     </main>
 
-    <footer class="pages-strip">
-      <div class="pages-actions">
-        <button type="button" id="add-page" class="btn">{labels.addPage}</button>
-        <button type="button" id="dup-page" class="btn">{labels.dupPage}</button>
-        <button type="button" id="del-page" class="btn">{labels.delPage}</button>
-      </div>
-      <div id="pages-list" class="pages-list"></div>
-    </footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <div id="context-menu" class="context-menu" hidden>
       <button type="button" data-context-action="duplicate">{labels.contextDuplicate}</button>
@@ -718,7 +632,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       delBtn: document.getElementById('delete-btn'), note: document.getElementById('ins-note'), inspectorTitle: document.getElementById('inspector-title'),
       inspectorEmpty: document.getElementById('inspector-empty'), inspectorContent: document.getElementById('inspector-content'),
       saveIndicator: document.getElementById('save-indicator'),
-      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets'), theme: document.getElementById('panel-theme') },
+      tabButtons: [...document.querySelectorAll('.left-tab')], tabPanels: { blocks: document.getElementById('panel-blocks'), layers: document.getElementById('panel-layers'), assets: document.getElementById('panel-assets') },
       assetSearch: document.getElementById('asset-search'), assetsList: document.getElementById('assets-list'),
       assetCategoryTabs: [...document.querySelectorAll('[data-asset-category]')], assetLoadMore: document.getElementById('asset-load-more'), assetPageLabel: document.getElementById('asset-page-label'),
       insX: document.getElementById('ins-x'), insY: document.getElementById('ins-y'), insW: document.getElementById('ins-w'), insH: document.getElementById('ins-h'),
@@ -733,7 +647,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       insSignatureLabel: document.getElementById('ins-signature-label'),
       insBarcodeText: document.getElementById('ins-barcode-text'),
       insChartData: document.getElementById('ins-chart-data'), insChartType: document.getElementById('ins-chart-type'), insChartColor: document.getElementById('ins-chart-color'),
-      insTimelineItems: document.getElementById('ins-timeline-items'), insTimelineColor: document.getElementById('ins-timeline-color'),
+      timelineItemsEditor: document.getElementById('timeline-items-editor'), insTimelineColor: document.getElementById('ins-timeline-color'),
       insCountdownTarget: document.getElementById('ins-countdown-target'), insCountdownLabel: document.getElementById('ins-countdown-label'), insCountdownColor: document.getElementById('ins-countdown-color'),
       cmdPaletteOverlay: document.getElementById('cmd-palette-overlay'), cmdPaletteInput: document.getElementById('cmd-palette-input'), cmdPaletteList: document.getElementById('cmd-palette-list'),
       exportHtmlBtn: document.getElementById('export-html-btn'), batchExportBtn: document.getElementById('batch-export-btn'),
@@ -781,6 +695,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     let copiedStyle = null;
     let contextNodeId = null;
     let marqueeState = null;
+    let pageSelected = false;
     let activeAssetCategory = 'Icons';
     let visibleAssetCount = ASSETS_PAGE_SIZE;
     let spacePanKeyDown = false;
@@ -1206,17 +1121,10 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     function renderThemePanel() {
-      el.themeWorkspaceColor.value = doc.workspaceBg || '#e5e7eb';
-      el.themeWorkspacePattern.checked = !!doc.workspacePatternOn;
-      el.themeGradients.innerHTML = WORKSPACE_GRADIENTS.map((item) => `<button type="button" class="btn ${doc.workspaceGradientId === item.id ? 'is-active' : ''}" data-gradient-id="${item.id}">${item.name}</button>`).join('');
-      el.themeGradients.querySelectorAll('[data-gradient-id]').forEach((btn) => {
-        btn.onclick = () => { doc.workspaceGradientId = btn.dataset.gradientId; commitChange(); render(); };
-      });
-
-      el.themePageColor.value = doc.pageBg || '#ffffff';
+      if (el.themePageColor) el.themePageColor.value = doc.pageBg || '#ffffff';
       const hasPageGrad = doc.pageBgGradient?.start && doc.pageBgGradient?.end;
       if (el.themePageGradientToggle) { el.themePageGradientToggle.checked = !!hasPageGrad; }
-      if (el.themePageGradientFields) { el.themePageGradientFields.hidden = !hasPageGrad; }
+      if (el.themePageGradientFields) el.themePageGradientFields.hidden = !hasPageGrad;
       if (hasPageGrad) {
         if (el.themePageGradientAngle) el.themePageGradientAngle.value = String(doc.pageBgGradient.angle ?? 90);
         if (el.themePageGradientStart) el.themePageGradientStart.value = doc.pageBgGradient.start;
@@ -1226,62 +1134,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         if (el.themePageGradientStart) el.themePageGradientStart.value = doc.pageBg || '#ffffff';
         if (el.themePageGradientEnd) el.themePageGradientEnd.value = '#e5e7eb';
       }
-      el.themeDefaultText.value = doc.defaults.textColor || '#111827';
-      el.themeDefaultFill.value = doc.defaults.fillColor || '#e2e8f0';
-      el.themeDefaultStroke.value = doc.defaults.strokeColor || '#94a3b8';
-      el.themeDefaultRadius.value = String(doc.defaults.radius ?? 6);
-
-      el.stylePresets.innerHTML = Object.values(STYLE_PRESETS).map((item) => `<button type="button" class="btn" data-style-preset="${item.id}">${item.name}</button>`).join('');
-      el.stylePresets.querySelectorAll('[data-style-preset]').forEach((btn) => {
-        btn.onclick = () => {
-          doc.pendingStylePreset = btn.dataset.stylePreset;
-          el.stylePresets.querySelectorAll('[data-style-preset]').forEach((item) => item.classList.toggle('is-active', item === btn));
-        };
-      });
-      if (!doc.pendingStylePreset) {
-        doc.pendingStylePreset = 'minimal';
-        const first = el.stylePresets.querySelector('[data-style-preset]');
-        if (first) first.classList.add('is-active');
-      }
-
-      const swatches = doc.brandSwatches || [];
-      el.brandSwatchesContainer.innerHTML = swatches.map((hex, idx) => `<button type="button" class="brand-swatch" data-brand-color="${hex}" title="${hex}" style="background:${hex}" aria-label="Apply ${hex}"></button>`).join('');
-      el.brandSwatchesContainer.querySelectorAll('.brand-swatch').forEach((btn) => {
-        btn.onclick = () => {
-          const color = btn.dataset.brandColor;
-          if (!color || !selectedNodeIds.size) return;
-          addRecentColor(color);
-          selectedNodes().forEach((n) => {
-            if (n.locked) return;
-            if (['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) n.props.color = color;
-            else if (['box', 'highlight', 'roundedrect', 'circle', 'svg'].includes(n.type)) n.props.fill = color;
-            else if (['line', 'divider'].includes(n.type)) n.props.color = color;
-          });
-          commitChange();
-          render();
-        };
-      });
-
-      const recent = doc.recentColors || [];
-      el.recentSwatchesContainer.innerHTML = recent.length ? recent.map((hex) => `<button type="button" class="brand-swatch" data-recent-color="${hex}" title="${hex}" style="background:${hex}" aria-label="Apply ${hex}"></button>`).join('') : '';
-      updateAllHexDisplays();
-      el.recentSwatchesContainer.querySelectorAll('[data-recent-color]').forEach((btn) => {
-        btn.onclick = () => {
-          const color = btn.dataset.recentColor;
-          if (!color) return;
-          addRecentColor(color);
-          if (!selectedNodeIds.size) return;
-          selectedNodes().forEach((n) => {
-            if (n.locked) return;
-            if (['text', 'heading', 'paragraph', 'datelabel'].includes(n.type)) n.props.color = color;
-            else if (['box', 'highlight', 'roundedrect', 'circle', 'svg'].includes(n.type)) n.props.fill = color;
-            else if (['line', 'divider'].includes(n.type)) n.props.color = color;
-          });
-          commitChange();
-          render();
-        };
-      });
       syncWatermarkUI();
+      updateAllHexDisplays();
     }
 
     function renderPageMiniCanvas(pg, canvasEl) {
@@ -1338,6 +1192,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     function renderPages() {
+      if (el.delPage) el.delPage.disabled = doc.pages.length <= 1;
+      if (!el.pagesList) return;
       el.pagesList.innerHTML = '';
       doc.pages.forEach((page, i) => {
         const chip = document.createElement('button');
@@ -1616,6 +1472,51 @@ const base = import.meta.env.BASE_URL ?? "/";
       }
     }
 
+    function buildTimelineItemsEditor(container, jsonStr, onChange) {
+      if (!container) return;
+      let items = [];
+      try { items = JSON.parse(jsonStr || '[]'); } catch {}
+      if (!Array.isArray(items)) items = [];
+      if (!items.length) items = [{ date: '', title: '' }];
+      const emit = () => {
+        const rows = container.querySelectorAll('.timeline-item-row');
+        const out = Array.from(rows).map((row) => ({
+          date: (row.querySelector('[data-timeline-date]')?.value ?? '').trim(),
+          title: (row.querySelector('[data-timeline-title]')?.value ?? '').trim()
+        }));
+        onChange(JSON.stringify(out));
+      };
+      container.innerHTML = items.map((it, i) =>
+        `<div class="timeline-item-row" data-index="${i}">
+          <input type="text" class="control" data-timeline-date placeholder="${labels.timelineDate}" value="${(it.date ?? '').replace(/"/g, '&quot;')}" />
+          <input type="text" class="control" data-timeline-title placeholder="${labels.timelineTitle}" value="${(it.title ?? '').replace(/"/g, '&quot;')}" />
+          <button type="button" class="btn timeline-item-remove" data-timeline-remove aria-label="${labels.delete}">×</button>
+        </div>`
+      ).join('') + `<button type="button" class="btn timeline-add-item" data-timeline-add>${labels.addTimelineItem}</button>`;
+      container.querySelectorAll('.timeline-item-row').forEach((row, i) => {
+        row.querySelector('[data-timeline-date]')?.addEventListener('input', emit);
+        row.querySelector('[data-timeline-date]')?.addEventListener('change', emit);
+        row.querySelector('[data-timeline-title]')?.addEventListener('input', emit);
+        row.querySelector('[data-timeline-title]')?.addEventListener('change', emit);
+        row.querySelector('[data-timeline-remove]')?.addEventListener('click', () => {
+          row.remove();
+          emit();
+        });
+      });
+      container.querySelector('[data-timeline-add]')?.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'timeline-item-row';
+        row.innerHTML = `<input type="text" class="control" data-timeline-date placeholder="${labels.timelineDate}" /><input type="text" class="control" data-timeline-title placeholder="${labels.timelineTitle}" /><button type="button" class="btn timeline-item-remove" data-timeline-remove aria-label="${labels.delete}">×</button>`;
+        row.querySelector('[data-timeline-date]')?.addEventListener('input', emit);
+        row.querySelector('[data-timeline-date]')?.addEventListener('change', emit);
+        row.querySelector('[data-timeline-title]')?.addEventListener('input', emit);
+        row.querySelector('[data-timeline-title]')?.addEventListener('change', emit);
+        row.querySelector('[data-timeline-remove]')?.addEventListener('click', () => { row.remove(); emit(); });
+        container.insertBefore(row, container.lastElementChild);
+        emit();
+      });
+    }
+
     function renderNodes() {
       const p = activePage();
       el.stage.innerHTML = '';
@@ -1689,6 +1590,18 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     function syncInspector() {
+      if (pageSelected) {
+        el.inspectorTitle.textContent = 'Page';
+        el.delBtn.disabled = true;
+        el.inspectorGroups.forEach((group) => {
+          group.style.display = group.dataset.for === 'page' ? 'block' : 'none';
+        });
+        el.inspectorContent.hidden = false;
+        el.inspectorEmpty.hidden = true;
+        el.note.hidden = true;
+        renderThemePanel();
+        return;
+      }
       const n = activeNode();
       const selectedCount = selectedNodeIds.size;
       const has = !!n && selectedCount <= 1;
@@ -1806,7 +1719,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       enableControl(el.insChartColor, isChart, n?.props.chartColors || '#6366f1');
 
       const isTimeline = n && n.type === 'timeline';
-      enableControl(el.insTimelineItems, isTimeline, n?.props.timelineItems || '[]');
+      if (el.timelineItemsEditor) {
+        el.timelineItemsEditor.hidden = !isTimeline;
+        if (isTimeline) buildTimelineItemsEditor(el.timelineItemsEditor, n.props.timelineItems || '[]', (newJson) => {
+          const node = activeNode();
+          if (node && node.type === 'timeline') { node.props.timelineItems = newJson; commitChange(); render(); }
+        });
+      }
       enableControl(el.insTimelineColor, isTimeline, n?.props.fill || '#6366f1');
 
       const isCountdown = n && n.type === 'countdown';
@@ -2150,6 +2069,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function startPointer(e) {
       const nodeEl = e.target.closest('.node'); if (!nodeEl) return;
       const n = activePage()?.nodes.find((x)=>x.id===nodeEl.dataset.id); if (!n) return;
+      pageSelected = false;
       const wasAlreadySelected = selectedNodeIds.has(n.id);
       if (e.shiftKey) toggleNodeSelection(n.id); else setSelection([n.id], n.id);
       if (n.locked) { render(); return; }
@@ -2158,6 +2078,23 @@ const base = import.meta.env.BASE_URL ?? "/";
       const isContentEditable = e.target.closest('[contenteditable="true"]');
       if (isContentEditable && !handle && !isDragHandle) {
         render();
+        // Focus the new contenteditable after render (DOM was recreated)
+        const nodeIdToFocus = n.id;
+        requestAnimationFrame(() => {
+          const nodeEl = el.stage.querySelector(`[data-id="${nodeIdToFocus}"]`);
+          const editable = nodeEl?.querySelector('.text-content[contenteditable="true"]');
+          if (editable && typeof editable.focus === 'function') {
+            editable.focus();
+            const sel = window.getSelection();
+            if (sel) {
+              const range = document.createRange();
+              range.selectNodeContents(editable);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          }
+        });
         return;
       }
       let dragStarted = !!handle || !!isDragHandle || !isContentEditable;
@@ -2259,6 +2196,25 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
+
+    const leftPanel = document.getElementById('left-panel');
+    const rightPanel = document.getElementById('right-panel');
+    const leftPanelToggle = document.getElementById('left-panel-toggle');
+    const rightPanelToggle = document.getElementById('right-panel-toggle');
+    if (leftPanelToggle && leftPanel) {
+      leftPanelToggle.onclick = () => {
+        const collapsed = leftPanel.classList.toggle('collapsed');
+        leftPanelToggle.textContent = collapsed ? '▶' : '◀';
+        leftPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      };
+    }
+    if (rightPanelToggle && rightPanel) {
+      rightPanelToggle.onclick = () => {
+        const collapsed = rightPanel.classList.toggle('collapsed');
+        rightPanelToggle.textContent = collapsed ? '◀' : '▶';
+        rightPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      };
+    }
     el.assetSearch.oninput = () => { visibleAssetCount = ASSETS_PAGE_SIZE; renderAssets(); };
     el.assetCategoryTabs.forEach((btn) => {
       btn.onclick = () => {
@@ -2345,8 +2301,8 @@ const base = import.meta.env.BASE_URL ?? "/";
         const active = document.activeElement;
         if (active?.isContentEditable) active.blur();
         const start = pagePointFromEvent(e);
-        marqueeState = { x0: start.xMm, y0: start.yMm, x1: start.xMm, y1: start.yMm, additive: e.shiftKey };
-        el.marquee.hidden = false;
+        const startX = e.clientX, startY = e.clientY;
+        let dragStarted = false;
         const drawMarquee = () => {
           const x = Math.min(marqueeState.x0, marqueeState.x1);
           const y = Math.min(marqueeState.y0, marqueeState.y1);
@@ -2357,15 +2313,34 @@ const base = import.meta.env.BASE_URL ?? "/";
           el.marquee.style.width = `${mmToPx(w)}px`;
           el.marquee.style.height = `${mmToPx(h)}px`;
         };
-        drawMarquee();
-        const onMove = (ev) => { const pt = pagePointFromEvent(ev); marqueeState.x1 = pt.xMm; marqueeState.y1 = pt.yMm; drawMarquee(); };
+        const onMove = (ev) => {
+          if (!dragStarted && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 6) {
+            dragStarted = true;
+            marqueeState = { x0: start.xMm, y0: start.yMm, x1: start.xMm, y1: start.yMm, additive: e.shiftKey };
+            el.marquee.hidden = false;
+            drawMarquee();
+          }
+          if (dragStarted && marqueeState) {
+            const pt = pagePointFromEvent(ev);
+            marqueeState.x1 = pt.xMm; marqueeState.y1 = pt.yMm;
+            drawMarquee();
+          }
+        };
         const onUp = () => {
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
+          if (!dragStarted) {
+            pageSelected = true;
+            selectedNodeId = null;
+            selectedNodeIds.clear();
+            render();
+            return;
+          }
           const rect = { left: Math.min(marqueeState.x0, marqueeState.x1), top: Math.min(marqueeState.y0, marqueeState.y1), right: Math.max(marqueeState.x0, marqueeState.x1), bottom: Math.max(marqueeState.y0, marqueeState.y1) };
           const hits = activePage()?.nodes.filter((n) => selectionIntersects(rect, n)) || [];
           const next = marqueeState.additive ? [...new Set([...selectedNodeIds, ...hits.map((n) => n.id)])] : hits.map((n) => n.id);
           setSelection(next, hits[hits.length - 1]?.id || null);
+          pageSelected = false;
           el.marquee.hidden = true;
           marqueeState = null;
           render();
@@ -2454,7 +2429,6 @@ const base = import.meta.env.BASE_URL ?? "/";
     if (el.insChartData) el.insChartData.onchange = () => applyInspector((n) => { n.props.chartData = el.insChartData.value; });
     if (el.insChartType) el.insChartType.onchange = () => applyInspector((n) => { n.props.chartType = el.insChartType.value; });
     if (el.insChartColor) el.insChartColor.onchange = () => applyInspector((n) => { n.props.chartColors = el.insChartColor.value; });
-    if (el.insTimelineItems) el.insTimelineItems.onchange = () => applyInspector((n) => { n.props.timelineItems = el.insTimelineItems.value; });
     if (el.insTimelineColor) el.insTimelineColor.onchange = () => applyInspector((n) => { n.props.fill = el.insTimelineColor.value; });
     if (el.insCountdownTarget) el.insCountdownTarget.onchange = () => applyInspector((n) => { n.props.countdownTarget = el.insCountdownTarget.value; });
     if (el.insCountdownLabel) el.insCountdownLabel.onchange = () => applyInspector((n) => { n.props.countdownLabel = el.insCountdownLabel.value; });
@@ -2480,7 +2454,9 @@ const base = import.meta.env.BASE_URL ?? "/";
         doc.watermark = undefined;
       }
       syncWatermarkUI();
-      commitChange(); render();
+      renderWatermark();
+      commitChange();
+      render();
     };
     const wmChange = () => {
       if (!doc.watermark || !el.watermarkText || !el.watermarkSize || !el.watermarkColor || !el.watermarkOpacity) return;
@@ -2566,9 +2542,9 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.rulerToggle.onchange = () => { doc.rulerOn = el.rulerToggle.checked; commitChange(); render(); };
     el.safeAreaToggle.onchange = () => { doc.safeAreaOn = el.safeAreaToggle.checked; commitChange(); render(); };
     el.gridStep.onchange = () => { doc.grid.stepMm = Number(el.gridStep.value); commitChange(); render(); };
-    el.themeWorkspaceColor.onchange = () => { addRecentColor(el.themeWorkspaceColor.value); doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
-    el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
-    el.themePageColor.onchange = () => { addRecentColor(el.themePageColor.value); if (!doc.pageBgGradient) doc.pageBg = el.themePageColor.value; commitChange(); render(); };
+    if (el.themeWorkspaceColor) el.themeWorkspaceColor.onchange = () => { addRecentColor(el.themeWorkspaceColor.value); doc.workspaceBg = el.themeWorkspaceColor.value; commitChange(); render(); };
+    if (el.themeWorkspacePattern) el.themeWorkspacePattern.onchange = () => { doc.workspacePatternOn = el.themeWorkspacePattern.checked; commitChange(); render(); };
+    if (el.themePageColor) el.themePageColor.onchange = () => { addRecentColor(el.themePageColor.value); if (!doc.pageBgGradient) doc.pageBg = el.themePageColor.value; commitChange(); render(); };
     if (el.themePageGradientToggle) {
       el.themePageGradientToggle.onchange = () => {
         if (el.themePageGradientToggle.checked) {
@@ -2589,15 +2565,15 @@ const base = import.meta.env.BASE_URL ?? "/";
     if (el.themePageGradientAngle) el.themePageGradientAngle.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.angle = clamp(Number(el.themePageGradientAngle.value) || 90, 0, 360); commitChange(); render(); } };
     if (el.themePageGradientStart) el.themePageGradientStart.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.start = el.themePageGradientStart.value; addRecentColor(el.themePageGradientStart.value); commitChange(); render(); } };
     if (el.themePageGradientEnd) el.themePageGradientEnd.onchange = () => { if (doc.pageBgGradient) { doc.pageBgGradient.end = el.themePageGradientEnd.value; addRecentColor(el.themePageGradientEnd.value); commitChange(); render(); } };
-    el.themeDefaultText.onchange = () => { addRecentColor(el.themeDefaultText.value); doc.defaults.textColor = el.themeDefaultText.value; commitChange(); render(); };
-    el.themeDefaultFill.onchange = () => { addRecentColor(el.themeDefaultFill.value); doc.defaults.fillColor = el.themeDefaultFill.value; commitChange(); render(); };
-    el.themeDefaultStroke.onchange = () => { addRecentColor(el.themeDefaultStroke.value); doc.defaults.strokeColor = el.themeDefaultStroke.value; commitChange(); render(); };
-    el.themeDefaultRadius.onchange = () => { doc.defaults.radius = clamp(Number(el.themeDefaultRadius.value) || 0, 0, 80); commitChange(); render(); };
-    el.themeSubtabs.forEach((btn) => {
+    if (el.themeDefaultText) el.themeDefaultText.onchange = () => { addRecentColor(el.themeDefaultText.value); doc.defaults.textColor = el.themeDefaultText.value; commitChange(); render(); };
+    if (el.themeDefaultFill) el.themeDefaultFill.onchange = () => { addRecentColor(el.themeDefaultFill.value); doc.defaults.fillColor = el.themeDefaultFill.value; commitChange(); render(); };
+    if (el.themeDefaultStroke) el.themeDefaultStroke.onchange = () => { addRecentColor(el.themeDefaultStroke.value); doc.defaults.strokeColor = el.themeDefaultStroke.value; commitChange(); render(); };
+    if (el.themeDefaultRadius) el.themeDefaultRadius.onchange = () => { doc.defaults.radius = clamp(Number(el.themeDefaultRadius.value) || 0, 0, 80); commitChange(); render(); };
+    if (el.themeSubtabs?.length) el.themeSubtabs.forEach((btn) => {
       btn.onclick = () => switchThemeSubtab(btn.dataset.themeSubtab || 'page');
     });
-    el.presetApplySelection.onclick = () => applyStylePreset('selection');
-    el.presetApplyAll.onclick = () => applyStylePreset('all');
+    if (el.presetApplySelection) el.presetApplySelection.onclick = () => applyStylePreset('selection');
+    if (el.presetApplyAll) el.presetApplyAll.onclick = () => applyStylePreset('all');
 
     el.addPage.onclick = () => { const p = { id:createId('page'), name:`Page ${doc.pages.length+1}`, nodes:[] }; doc.pages.push(p); doc.activePageId = p.id; setPrimarySelection(null); commitChange(); render(); };
     el.dupPage.onclick = () => { const p = activePage(); if(!p) return; const c=structuredClone(p); c.id=createId('page'); c.name=`Page ${doc.pages.length+1}`; c.nodes.forEach((n)=>n.id=createId('node')); doc.pages.push(c); doc.activePageId=c.id; setPrimarySelection(null); commitChange(); render(); };
