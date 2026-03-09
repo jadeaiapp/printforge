@@ -187,9 +187,11 @@ const base = import.meta.env.BASE_URL ?? "/";
       </section>
 
       <aside class="panel right-panel" id="right-panel">
-        <button type="button" class="panel-toggle right-panel-toggle" id="right-panel-toggle" title="Toggle inspector" aria-expanded="true" aria-label="Toggle inspector">▶</button>
+        <div class="right-header">
+          <h2 id="inspector-title">{labels.noSelection}</h2>
+          <button type="button" class="panel-toggle right-panel-toggle" id="right-panel-toggle" title="Toggle inspector" aria-expanded="true" aria-label="Toggle inspector">▶</button>
+        </div>
         <div class="right-panel-content">
-        <h2 id="inspector-title">{labels.noSelection}</h2>
         <div id="inspector-scroll" class="right-scroll">
           <div id="inspector-empty" class="ins-note">{labels.selectObject}</div>
           <div id="inspector-content" hidden>
