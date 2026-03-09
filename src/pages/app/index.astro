@@ -74,24 +74,13 @@ const base = import.meta.env.BASE_URL ?? "/";
 
     <main class="app-main">
       <aside class="panel left-panel" id="left-panel">
-        <div class="left-panel-header">
-          <button
-            type="button"
-            id="left-panel-toggle"
-            class="btn btn-icon left-panel-toggle"
-            aria-label={labels.sidebarToggleLeft}
-            title={labels.sidebarToggleLeft}
-          >
-            ‹
-          </button>
-          <div class="left-tabs" role="tablist" aria-label={labels.blocks}>
-            <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">{labels.blocks}</button>
-            <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">{labels.layers}</button>
-            <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">{labels.assets}</button>
-          </div>
+        <div class="left-tabs" role="tablist" aria-label="Left panel tabs">
+          <button type="button" class="left-tab is-active" id="tab-blocks" data-tab="blocks" role="tab" aria-selected="true">{labels.blocks}</button>
+          <button type="button" class="left-tab" id="tab-layers" data-tab="layers" role="tab" aria-selected="false">{labels.layers}</button>
+          <button type="button" class="left-tab" id="tab-assets" data-tab="assets" role="tab" aria-selected="false">{labels.assets}</button>
         </div>
 
-        <div id="left-scroll" class="left-scroll left-panel-content">
+        <div id="left-scroll" class="left-scroll">
           <section id="panel-blocks" class="tab-panel active" role="tabpanel" aria-labelledby="tab-blocks">
             <div id="favorites-bar" class="favorites-bar" hidden>
               <span class="favorites-label">{labels.favorites}</span>
@@ -195,22 +184,10 @@ const base = import.meta.env.BASE_URL ?? "/";
       </section>
 
       <aside class="panel right-panel" id="right-panel">
-        <div class="right-panel-header">
-          <h2 id="inspector-title" class="right-panel-title">{labels.noSelection}</h2>
-          <button
-            type="button"
-            id="right-panel-toggle"
-            class="btn btn-icon right-panel-toggle"
-            aria-label={labels.sidebarToggleRight}
-            title={labels.sidebarToggleRight}
-          >
-            ›
-          </button>
-        </div>
-        <div class="right-panel-content">
-          <div id="inspector-scroll" class="right-scroll">
-            <div id="inspector-empty" class="ins-note">{labels.selectObject}</div>
-            <div id="inspector-content" hidden>
+        <h2 id="inspector-title">{labels.noSelection}</h2>
+        <div id="inspector-scroll" class="right-scroll">
+          <div id="inspector-empty" class="ins-note">{labels.selectObject}</div>
+          <div id="inspector-content" hidden>
             <section class="ins-group" data-for="page">
               <h3>Page</h3>
               <label class="field"><span>Background color</span>
@@ -602,32 +579,6 @@ const base = import.meta.env.BASE_URL ?? "/";
     const saveToLocal = (doc) => { try { localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(doc)); } catch (err) { console.error('[PrintForge] saveToLocal failed', err); } };
     const exportJSON = (doc) => { const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `printforge-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
     const importJSON = async (file) => JSON.parse(await file.text());
-
-    const appMainEl = document.querySelector('.app-main');
-    const leftPanelEl = document.getElementById('left-panel');
-    const rightPanelEl = document.getElementById('right-panel');
-    const leftPanelToggle = document.getElementById('left-panel-toggle');
-    const rightPanelToggle = document.getElementById('right-panel-toggle');
-
-    const updatePanelLayout = () => {
-      if (!appMainEl || !leftPanelEl || !rightPanelEl) return;
-      const leftCollapsed = leftPanelEl.classList.contains('collapsed');
-      const rightCollapsed = rightPanelEl.classList.contains('collapsed');
-      appMainEl.classList.toggle('left-collapsed', leftCollapsed);
-      appMainEl.classList.toggle('right-collapsed', rightCollapsed);
-    };
-
-    leftPanelToggle?.addEventListener('click', () => {
-      if (!leftPanelEl) return;
-      leftPanelEl.classList.toggle('collapsed');
-      updatePanelLayout();
-    });
-
-    rightPanelToggle?.addEventListener('click', () => {
-      if (!rightPanelEl) return;
-      rightPanelEl.classList.toggle('collapsed');
-      updatePanelLayout();
-    });
 
     const WORKSPACE_GRADIENTS = [
       { id: 'light', name: 'Light', value: 'linear-gradient(180deg,#e5e7eb 0%,#d1d5db 100%)' },
