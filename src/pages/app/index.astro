@@ -2226,11 +2226,6 @@ const base = import.meta.env.BASE_URL ?? "/";
       };
     }
 
-    const leftPanel = document.getElementById('left-panel');
-    const rightPanel = document.getElementById('right-panel');
-    const leftPanelToggle = document.getElementById('left-panel-toggle');
-    const rightPanelToggle = document.getElementById('right-panel-toggle');
-    if (leftPanelToggle && leftPanel) {
       leftPanelToggle.onclick = () => {
         const collapsed = leftPanel.classList.toggle('collapsed');
         leftPanelToggle.textContent = collapsed ? '▶' : '◀';
