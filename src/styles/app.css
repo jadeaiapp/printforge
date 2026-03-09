@@ -192,6 +192,19 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   gap: 0;
   overflow: hidden;
   background: #f9fafb;
+  transition: grid-template-columns 0.24s ease;
+}
+
+.app-main.left-collapsed {
+  grid-template-columns: 44px 1fr var(--right-panel-width);
+}
+
+.app-main.right-collapsed {
+  grid-template-columns: var(--left-panel-width) 1fr 44px;
+}
+
+.app-main.left-collapsed.right-collapsed {
+  grid-template-columns: 44px 1fr 44px;
 }
 
 .panel {
@@ -215,13 +228,45 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   min-height: 0;
   overflow: hidden;
   height: 100%;
+  transition: width 0.24s ease, min-width 0.24s ease, padding 0.24s ease;
 }
 .right-panel {
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 0;
   border-left: 2px solid var(--panel-border);
+  transition: width 0.24s ease, min-width 0.24s ease, padding 0.24s ease;
 }
+
+.left-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.right-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.right-panel-title {
+  flex: 1;
+}
+
+.left-panel.collapsed {
+  width: 44px;
+  min-width: 44px;
+  padding: 8px;
+  grid-template-rows: 1fr auto;
+}
+
+.left-panel.collapsed .left-panel-content {
+  display: none;
+}
+
 .left-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -467,8 +512,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .handle.se { right: -4px; bottom: -4px; cursor: nwse-resize; }
 
 /* Right panel - Inspector */
-.right-panel { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; min-height: 0; border-left: 2px solid var(--panel-border); transition: width 0.2s ease; }
-.right-panel.collapsed { width: 44px; min-width: 44px; padding: 8px; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+.right-panel { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 0; border-left: 2px solid var(--panel-border); }
+.right-panel.collapsed { width: 44px; min-width: 44px; padding: 8px; grid-template-rows: 1fr auto; }
 .right-panel.collapsed .right-panel-content { display: none; }
 .right-panel.collapsed .right-panel-toggle { grid-row: 2; }
 .right-panel h2 {

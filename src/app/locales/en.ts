@@ -228,4 +228,6 @@ export default {
   cropMarks: "Crop marks",
   historyTimeline: "History",
   historyRestore: "Restore",
+  sidebarToggleLeft: "Toggle left sidebar",
+  sidebarToggleRight: "Toggle right sidebar",
 } as const;

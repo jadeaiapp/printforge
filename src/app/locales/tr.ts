@@ -228,4 +228,6 @@ export default {
   cropMarks: "Kesim çizgileri",
   historyTimeline: "Geçmiş",
   historyRestore: "Geri yükle",
+  sidebarToggleLeft: "Sol paneli aç/kapat",
+  sidebarToggleRight: "Sağ paneli aç/kapat",
 } as const;
