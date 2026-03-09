@@ -2225,20 +2225,6 @@ const base = import.meta.env.BASE_URL ?? "/";
         appMain.classList.toggle('right-collapsed', collapsed);
       };
     }
-
-      leftPanelToggle.onclick = () => {
-        const collapsed = leftPanel.classList.toggle('collapsed');
-        leftPanelToggle.textContent = collapsed ? '▶' : '◀';
-        leftPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      };
-    }
-    if (rightPanelToggle && rightPanel) {
-      rightPanelToggle.onclick = () => {
-        const collapsed = rightPanel.classList.toggle('collapsed');
-        rightPanelToggle.textContent = collapsed ? '◀' : '▶';
-        rightPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      };
-    }
     el.assetSearch.oninput = () => { visibleAssetCount = ASSETS_PAGE_SIZE; renderAssets(); };
     el.assetCategoryTabs.forEach((btn) => {
       btn.onclick = () => {
