@@ -40,7 +40,7 @@ html, body { height: 100%; margin: 0; }
   align-items: center;
   min-height: 56px;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .brand {
   display: inline-flex;
@@ -477,15 +477,40 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 }
 .right-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 10px; padding-right: 4px; }
 .right-scroll { overflow-x: hidden; overflow-y: auto; }
-.inspector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.ins-group { display: none; border-top: 1px solid var(--panel-border); margin-top: 8px; padding-top: 8px; }
+.inspector-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: flex-start;
+}
+.ins-group {
+  display: none;
+  border-top: 1px solid var(--panel-border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
 .ins-group:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
 .ins-group .inspector-grid { margin: 0; }
 
 /* Shape inspector – stacked sections */
 .ins-shape-stack { display: flex; flex-direction: column; gap: 14px; }
-.ins-subsection { display: flex; flex-direction: column; gap: 6px; }
-.ins-subsection-title { font-size: 11px; font-weight: 600; color: var(--ctrl-muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+.ins-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 10px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(148, 163, 184, 0.08);
+}
+.ins-subsection-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctrl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
 .ins-subsection-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ins-subsection .field-full { width: 100%; }
 .ins-gradient-toggle { margin-top: 2px; margin-bottom: 2px; }
@@ -583,6 +608,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 }
 .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .toast .toast-retry { flex-shrink: 0; padding: 4px 10px; font-size: 12px; }
+@media (max-width: 760px) {
+  .app-topbar {
+    flex-wrap: wrap;
+  }
+}
 
 @media (max-width: 1180px) { .app-main { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) {
