@@ -12,8 +12,43 @@ function getJsPDFFont(fontFamily: string): string {
   return "helvetica";
 }
 
+// Render inline SVG markup to a PNG data URL so it can be embedded into the PDF.
+async function svgToPngDataUrl(svgMarkup: string): Promise<string | null> {
+  try {
+    const blob = new Blob([svgMarkup], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        img.onload = () => {
+          const size = 256;
+          const canvas = document.createElement("canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("No canvas context"));
+            return;
+          }
+          ctx.clearRect(0, 0, size, size);
+          ctx.drawImage(img, 0, 0, size, size);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = () => reject(new Error("Failed to load SVG image"));
+        img.src = url;
+      });
+      return dataUrl;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  } catch {
+    return null;
+  }
+}
+
 export async function exportDocToPDF(doc: Doc): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
+  const { default: QRCode } = await import("qrcode");
   const pdf = new jsPDF({
     orientation: doc.orientation,
     unit: "mm",
@@ -22,6 +57,46 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
 
   const defaultFont = getJsPDFFont(doc.defaults?.fontFamily || "Inter");
   const defaultColor = doc.defaults?.textColor || "#111827";
+
+  // Pre-render all unique SVG markups used in the document into PNG data URLs.
+  const svgCache = new Map<string, string>();
+  const svgMarkups = new Set<string>();
+  doc.pages.forEach((page) => {
+    page.nodes.forEach((node) => {
+      if (node.type === "svg" && (node.props as any)?.svgMarkup) {
+        svgMarkups.add((node.props as any).svgMarkup as string);
+      }
+    });
+  });
+  for (const markup of svgMarkups) {
+    const dataUrl = await svgToPngDataUrl(markup);
+    if (dataUrl) {
+      svgCache.set(markup, dataUrl);
+    }
+  }
+
+  // Pre-render all unique QR texts into PNG data URLs.
+  const qrCache = new Map<string, string>();
+  const qrTexts = new Set<string>();
+  doc.pages.forEach((page) => {
+    page.nodes.forEach((node) => {
+      if (node.type === "qrcode" && (node.props as any)?.qrText) {
+        qrTexts.add((node.props as any).qrText as string);
+      }
+    });
+  });
+  for (const text of qrTexts) {
+    try {
+      const dataUrl = await QRCode.toDataURL(text || "", {
+        errorCorrectionLevel: "M",
+        margin: 1,
+        scale: 4,
+      });
+      qrCache.set(text, dataUrl);
+    } catch {
+      // ignore QR generation errors; will fall back to placeholder
+    }
+  }
 
   const drawNode = (pdf: import("jspdf").jsPDF, node: Node, pageW: number, pageH: number) => {
     if (!node.visible) return;
@@ -171,17 +246,36 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         }
         break;
       }
-      case "svg":
+      case "svg": {
+        const markup = (node.props as any)?.svgMarkup as string | undefined;
+        const dataUrl = markup ? svgCache.get(markup) : undefined;
+        if (dataUrl) {
+          try {
+            pdf.addImage(dataUrl, "PNG", x, y, w, h, undefined, "FAST");
+            break;
+          } catch {
+            // fall back to placeholder below
+          }
+        }
         pdf.setFillColor(245, 245, 245);
         pdf.roundedRect(x, y, w, h, 1, 1, "F");
         break;
-      case "qrcode":
+      }
+      case "qrcode": {
+        const text = (node.props as any)?.qrText as string | undefined;
+        const dataUrl = text ? qrCache.get(text) : undefined;
+        if (dataUrl) {
+          try {
+            pdf.addImage(dataUrl, "PNG", x, y, w, h, undefined, "FAST");
+            break;
+          } catch {
+            // fall through to placeholder
+          }
+        }
         pdf.setFillColor(255, 255, 255);
         pdf.rect(x, y, w, h, "F");
-        pdf.setFontSize(8);
-        pdf.setTextColor(128, 128, 128);
-        pdf.text("QR", x + w / 2, y + h / 2, { align: "center" });
         break;
+      }
       case "progressbar": {
         const val = Math.max(0, Math.min(100, node.props.progressValue ?? 50));
         const track = node.props.progressTrack || "#e2e8f0";
@@ -346,6 +440,48 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
   const pageBgHex = doc.pageBgGradient?.start ?? doc.pageBg ?? "#ffffff";
   const [pageR, pageG, pageB] = hexToRgb(pageBgHex);
 
+  // Approximate page background gradient with a stack of horizontal bands.
+  const fillPageBackground = () => {
+    const grad = doc.pageBgGradient;
+    if (!grad) {
+      pdf.setFillColor(pageR * 255, pageG * 255, pageB * 255);
+      pdf.rect(0, 0, pageDims.w, pageDims.h, "F");
+      return;
+    }
+    const [sr, sg, sb] = hexToRgb(grad.start);
+    const [er, eg, eb] = hexToRgb(grad.end);
+    const bands = 36;
+    const bandH = pageDims.h / bands;
+    for (let i = 0; i < bands; i++) {
+      const t = i / Math.max(1, bands - 1);
+      const r = (sr + (er - sr) * t) * 255;
+      const g = (sg + (eg - sg) * t) * 255;
+      const b = (sb + (eb - sb) * t) * 255;
+      pdf.setFillColor(r, g, b);
+      pdf.rect(0, i * bandH, pageDims.w, bandH + 0.1, "F");
+    }
+  };
+
+  const drawWatermarkOverlay = () => {
+    const wm = doc.watermark;
+    if (!wm || !wm.text) return;
+    const text = wm.text || "DRAFT";
+    const baseFont = getJsPDFFont(doc.defaults?.fontFamily || "Inter");
+    const fs = wm.fontSize || 60;
+    // Blend watermark color towards white to approximate opacity on paper.
+    const [wr, wg, wb] = hexToRgb(wm.color || "#000000");
+    const alpha = wm.opacity ?? 0.08;
+    const r = 255 * (1 - alpha) + wr * 255 * alpha;
+    const g = 255 * (1 - alpha) + wg * 255 * alpha;
+    const b = 255 * (1 - alpha) + wb * 255 * alpha;
+    pdf.setFont(baseFont, "bold");
+    pdf.setFontSize(fs);
+    pdf.setTextColor(r, g, b);
+    const cx = pageDims.w / 2;
+    const cy = pageDims.h / 2;
+    (pdf as any).text(text, cx, cy, { align: "center", angle: -45 });
+  };
+
   doc.pages.forEach((page: Page, index: number) => {
     if (index > 0) {
       pdf.addPage(
@@ -353,10 +489,10 @@ export async function exportDocToPDF(doc: Doc): Promise<Blob> {
         doc.orientation
       );
     }
-    pdf.setFillColor(pageR * 255, pageG * 255, pageB * 255);
-    pdf.rect(0, 0, pageDims.w, pageDims.h, "F");
+    fillPageBackground();
     const sorted = [...page.nodes].sort((a, b) => a.z - b.z);
     sorted.forEach((node) => drawNode(pdf, node, pageDims.w, pageDims.h));
+    drawWatermarkOverlay();
   });
 
   return pdf.output("blob");
