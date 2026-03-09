@@ -159,6 +159,9 @@ const base = import.meta.env.BASE_URL ?? "/";
           <button type="button" data-arrange="dist-h" class="btn" title={labels.arrangeDistributeH}>⇆</button>
           <button type="button" data-arrange="dist-v" class="btn" title={labels.arrangeDistributeV}>⇅</button>
           <span class="arrange-sep" aria-hidden="true">|</span>
+          <button type="button" id="group-btn" class="btn" title={labels.arrangeGroup}>{labels.arrangeGroup}</button>
+          <button type="button" id="ungroup-btn" class="btn" title={labels.arrangeUngroup}>{labels.arrangeUngroup}</button>
+          <span class="arrange-sep" aria-hidden="true">|</span>
           <button type="button" id="copy-style-btn" class="btn" title={labels.copyStyle}>{labels.copyStyle}</button>
           <button type="button" id="paste-style-btn" class="btn" title={labels.pasteStyle}>{labels.pasteStyle}</button>
         </div>
@@ -627,6 +630,7 @@ const base = import.meta.env.BASE_URL ?? "/";
       gridToggle: document.getElementById('grid-toggle'), rulerToggle: document.getElementById('ruler-toggle'), safeAreaToggle: document.getElementById('safe-area-toggle'), gridStep: document.getElementById('grid-step'), zoom: document.getElementById('zoom-select'),
       canvasInner: document.getElementById('canvas-inner'), rulerCorner: document.getElementById('ruler-corner'), rulerTop: document.getElementById('ruler-top'), rulerLeft: document.getElementById('ruler-left'), safeAreaOverlay: document.getElementById('safe-area-overlay'),
       copyStyleBtn: document.getElementById('copy-style-btn'), pasteStyleBtn: document.getElementById('paste-style-btn'),
+      groupBtn: document.getElementById('group-btn'), ungroupBtn: document.getElementById('ungroup-btn'),
       addPage: document.getElementById('add-page'), dupPage: document.getElementById('dup-page'), delPage: document.getElementById('del-page'),
       fileMenu: document.getElementById('file-menu'), newProjectBtn: document.getElementById('new-project-btn'), duplicateProjectBtn: document.getElementById('duplicate-project-btn'), clearProjectBtn: document.getElementById('clear-project-btn'), save: document.getElementById('save-btn'), load: document.getElementById('load-btn'), exportPdf: document.getElementById('export-pdf-btn'), exportPng: document.getElementById('export-png-btn'), exportSvg: document.getElementById('export-svg-btn'), exportZip: document.getElementById('export-zip-btn'), presentationBtn: document.getElementById('presentation-btn'), printPreview: document.getElementById('print-preview-btn'), printBtn: document.getElementById('print-btn'), ex: document.getElementById('export-btn'), im: document.getElementById('import-btn'),
       darkModeToggle: document.getElementById('dark-mode-toggle'),
@@ -1273,7 +1277,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function listRowsHtml(n) {
       const items = (n.props.items && n.props.items.length ? n.props.items : ['Item 1']).map((item, idx) => {
         const marker = n.props.listStyle === 'checkbox' ? '☐' : '•';
-        return `<div class="list-row"><span class="list-marker">${marker}</span><span class="list-item" contenteditable="true" data-list-item="${idx}">${item}</span></div>`;
+        return `<div class="list-row"><span class="list-marker">${marker}</span><span class="list-item" contenteditable="true" data-list-item="${idx}">${item}</span><span class="list-row-handle" data-list-handle="${idx}"></span></div>`;
       }).join('');
       return `<div class="meta-content list-content" style="line-height:${n.props.lineHeight||1.4};opacity:${n.props.opacity||1}">${items}<button type="button" class="list-add" data-add-item="true">+ item</button></div>`;
     }
@@ -1750,8 +1754,12 @@ const base = import.meta.env.BASE_URL ?? "/";
       } else {
         el.multiBox.hidden = true;
       }
-      el.arrangeToolbar.hidden = selectedNodeIds.size < 1;
-      el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => { btn.disabled = selectedNodeIds.size < 2; });
+      const hasSelection = selectedNodeIds.size >= 1;
+      const multiSelection = selectedNodeIds.size >= 2;
+      el.arrangeToolbar.hidden = !hasSelection;
+      el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => { btn.disabled = !multiSelection; });
+      if (el.groupBtn) el.groupBtn.disabled = !multiSelection;
+      if (el.ungroupBtn) el.ungroupBtn.disabled = !multiSelection;
       el.copyStyleBtn.disabled = selectedNodeIds.size !== 1;
       el.pasteStyleBtn.disabled = !selectedNodeIds.size || !copiedStyle || Object.keys(copiedStyle).length === 0;
     }
@@ -2354,6 +2362,8 @@ const base = import.meta.env.BASE_URL ?? "/";
     el.arrangeToolbar.querySelectorAll('[data-arrange]').forEach((btn) => {
       btn.onclick = () => applyArrange(btn.dataset.arrange);
     });
+    if (el.groupBtn) el.groupBtn.onclick = () => groupSelection();
+    if (el.ungroupBtn) el.ungroupBtn.onclick = () => ungroupSelection();
     el.copyStyleBtn.onclick = () => copyStyle();
     el.pasteStyleBtn.onclick = () => pasteStyle();
 

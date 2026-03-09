@@ -97,6 +97,8 @@ export default {
   arrangeAlignBottom: "Alta hizala",
   arrangeDistributeH: "Yatay dağıt",
   arrangeDistributeV: "Dikey dağıt",
+  arrangeGroup: "Grupla",
+  arrangeUngroup: "Grubu çöz",
   contextLockSelection: "Seçimi kilitle",
   contextUnlockSelection: "Seçimi aç",
   zoomShort: "Zoom",

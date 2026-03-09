@@ -97,6 +97,8 @@ export default {
   arrangeAlignBottom: "Align bottom",
   arrangeDistributeH: "Distribute horizontally",
   arrangeDistributeV: "Distribute vertically",
+  arrangeGroup: "Group",
+  arrangeUngroup: "Ungroup",
   contextLockSelection: "Lock selection",
   contextUnlockSelection: "Unlock selection",
   zoomShort: "Zoom",

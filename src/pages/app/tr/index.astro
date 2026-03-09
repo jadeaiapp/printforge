@@ -1276,7 +1276,7 @@ const base = import.meta.env.BASE_URL ?? "/";
     function listRowsHtml(n) {
       const items = (n.props.items && n.props.items.length ? n.props.items : ['Item 1']).map((item, idx) => {
         const marker = n.props.listStyle === 'checkbox' ? '☐' : '•';
-        return `<div class="list-row"><span class="list-marker">${marker}</span><span class="list-item" contenteditable="true" data-list-item="${idx}">${item}</span></div>`;
+        return `<div class="list-row"><span class="list-marker">${marker}</span><span class="list-item" contenteditable="true" data-list-item="${idx}">${item}</span><span class="list-row-handle" data-list-handle="${idx}"></span></div>`;
       }).join('');
       return `<div class="meta-content list-content" style="line-height:${n.props.lineHeight||1.4};opacity:${n.props.opacity||1}">${items}<button type="button" class="list-add" data-add-item="true">+ item</button></div>`;
     }
