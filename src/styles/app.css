@@ -245,11 +245,32 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   flex-shrink: 0;
 }
 .panel-toggle:hover { background: var(--ctrl-bg); color: var(--ctrl-text); }
-.right-panel .right-panel-content { display: grid; grid-template-rows: auto 1fr; min-height: 0; overflow: hidden; }
-.right-panel { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; min-height: 0; border-left: 2px solid var(--panel-border); transition: width 0.2s ease; }
-.right-panel .right-panel-toggle { grid-column: 1; grid-row: 1; align-self: start; margin-top: 4px; }
-.right-panel.collapsed { width: 44px; min-width: 44px; }
-.right-panel.collapsed .right-panel-content { display: none; }
+.right-panel {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  border-left: 2px solid var(--panel-border);
+  transition: width 0.2s ease;
+}
+.right-panel .right-panel-content {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+.right-panel .right-panel-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.right-panel.collapsed {
+  width: 44px;
+  min-width: 44px;
+}
+.right-panel.collapsed .right-panel-content {
+  display: none;
+}
 .left-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
