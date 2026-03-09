@@ -2083,7 +2083,12 @@ const base = import.meta.env.BASE_URL ?? "/";
       const handle = e.target.dataset.handle || null;
       const isDragHandle = e.target.closest('[data-drag-handle="true"]');
       const isContentEditable = e.target.closest('[contenteditable="true"]');
+      const isListItem = !!e.target.closest('[data-list-item]');
       if (isContentEditable && !handle && !isDragHandle) {
+        // For checklist / bullet list items, let the browser + list handlers manage focus;
+        // do NOT re-render here, yoksa DOM yenilenip focus kayboluyor.
+        if (isListItem) return;
+
         render();
         // Focus the new contenteditable after render (DOM was recreated)
         const nodeIdToFocus = n.id;
