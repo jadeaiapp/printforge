@@ -61,6 +61,14 @@ html, body { height: 100%; margin: 0; }
   flex-wrap: wrap;
   align-items: center;
 }
+
+@media (max-width: 1440px) {
+  .top-controls {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+}
 .field { display: grid; gap: 4px; font-size: 12px; color: var(--ctrl-muted); }
 .field.inline { display: inline-grid; }
 .field span { font-weight: 500; color: var(--ctrl-muted); }
@@ -498,10 +506,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 10px 8px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-border);
-  background: rgba(148, 163, 184, 0.08);
+  padding: 6px 0 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.45);
 }
 .ins-subsection-title {
   font-size: 11px;
@@ -509,7 +515,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   color: var(--ctrl-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+.ins-subsection:first-of-type {
+  border-top: none;
+  padding-top: 0;
 }
 .ins-subsection-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ins-subsection .field-full { width: 100%; }

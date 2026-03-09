@@ -1850,9 +1850,12 @@ const base = import.meta.env.BASE_URL ?? "/";
     function renderWatermark() {
       const wm = doc.watermark;
       if (!el.watermarkOverlay || !el.watermarkToggle) return;
-      const show = wm && el.watermarkToggle.checked;
+      const show = !!wm;
       el.watermarkOverlay.hidden = !show;
-      if (!show) return;
+      if (!show) {
+        el.watermarkOverlay.innerHTML = "";
+        return;
+      }
       el.watermarkOverlay.style.cssText = `position:absolute;inset:0;pointer-events:none;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:5;`;
       el.watermarkOverlay.innerHTML = `<span style="font-size:${wm.fontSize||60}px;color:${wm.color||'#000'};opacity:${wm.opacity||0.08};transform:rotate(-45deg);white-space:nowrap;font-weight:700;user-select:none;letter-spacing:4px;">${wm.text || 'DRAFT'}</span>`;
     }
