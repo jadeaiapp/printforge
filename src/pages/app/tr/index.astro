@@ -39,6 +39,10 @@ const base = import.meta.env.BASE_URL ?? "/";
 
         <span id="save-indicator" class="save-indicator" aria-live="polite">{labels.saved}</span>
 
+        <div class="top-undo-redo">
+          <button type="button" id="undo-btn" class="btn ghost btn-icon" title={labels.undoTitle} aria-label={labels.undoTitle}>↺</button>
+          <button type="button" id="redo-btn" class="btn ghost btn-icon" title={labels.redoTitle} aria-label={labels.redoTitle}>↻</button>
+        </div>
         <button type="button" id="delete-btn" class="btn btn-danger" disabled>{labels.delete}</button>
         <details class="file-menu" id="file-menu">
           <summary class="btn btn-primary">{labels.file}</summary>
@@ -385,6 +389,17 @@ const base = import.meta.env.BASE_URL ?? "/";
         </div>
       </aside>
     </main>
+
+    <footer class="pages-strip" id="pages-strip">
+      <div class="pages-actions">
+        <button type="button" id="add-page" class="btn">{labels.addPage}</button>
+        <button type="button" id="dup-page" class="btn">{labels.dupPage}</button>
+        <button type="button" id="del-page" class="btn">{labels.delPage}</button>
+        <span class="pages-count" id="pages-count"></span>
+      </div>
+      <div id="pages-list" class="pages-list"></div>
+    </footer>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <div id="context-menu" class="context-menu" hidden>
       <button type="button" data-context-action="duplicate">{labels.contextDuplicate}</button>
@@ -674,6 +689,8 @@ const base = import.meta.env.BASE_URL ?? "/";
       templateCategory: document.getElementById('template-category'), templateList: document.getElementById('template-list'), packList: document.getElementById('pack-list'),
       templateBlankBtn: document.getElementById('template-blank-btn'), templateHideToggle: document.getElementById('template-hide-toggle'),
       arrangeToolbar: document.getElementById('arrange-toolbar'),
+      undoBtn: document.getElementById('undo-btn'),
+      redoBtn: document.getElementById('redo-btn'),
     };
 
     let doc = normalizeDoc(loadFromLocal() || defaultDoc());
@@ -1199,12 +1216,9 @@ const base = import.meta.env.BASE_URL ?? "/";
         chip.className = `page-thumb ${page.id === doc.activePageId ? 'active' : ''}`;
         chip.draggable = true;
         chip.dataset.pageId = page.id;
-        const preview = document.createElement('canvas');
-        preview.className = 'page-thumb-canvas';
-        chip.appendChild(preview);
         const label = document.createElement('span');
         label.className = 'page-thumb-label';
-        label.textContent = page.name || `Page ${i + 1}`;
+        label.textContent = page.name || `${labels.pageLabel} ${i + 1}`;
         chip.appendChild(label);
         chip.onclick = (e) => { if (!e.defaultPrevented) { setPrimarySelection(null); doc.activePageId = page.id; render(); } };
         chip.ondragstart = (e) => { e.dataTransfer.setData('text/plain', page.id); e.dataTransfer.effectAllowed = 'move'; chip.classList.add('page-thumb-dragging'); };
@@ -1226,9 +1240,7 @@ const base = import.meta.env.BASE_URL ?? "/";
         };
         el.pagesList.appendChild(chip);
       });
-      el.pagesList.querySelectorAll('.page-thumb-canvas').forEach((cvs, i) => {
-        if (doc.pages[i]) renderPageMiniCanvas(doc.pages[i], cvs);
-      });
+      if (el.pagesCount) el.pagesCount.textContent = `${doc.pages.length} ${labels.pagesSuffix}`;
       el.delPage.disabled = doc.pages.length <= 1;
     }
 
@@ -2194,23 +2206,26 @@ const base = import.meta.env.BASE_URL ?? "/";
     }
 
     el.tabButtons.forEach((btn) => btn.onclick = () => switchLeftTab(btn.dataset.tab));
+    const appMain = document.querySelector('.app-main');
 
     const leftPanel = document.getElementById('left-panel');
     const rightPanel = document.getElementById('right-panel');
     const leftPanelToggle = document.getElementById('left-panel-toggle');
     const rightPanelToggle = document.getElementById('right-panel-toggle');
-    if (leftPanelToggle && leftPanel) {
+    if (leftPanelToggle && leftPanel && appMain) {
       leftPanelToggle.onclick = () => {
         const collapsed = leftPanel.classList.toggle('collapsed');
         leftPanelToggle.textContent = collapsed ? '▶' : '◀';
         leftPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        appMain.classList.toggle('left-collapsed', collapsed);
       };
     }
-    if (rightPanelToggle && rightPanel) {
+    if (rightPanelToggle && rightPanel && appMain) {
       rightPanelToggle.onclick = () => {
         const collapsed = rightPanel.classList.toggle('collapsed');
         rightPanelToggle.textContent = collapsed ? '◀' : '▶';
         rightPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        appMain.classList.toggle('right-collapsed', collapsed);
       };
     }
 
@@ -2228,6 +2243,13 @@ const base = import.meta.env.BASE_URL ?? "/";
       };
     });
     el.assetLoadMore.onclick = () => { visibleAssetCount += ASSETS_PAGE_SIZE; renderAssets(); };
+
+    if (el.undoBtn) el.undoBtn.onclick = () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }));
+    };
+    if (el.redoBtn) el.redoBtn.onclick = () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, shiftKey: true }));
+    };
 
     el.blockList.querySelectorAll('.block-item').forEach((b) => {
       b.ondragstart = () => { draggingBlock = b.dataset.block; };
