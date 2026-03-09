@@ -191,15 +191,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
   overflow: hidden;
   background: #f9fafb;
 }
-.app-main.left-collapsed {
-  grid-template-columns: 44px 1fr minmax(280px, 340px);
-}
-.app-main.right-collapsed {
-  grid-template-columns: minmax(260px, 300px) 1fr 44px;
-}
-.app-main.left-collapsed.right-collapsed {
-  grid-template-columns: 44px 1fr 44px;
-}
 
 .panel {
   background: var(--panel-bg);
@@ -219,38 +210,15 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .left-panel {
   display: grid;
   grid-template-rows: auto 1fr;
-  grid-template-columns: 1fr auto;
   min-height: 0;
   overflow: hidden;
   height: 100%;
-  transition: width 0.2s ease;
 }
-.left-panel .left-panel-content { grid-column: 1; grid-row: 1 / -1; display: grid; grid-template-rows: auto 1fr; min-height: 0; overflow: hidden; }
-.left-panel .left-panel-toggle { grid-column: 2; grid-row: 1; align-self: start; margin-top: 4px; }
-.left-panel.collapsed { width: 44px; min-width: 44px; padding: 8px; }
-.left-panel.collapsed .left-panel-content { display: none; }
-.panel-toggle {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--ctrl-br);
-  background: var(--panel-bg);
-  color: var(--ctrl-muted);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  display: grid;
-  place-items: center;
-  align-self: center;
-  flex-shrink: 0;
-}
-.panel-toggle:hover { background: var(--ctrl-bg); color: var(--ctrl-text); }
 .right-panel {
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 0;
   border-left: 2px solid var(--panel-border);
-  transition: width 0.2s ease;
 }
 .right-header {
   display: flex;
