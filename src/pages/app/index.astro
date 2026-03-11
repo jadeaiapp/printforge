@@ -9,36 +9,39 @@ const base = import.meta.env.BASE_URL ?? "/";
 <BaseLayout lang="en" title="PrintForge App — Sprint 2E" description="Interactive printable builder" canonical="/app/" ogImage="/og-en.svg" hreflang={{ tr: "/tr/", en: "/en/" }} noindex={true}>
   <div class="app-shell" id="app-shell">
     <header class="app-topbar">
-      <a class="brand" href={withBase("/en/", base)}>
-        <span class="brand-badge" aria-hidden="true">✦</span>
-        <span>PrintForge</span>
-      </a>
-      <a class="btn ghost lang-switcher" href={withBase("/app/tr/", base)}>{labels.langSwitch}</a>
-      <label class="dark-toggle"><input type="checkbox" id="dark-mode-toggle" /> {labels.darkMode}</label>
-      <button type="button" class="btn ghost btn-icon" id="shortcuts-btn" title={labels.shortcutsTitle} aria-label={labels.shortcutsTitle}>⌘</button>
-      <button type="button" class="btn ghost btn-icon" id="tips-btn" title={labels.tipsTitle} aria-label={labels.tipsTitle}>?</button>
-      <div class="top-controls">
-        <label class="field inline project-name-field"><span>{labels.project}</span><input id="project-name" class="control" type="text" value={labels.untitledProject} maxlength="80" /></label>
-        <label class="field inline"><span>{labels.zoom}</span>
-          <select id="zoom-select" class="control"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="fit">Fit</option><option value="fitSelection">{labels.fitSelection}</option></select>
-        </label>
-        <div class="segment" role="group" aria-label="Page size"><button type="button" data-size="A4" class="is-active">A4</button><button type="button" data-size="A5">A5</button></div>
-        <div class="segment" role="group" aria-label="Page orientation"><button type="button" data-orientation="portrait" class="is-active">Portrait</button><button type="button" data-orientation="landscape">Landscape</button></div>
+      <div class="topbar-main">
+        <a class="brand" href={withBase("/en/", base)}>
+          <span class="brand-badge" aria-hidden="true">✦</span>
+          <span>PrintForge</span>
+        </a>
+        <a class="btn ghost lang-switcher" href={withBase("/app/tr/", base)}>{labels.langSwitch}</a>
+        <label class="dark-toggle"><input type="checkbox" id="dark-mode-toggle" /> {labels.darkMode}</label>
+        <button type="button" class="btn ghost btn-icon" id="shortcuts-btn" title={labels.shortcutsTitle} aria-label={labels.shortcutsTitle}>⌘</button>
+        <button type="button" class="btn ghost btn-icon" id="tips-btn" title={labels.tipsTitle} aria-label={labels.tipsTitle}>?</button>
+        <div class="top-controls">
+          <label class="field inline project-name-field"><span>{labels.project}</span><input id="project-name" class="control" type="text" value={labels.untitledProject} maxlength="80" /></label>
+          <label class="field inline"><span>{labels.zoom}</span>
+            <select id="zoom-select" class="control"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="fit">Fit</option><option value="fitSelection">{labels.fitSelection}</option></select>
+          </label>
+          <div class="segment" role="group" aria-label="Page size"><button type="button" data-size="A4" class="is-active">A4</button><button type="button" data-size="A5">A5</button></div>
+          <div class="segment" role="group" aria-label="Page orientation"><button type="button" data-orientation="portrait" class="is-active">Portrait</button><button type="button" data-orientation="landscape">Landscape</button></div>
 
-        <label class="checkline"><input type="checkbox" id="grid-toggle" /> {labels.grid}</label>
-        <label class="checkline"><input type="checkbox" id="ruler-toggle" /> {labels.rulers}</label>
-        <label class="checkline"><input type="checkbox" id="safe-area-toggle" /> {labels.safeArea}</label>
-        <label class="field inline"><span>{labels.step}</span>
-          <select id="grid-step" class="control"><option value="2">2mm</option><option value="5" selected>5mm</option><option value="10">10mm</option></select>
-        </label>
+          <label class="checkline"><input type="checkbox" id="grid-toggle" /> {labels.grid}</label>
+          <label class="checkline"><input type="checkbox" id="ruler-toggle" /> {labels.rulers}</label>
+          <label class="checkline"><input type="checkbox" id="safe-area-toggle" /> {labels.safeArea}</label>
+          <label class="field inline"><span>{labels.step}</span>
+            <select id="grid-step" class="control"><option value="2">2mm</option><option value="5" selected>5mm</option><option value="10">10mm</option></select>
+          </label>
 
-        <span id="save-indicator" class="save-indicator" aria-live="polite">{labels.saved}</span>
+          <span id="save-indicator" class="save-indicator" aria-live="polite">{labels.saved}</span>
 
-        <div class="top-undo-redo">
-          <button type="button" id="undo-btn" class="btn ghost btn-icon" title={labels.undoTitle} aria-label={labels.undoTitle}>↺</button>
-          <button type="button" id="redo-btn" class="btn ghost btn-icon" title={labels.redoTitle} aria-label={labels.redoTitle}>↻</button>
+          <div class="top-undo-redo">
+            <button type="button" id="undo-btn" class="btn ghost btn-icon" title={labels.undoTitle} aria-label={labels.undoTitle}>↺</button>
+            <button type="button" id="redo-btn" class="btn ghost btn-icon" title={labels.redoTitle} aria-label={labels.redoTitle}>↻</button>
+          </div>
         </div>
-
+      </div>
+      <div class="top-actions">
         <button type="button" id="delete-btn" class="btn btn-danger" disabled>{labels.delete}</button>
         <details class="file-menu" id="file-menu">
           <summary class="btn btn-primary">{labels.file}</summary>
